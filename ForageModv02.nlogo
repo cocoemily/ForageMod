@@ -14,7 +14,7 @@ foragers-own [ moves move-tracker energy burn-prob age offspring interactions]
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
 
-globals [ file-path available-forage forage-per-capita self-burn other-burn offspring-count energy-intake current-veg-regime current-max-veg forager-list]
+globals [ file-path patch-burn-list available-forage forage-per-capita self-burn other-burn offspring-count energy-intake current-veg-regime current-max-veg ]
 
 to setup
   clear-all
@@ -22,6 +22,7 @@ to setup
   ;Set file path for the experiment
   let stamp1 (random 9999) + 1
   set file-path (word "preliminary-results/experiment_" stamp1 "_" )
+  set patch-burn-list []
 
   ;Tracking for burn benefit
   set self-burn 0
@@ -85,9 +86,6 @@ to setup
     ]
   ]
 
-  ;for testing forager-ordering
-  set forager-list []
-
   reset-ticks
 end
 
@@ -95,7 +93,7 @@ to profile
   setup
   profiler:reset
   profiler:start
-  repeat 500 [go]
+  repeat 200 [go]
   profiler:stop
   let _fname "report.txt"
   carefully [file-delete _fname] []
@@ -108,6 +106,8 @@ to go
 
   if ticks >= tick-limit [
     if export? = true [
+      set patch-burn-list lput patch-information patch-burn-list
+
       export-data
     ]
     stop
@@ -116,6 +116,9 @@ to go
   ;Reset trackers
   set self-burn 0
   set other-burn 0
+  if ticks mod (cycle-duration / 2) = 0 and ticks != 0 [
+    set patch-burn-list lput patch-information patch-burn-list
+  ]
 
 
   ;Alternate between productive-unproductive environments
@@ -152,14 +155,12 @@ to go
 
   ;foraging loop based on which agents still have moves to make
   while [ any? foragers with [ moves > 0] ] [
-    set forager-list []
     ask foragers [
       check-interactions
     ]
 
     ;Agents forage and move
     ask foragers with [moves > 0] [
-      set forager-list lput who forager-list
       ifelse (([ burnt? ] of patch-here = false) and ([ foraged? ] of patch-here = false) and ([ regenerating? ] of patch-here = false)) [
         ;output-print (word "agent " who " is foraging and moving")
         forage ;see 'Foraging routine'
@@ -442,15 +443,16 @@ end
 to-report patch-information
   let burn-list []
   ask patches [
-    set burn-list lput (list ([pxcor] of self) ([pycor] of self) times-human-burned) burn-list
+    set burn-list lput (list ([pxcor] of self) ([pycor] of self) times-human-burned ticks) burn-list
   ]
   report burn-list
 end
 
 to export-data
 
+  set patch-burn-list reduce sentence patch-burn-list
   file-open (word file-path "human-burning-amounts.csv")
-  csv:to-file (word file-path "human-burning-amounts.csv") patch-information
+  csv:to-file (word file-path "human-burning-amounts.csv") patch-burn-list
   file-close
 
   export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
@@ -850,7 +852,7 @@ INPUTBOX
 543
 70
 tick-limit
-1000.0
+200.0
 1
 0
 Number
@@ -882,7 +884,7 @@ SWITCH
 51
 export?
 export?
-1
+0
 1
 -1000
 
@@ -909,7 +911,7 @@ CHOOSER
 veg-distribution
 veg-distribution
 "random" "patchy"
-1
+0
 
 PLOT
 1118
