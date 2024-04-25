@@ -1448,6 +1448,61 @@ NetLogo 6.4.0
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
+  <experiment name="HPC-test" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <enumeratedValueSet variable="foragers-burn?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="forager-moves">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="tick-limit">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-distribution">
+      <value value="&quot;random&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="export?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burnt-neighbor-limit">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="natural-ignition">
+      <value value="0.005"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="forager-energy-requirement">
+      <value value="1500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-cycle-start">
+      <value value="&quot;productive&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burn-veg-type-threshold">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cycle-duration">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burn-cost">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-type-modifier">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="movement-cost">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-threshold">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="movement-model">
+      <value value="&quot;Random Walk&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-cost">
+      <value value="500"/>
+    </enumeratedValueSet>
+  </experiment>
 </experiments>
 @#$#@#$#@
 @#$#@#$#@
