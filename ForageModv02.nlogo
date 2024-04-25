@@ -4,11 +4,12 @@
 
 extensions [
   csv
+  table
   profiler
 ]
 
 breed [ foragers forager ]
-foragers-own [ moves move-tracker energy burn-prob age offspring interactions interaction-count patches-visited patch-visit-count]
+foragers-own [ moves move-tracker energy burn-prob age offspring interactions]
 ;;patch regeneration not instantiated
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
@@ -73,16 +74,12 @@ to setup
   ask n-of 100 patches [
     sprout-foragers 1 [
       set energy 1500
-      ;set color red
       set color (10 * (1 + random 14)) + 4
       set shape "person"
       set burn-prob -0.1 + random-float 0.2
       set age random 50
       set offspring 0
-      set interactions []
-      set interaction-count 0
-      set patches-visited []
-      set patch-visit-count 0
+      set interactions 0
       set move-tracker 0
       set moves 0
     ]
@@ -199,8 +196,10 @@ end
 
 ;Foraging routine
 to forage
-  ;burning behavior
+  ;foraging behavior
   set energy energy + (veg-type * veg-type-modifier)
+
+  ;check if space was previously burned
   if veg-type > 1 [
     ifelse who-burned = self [
       set self-burn self-burn + 1
@@ -209,7 +208,15 @@ to forage
     ]
   ]
 
-  if veg-type < 4 [ ;;could this be changed so that they only burn patches that have reached a certain productivity?
+  ;set patch to foraged
+  let vt [veg-type] of patch-here
+  ask patch-here [
+    set foraged? true
+    set veg-type 0
+  ]
+
+  ;burning behavior
+  if vt <= burn-veg-type-threshold [ ;;set a limit on what type of vegetation agents are willing to burn
     if foragers-burn? = true [
       if count ([neighbors] of patch-here) with [burnt? = true] <= burnt-neighbor-limit [ ;;preference for burning areas surrounding by green areas
         if (random-float 1.0) < burn-prob [
@@ -222,15 +229,13 @@ to forage
             set who-burned myself
             set veg-type 0
           ]
+        ;get a little extra energy from burning
           set energy energy + veg-type-modifier
         ]
       ]
     ]
   ]
-  ask patch-here [
-    set foraged? true
-    set veg-type 0
-  ]
+
 end
 
 ; 'Cycle maximum productivity of different patches'
@@ -309,9 +314,11 @@ to assess-movement
 
   ;test possible available energy at increasingly large radii to determine how far to travel to meet energy requirements
   while [checks > 0] [
+    let previous-patches patches in-radius r
     set r r + 1
     ;agents make their assessment based on maximum available energy to forage
-    let available veg-type-modifier * (max ([veg-type] of (patches in-radius r)))
+    let new-patches patches in-radius r with [ not member? self previous-patches]
+    let available veg-type-modifier * (max ([veg-type] of (new-patches)))
     set possible-total-energy energy + available
 
     ;agents add an additional move until they have enough energy to reproduce and do their next round of foraging
@@ -340,14 +347,6 @@ to move
     move-to one-of neighbors
   ]
   set moves moves - 1
-  ;set energy energy - movement-cost
-
-;    if movement-model = "Directed Jump" [
-;   move-to max-one-of patches [ veg-type ]
-;  ]
-;  if movement-model = "Random Jump" [
-;      move-to one-of patches
-;  ]
 
 end
 
@@ -369,8 +368,8 @@ to check-interactions
     ]
 
 
-    ;remove links that are older than 10
-    if counter > forager-moves * 5 [ ;what should this number be? -- currently links remain over ~5 move/forage sequences
+    ;remove old links
+    if counter > forager-moves * 5 [ ;currently links remain over ~5 move/forage sequences
       die
     ]
   ]
@@ -380,6 +379,8 @@ to check-interactions
   create-links-with nforagers with [not link-neighbor? myself] [
     set counter 0
   ]
+
+  set interactions count link-neighbors
 
   ask links [
     hide-link
@@ -508,7 +509,7 @@ NIL
 SLIDER
 17
 13
-301
+181
 46
 natural-ignition
 natural-ignition
@@ -908,7 +909,7 @@ CHOOSER
 veg-distribution
 veg-distribution
 "random" "patchy"
-0
+1
 
 PLOT
 1118
@@ -926,9 +927,9 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -7858858 true "" "ifelse count foragers > 0 [ plot mean [ count link-neighbors ] of foragers ] [ plot 0 ]"
-"pen-1" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [  count link-neighbors ] of foragers + standard-deviation [  count link-neighbors  ] of foragers  ] [ plot 0 ]"
-"pen-2" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ count link-neighbors  ] of foragers - standard-deviation [  count link-neighbors  ] of foragers  ] [ plot 0 ]"
+"default" 1.0 0 -7858858 true "" "ifelse count foragers > 0 [ plot mean [ interactions ] of foragers ] [ plot 0 ]"
+"pen-1" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ interactions ] of foragers + standard-deviation [ interactions ] of foragers  ] [ plot 0 ]"
+"pen-2" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ interactions ] of foragers - standard-deviation [ interactions ] of foragers  ] [ plot 0 ]"
 
 BUTTON
 730
@@ -947,6 +948,21 @@ NIL
 NIL
 1
 
+SLIDER
+17
+171
+194
+204
+burn-veg-type-threshold
+burn-veg-type-threshold
+1
+7
+4.0
+1
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -956,28 +972,33 @@ ForageMod is a simple model of foraging in an environment in which a disturbance
 
 In the model, agents obtain resources (energy) from their environment, moving to new locations once local resources are exhausted. If an agent obtains more resources than needed to exceed a threshold, the agent can reproduce, adding a new agent to the world. If an agent fails to obtain enough resource to survive, the agent dies.
 
-The energy obtained from different parts of the environmentis controlled by the *veg-type*, where a higher value (up to 5) provides more resources, while a lower value (baseline 1) provides less. A value of 0 indicates the patch has either previously been foraged or burned. 
+The energy obtained from different parts of the environmentis controlled by the *veg-type*, where a higher value provides more resources, while a lower value (baseline 1) provides less. A value of 0 indicates the patch has either previously been foraged or burned. Each patch is assigned a *max-veg-type* that it can achieve; this is determined by whether the model is in a productive vegetation regime (*curret-veg-regime*) or an unproductive one. During a productive state, *max-veg-types* are either 3, 5, or 7. During an unproductive state, *max-veg-types* are limited to 3 and 5, reducing the total possible resources available in the environment. These vegetation regimes cycle throughout the model as determined by the *cycle-duration* parameter.
 
 Each time step, the environment updates in the following ways:
--Burned patches are reset to the max veg-type (5)
+-Burned patches are reset to their *max-veg-type*
 -Foraged patches that are not burned return to the minimum veg-type (1)
 -Patches with a veg-type higher than 1 reduce their veg-type by 1
 
 Following this, a random subset of patches are burned through "natural ignition" (e.g. lightning), setting their veg-type to 0. 
 
-Movement occurs over a number of steps, and can occur in one of four ways:
+Movement occurs over a number of steps, and can occur in one of two ways:
 -"Directed Walk", where agents move to the neighboring patch with the highest resource availability.
 -"Random Walk", where agents move to any neighboring patch.
--"Directed Jump", where agents move to the patch with the highest resource in the model world.
--"Random Jump", where agents move to any patch in the model world. 
 
-When agents forage, they reduce the veg-type to 0. If an agent arrives on a patch that has a 0 value, there is an agent-specific probability (burn-prob) that the agent will burn the patch. At the start of the model, these probabilities are distributed evenly in the population between -0.1 and 0.1, with negative values resulting in no burning at all. 
+Agents assess how many steps they will take during a given tick by iteratively checking what is the maximum amount of energy they could obtain within increasingly larger radii. Agents add additional moves to their agenda until they determine they will have enough energy to reproduce and do their next round of foraging. The agents then carry out those steps and forage at each step when possible. For every step, the order of foragers is randomized.
+
+When agents forage, they reduce the veg-type to 0. If an agent arrives on a patch that has a 0 value, there is an agent-specific probability (burn-prob) that the agent will burn the patch. At the start of the model, these probabilities are distributed evenly in the population between -0.1 and 0.1, with negative values resulting in no burning at all.
+
+When an agent burns a patch, there is an associated burn cost, but they also receive a little extra energy.
+ 
 Following reproduction, the new agent begins with enough resource to survive to the next time step. The new agent's *burn-prob* is the value of the parent +/- 0.01, making the new agent more or less likely to burn unproductive land than their parent.
 
 
 ## HOW TO USE IT
 
 ### Controls
+
+#### *TODO: update to include new parameters*
 
 To run the model, press Setup to initiate the simulation, then Go to set it running. The model begins with 100 agents in a landscape where all patches are veg-type 1. 
 
@@ -1002,17 +1023,28 @@ The amount of energy expended by an agent moving between patches is controlled b
 
 ### Outputs
 
+#### Plots
+
 Population: the total number of agents at the end of each time step
-
-Burning behavior: the average burn-prob in the population of agents (with 1 standard deviation)
-
-Average Energy Intake: the average amount of energy taken in by an agent at the end of each time step (with 1 standard deviation)
 
 Age structure: the distribution of ages for each agent
 
+Forager interactions: the average number of other agents each agent has recently encountered (with 1 standard deviation)
+
+Vegetation type proportions: the proportional number of patches with each *veg-type* value
+
 Available Forage Per Capita: total available energy at the world evenly divided among agents prior to foraging
 
+Average Energy Intake: the average amount of energy taken in by an agent at the end of each time step (with 1 standard deviation)
+
+Forager moves: the average number of steps agents take at each tick (with 1 standard deviation)
+
+Burning behavior: the average burn-prob in the population of agents (with 1 standard deviation)
+
 Self vs Other Benefit: tracks the number of patches where the energy gained from them was gained by the last agent to burn it (self; orange) or someone else (other; blue)
+
+#### Other outputs
+A file that records the frequency of human burning events for each patch (x, y coords)
 
 
 ## THINGS TO NOTICE
@@ -1034,18 +1066,19 @@ Self vs Other Benefit: tracks the number of patches where the energy gained from
 
 -There is a high disparity in the amount of resources agents obtain each time step, with some agents substantially exceeding the reproduction threshold. It would be interesting to add a component that allows agents to share resources.
 
--All agent movements/search times currently have the same cost, so there is no true optimizing calculation. It might be interesting for agents to assess patches within a maximum "cost radius" and then determine which patch would provide the most benefit for distance moved.
 
 ## CREDITS AND REFERENCES
 
 Ben Davies, University of Utah, 2020
-Web: b-davies.github.io/files/ForageModv01.html
+Emily Coco, Yale University, 2024
 
 ## VERSION HISTORY
 
 vb01 base model 1 Dec 2020
 vb02 replaced hard-coded forager variables with sliders 16 Dec 2020
 v01 Updated burning activities to include recently foraged patches, renamed some variables
+Web: b-davies.github.io/files/ForageModv01.html
+v02 Updated environmental conditions, burning limits, and foragers do movement assessment, added some new outputs 2024
 @#$#@#$#@
 default
 true
