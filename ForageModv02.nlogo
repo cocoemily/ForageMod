@@ -1448,7 +1448,7 @@ NetLogo 6.4.0
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="HPC-test" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="HPC-test" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="foragers-burn?">
