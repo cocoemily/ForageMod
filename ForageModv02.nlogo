@@ -1530,10 +1530,9 @@ NetLogo 6.4.0
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis" repetitions="15" runMetricsEveryStep="true">
+  <experiment name="sensitivity-analysis" repetitions="15" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
-    <metric>count turtles</metric>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
