@@ -20,8 +20,13 @@ to setup
   clear-all
 
   ;Set file path for the experiment
-  let stamp1 (random 9999) + 1
-  set file-path (word "preliminary-results/experiment_" stamp1 "_" )
+  let stamp1 random-float 1
+  ifelse directory-name = "" [
+    set file-path (word "preliminary-results/experiment_" stamp1 "_" )
+  ][
+    set file-path (word directory-name "/experiment_" stamp1 "_" )
+  ]
+
   set patch-burn-list []
 
   ;Tracking for burn benefit
@@ -41,7 +46,7 @@ to setup
     ]
   ]
 
-  if veg-distribution = "patchy" [
+  if veg-distribution = "clustered" [
     ask patches [
       ifelse veg-cycle-start = "productive" [ ;productive environment
         set max-veg-type one-of [3 5 7]
@@ -74,7 +79,7 @@ to setup
   ;Create base population of 100 agents with randomly distributed ages and probability of burning
   ask n-of 100 patches [
     sprout-foragers 1 [
-      set energy 1500
+      set energy forager-energy-requirement
       set color (10 * (1 + random 14)) + 4
       set shape "person"
       set burn-prob -0.1 + random-float 0.2
@@ -291,13 +296,13 @@ to update-veg
     ]
   ]
 
-  let regen-threshold 10
-  if regenerating? = true [
-    if time-to-last-burn > regen-threshold * 2 [
-      set regenerating? false
-      set max-veg-type save-veg-type
-    ]
-  ]
+;  let regen-threshold 10
+;  if regenerating? = true [
+;    if time-to-last-burn > regen-threshold * 2 [
+;      set regenerating? false
+;      set max-veg-type save-veg-type
+;    ]
+;  ]
    ;Update patch color
     set pcolor scale-color green veg-type 10 1
 
@@ -461,13 +466,15 @@ to export-data
   export-plot "Self vs Other Benefit" (word file-path "benefit-distribution.csv")
   export-plot "Forager Interactions" (word file-path "forager-interactions.csv")
   export-plot "Forager Moves" (word file-path "forager-moves.csv")
+  export-plot "Vegetation Moran's I" (word file-path "veg-spat-autocorrelation.csv")
+  export-plot "Vegetation Diversity" (word file-path "veg-simpsons-diversity.csv")
 
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-211
+206
 123
-627
+622
 540
 -1
 -1
@@ -541,10 +548,10 @@ NIL
 1
 
 PLOT
-682
-66
-882
-216
+633
+77
+819
+227
 Population
 NIL
 NIL
@@ -559,10 +566,10 @@ PENS
 "default" 1.0 0 -2674135 true "" "plot count foragers"
 
 PLOT
-902
-391
-1102
-541
+825
+402
+1012
+552
 Burning Behavior
 NIL
 NIL
@@ -590,10 +597,10 @@ foragers-burn?
 -1000
 
 PLOT
-1119
-229
-1319
-379
+1015
+238
+1201
+388
 Average Energy Intake
 NIL
 NIL
@@ -610,10 +617,10 @@ PENS
 "pen-2" 1.0 0 -1712915 true "" "ifelse count foragers > 2 [ plot mean [ energy ] of foragers - standard-deviation [ energy ] of foragers  ] [ plot 0 ]"
 
 PLOT
-902
-67
-1102
-217
+824
+77
+1010
+227
 Age Structure
 NIL
 NIL
@@ -628,10 +635,10 @@ PENS
 "default" 1.0 1 -16777216 true "" "histogram [ age ] of foragers"
 
 PLOT
-901
-228
-1101
-378
+824
+238
+1011
+388
 Available Forage Per Capita
 NIL
 NIL
@@ -646,10 +653,10 @@ PENS
 "pc" 1.0 0 -10899396 true "" "plot forage-per-capita"
 
 PLOT
-1119
-391
-1319
-541
+1016
+402
+1201
+552
 Self vs Other Benefit
 NIL
 NIL
@@ -807,10 +814,10 @@ veg-cycle-start
 0
 
 PLOT
-683
-228
-883
-378
+634
+239
+820
+389
 Vegetation Type Proportions
 NIL
 NIL
@@ -858,10 +865,10 @@ tick-limit
 Number
 
 PLOT
-684
-391
-884
-541
+635
+402
+821
+552
 Forager Moves
 NIL
 NIL
@@ -878,10 +885,10 @@ PENS
 "pen-2" 1.0 0 -7500403 true "" "ifelse count foragers > 2 [ plot mean [ move-tracker ] of foragers - standard-deviation [ move-tracker ] of foragers  ] [ plot 0 ]"
 
 SWITCH
-557
-18
-661
-51
+753
+15
+857
+48
 export?
 export?
 0
@@ -910,14 +917,14 @@ CHOOSER
 115
 veg-distribution
 veg-distribution
-"random" "patchy"
-0
+"random" "clustered"
+1
 
 PLOT
-1118
-67
-1318
-217
+1014
+77
+1200
+227
 Forager Interactions
 NIL
 NIL
@@ -934,10 +941,10 @@ PENS
 "pen-2" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ interactions ] of foragers - standard-deviation [ interactions ] of foragers  ] [ plot 0 ]"
 
 BUTTON
-730
-23
-822
-56
+644
+15
+736
+48
 NIL
 cycle-veg
 NIL
@@ -964,6 +971,53 @@ burn-veg-type-threshold
 1
 NIL
 HORIZONTAL
+
+PLOT
+1204
+77
+1391
+227
+Vegetation Moran's I
+NIL
+NIL
+0.0
+10.0
+-2.0
+2.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "if ticks > 0 [ plot morans-I ]"
+
+PLOT
+1206
+238
+1393
+388
+Vegetation Diversity
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "if ticks > 0 [ plot simpsons-diversity ]"
+
+INPUTBOX
+872
+10
+1101
+70
+directory-name
+NIL
+1
+0
+String
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1451,6 +1505,9 @@ NetLogo 6.4.0
   <experiment name="HPC-test" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
+    <enumeratedValueSet variable="directory-name">
+      <value value="&quot;preliminary-results&quot;"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="foragers-burn?">
       <value value="true"/>
     </enumeratedValueSet>
@@ -1500,6 +1557,72 @@ NetLogo 6.4.0
       <value value="&quot;Random Walk&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
+      <value value="500"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="sensitivity-analysis" repetitions="15" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>count turtles</metric>
+    <enumeratedValueSet variable="export?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="directory-name">
+      <value value="&quot;sensitivity-analysis&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="tick-limit">
+      <value value="2000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="natural-ignition">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-distribution">
+      <value value="&quot;random&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-cycle-start">
+      <value value="&quot;productive&quot;"/>
+      <value value="&quot;unproductive&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cycle-duration">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="foragers-burn?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="forager-moves">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="movement-model">
+      <value value="&quot;Random Walk&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-type-modifier">
+      <value value="100"/>
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burnt-neighbor-limit">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burn-veg-type-threshold">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="forager-energy-requirement">
+      <value value="1000"/>
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burn-cost">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="movement-cost">
+      <value value="50"/>
+      <value value="100"/>
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-threshold">
+      <value value="1000"/>
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-cost">
+      <value value="100"/>
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
