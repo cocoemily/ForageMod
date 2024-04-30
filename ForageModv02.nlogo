@@ -112,8 +112,11 @@ to go
   if ticks >= tick-limit [
     if export? = true [
       set patch-burn-list lput patch-information patch-burn-list
-
       export-data
+    ]
+
+    if export-pop? = true [
+      export-population-data
     ]
     stop
   ]
@@ -191,8 +194,13 @@ to go
   ]
 
   if count foragers = 0 [ ;if all the agents are dead, stop the model
-   if export? = true [
+    if export? = true [
+      set patch-burn-list lput patch-information patch-burn-list
       export-data
+    ]
+
+    if export-pop? = true [
+      export-population-data
     ]
     stop
   ]
@@ -469,6 +477,10 @@ to export-data
   export-plot "Vegetation Moran's I" (word file-path "veg-spat-autocorrelation.csv")
   export-plot "Vegetation Diversity" (word file-path "veg-simpsons-diversity.csv")
 
+end
+
+to export-population-data
+  export-plot "Population" (word file-path "population.csv")
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -885,13 +897,13 @@ PENS
 "pen-2" 1.0 0 -7500403 true "" "ifelse count foragers > 2 [ plot mean [ move-tracker ] of foragers - standard-deviation [ move-tracker ] of foragers  ] [ plot 0 ]"
 
 SWITCH
-753
+746
 15
-857
+850
 48
 export?
 export?
-0
+1
 1
 -1000
 
@@ -1009,15 +1021,26 @@ PENS
 "default" 1.0 0 -16777216 true "" "if ticks > 0 [ plot simpsons-diversity ]"
 
 INPUTBOX
-872
-10
-1101
-70
+1018
+12
+1247
+72
 directory-name
 NIL
 1
 0
 String
+
+SWITCH
+862
+15
+997
+48
+export-pop?
+export-pop?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1446,62 +1469,6 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="test-burn-neighbor-limits_prod-start" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <enumeratedValueSet variable="export?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="tick-limit">
-      <value value="2000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="cycle-duration">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="natual-ignition">
-      <value value="0.005"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-cycle-start">
-      <value value="&quot;productive&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-distribution">
-      <value value="&quot;random&quot;"/>
-      <value value="&quot;patchy&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="foragers-burn?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burnt-neighbor-limit">
-      <value value="2"/>
-      <value value="4"/>
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="movement-model">
-      <value value="&quot;Random Walk&quot;"/>
-      <value value="&quot;Directed Walk&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forager-moves">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forager-energy-requirement">
-      <value value="1500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burn-cost">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-type-modifier">
-      <value value="200"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="movement-cost">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="reproduction-threshold">
-      <value value="3000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="reproduction-cost">
-      <value value="500"/>
-    </enumeratedValueSet>
-  </experiment>
   <experiment name="HPC-test" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
@@ -1522,6 +1489,9 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="export?">
       <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="export-pop?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burnt-neighbor-limit">
       <value value="2"/>
@@ -1566,6 +1536,9 @@ NetLogo 6.4.0
     <metric>count turtles</metric>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="export-pop?">
+      <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="directory-name">
       <value value="&quot;sensitivity-analysis&quot;"/>
