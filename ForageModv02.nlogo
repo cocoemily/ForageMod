@@ -14,13 +14,13 @@ foragers-own [ moves move-tracker energy burn-prob age offspring interactions]
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
 
-globals [ file-path patch-burn-list available-forage forage-per-capita self-burn other-burn offspring-count energy-intake current-veg-regime current-max-veg ]
+globals [ stamp1 file-path patch-burn-list available-forage forage-per-capita self-burn other-burn offspring-count energy-intake current-veg-regime current-max-veg ]
 
 to setup
   clear-all
 
   ;Set file path for the experiment
-  let stamp1 random-float 1
+  set stamp1 random-float 1
   ifelse directory-name = "" [
     set file-path (word "preliminary-results/experiment_" stamp1 "_" )
   ][
@@ -90,6 +90,8 @@ to setup
       set moves 0
     ]
   ]
+
+  output-print (word "start run " stamp1)
 
   reset-ticks
 end
@@ -462,6 +464,8 @@ to-report patch-information
 end
 
 to export-data
+
+  output-print (word "end run " stamp1)
 
   set patch-burn-list reduce sentence patch-burn-list
   file-open (word file-path "human-burning-amounts.csv")
