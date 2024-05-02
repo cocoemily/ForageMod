@@ -484,7 +484,11 @@ to export-data
 end
 
 to export-population-data
+
+  output-print (word "end run " stamp1)
+
   export-plot "Population" (word file-path "population.csv")
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
