@@ -1620,7 +1620,7 @@ profiler:reset
 profiler:start</setup>
     <go>go</go>
     <postRun>profiler:stop
-let _fname (word "report_" stamp1 ".txt")
+let _fname (word "profiler/report_" stamp1 ".txt")
 carefully [file-delete _fname] []
 file-open _fname
 file-print profiler:report
@@ -1660,7 +1660,7 @@ file-close</postRun>
       <value value="&quot;Random Walk&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-type-modifier">
-      <value value="100"/>
+      <value value="200"/>
       <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burnt-neighbor-limit">
@@ -1670,7 +1670,7 @@ file-close</postRun>
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="forager-energy-requirement">
-      <value value="1000"/>
+      <value value="1500"/>
       <value value="3000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burn-cost">
@@ -1682,12 +1682,12 @@ file-close</postRun>
       <value value="200"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-threshold">
-      <value value="1000"/>
+      <value value="1500"/>
       <value value="3000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
-      <value value="100"/>
       <value value="500"/>
+      <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
