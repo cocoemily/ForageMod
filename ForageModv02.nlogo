@@ -1606,9 +1606,17 @@ NetLogo 6.4.0
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis_TEST" repetitions="1" runMetricsEveryStep="false">
-    <setup>setup</setup>
+  <experiment name="sensitivity-analysis_TEST" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup
+profiler:reset
+profiler:start</setup>
     <go>go</go>
+    <postRun>profiler:stop
+let _fname (word "report_" stamp1 ".txt")
+carefully [file-delete _fname] []
+file-open _fname
+file-print profiler:report
+file-close</postRun>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
@@ -1619,7 +1627,7 @@ NetLogo 6.4.0
       <value value="&quot;sensitivity-analysis&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="tick-limit">
-      <value value="2000"/>
+      <value value="1000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
       <value value="0"/>
@@ -1632,7 +1640,7 @@ NetLogo 6.4.0
       <value value="&quot;unproductive&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cycle-duration">
-      <value value="1000"/>
+      <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="foragers-burn?">
       <value value="true"/>
