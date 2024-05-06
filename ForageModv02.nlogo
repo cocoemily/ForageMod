@@ -1623,17 +1623,17 @@ file-close</postRun>
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis_TEST" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="sensitivity-analysis_TEST" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup
-profiler:reset
-profiler:start</setup>
+;profiler:reset
+;profiler:start</setup>
     <go>go</go>
-    <postRun>profiler:stop
-let _fname (word "profiler/report_" stamp1 ".txt")
-carefully [file-delete _fname] []
-file-open _fname
-file-print profiler:report
-file-close</postRun>
+    <postRun>;profiler:stop
+;let _fname (word "profiler/report_" stamp1 ".txt")
+;carefully [file-delete _fname] []
+;file-open _fname
+;file-print profiler:report
+;file-close</postRun>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
@@ -1690,8 +1690,8 @@ file-close</postRun>
       <value value="200"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-threshold">
-      <value value="1500"/>
       <value value="3000"/>
+      <value value="5000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
       <value value="500"/>
