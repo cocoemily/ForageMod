@@ -4,7 +4,6 @@
 
 extensions [
   csv
-  table
   profiler
 ]
 
@@ -102,7 +101,7 @@ to profile
   profiler:start
   repeat 200 [go]
   profiler:stop
-  let _fname "report.txt"
+  let _fname (word "report_" stamp1 ".txt")
   carefully [file-delete _fname] []
   file-open _fname
   file-print profiler:report
@@ -165,10 +164,6 @@ to go
 
   ;foraging loop based on which agents still have moves to make
   while [ any? foragers with [ moves > 0] ] [
-    ask foragers [
-      check-interactions
-    ]
-
     ;Agents forage and move
     ask foragers with [moves > 0] [
       ifelse (([ burnt? ] of patch-here = false) and ([ foraged? ] of patch-here = false) and ([ regenerating? ] of patch-here = false)) [
@@ -182,7 +177,9 @@ to go
         set energy energy - movement-cost
       ]
     ]
-    ;output-print forager-list
+    ask foragers [
+      check-interactions
+    ]
   ]
 
   ;Agents check whether they are dead or reproducing, and age one time step
@@ -368,21 +365,42 @@ end
 
 
 to check-interactions
-  let neighborhood neighbors
+  ;let neighborhood neighbors
+
+;  let n [who] of turtles-on neighborhood
+;  foreach n [ x ->
+;    ifelse table:has-key? interact-list x [
+;      let old table:get interact-list x
+;      table:put interact-list x (old + 1)
+;    ][
+;      table:put interact-list x 1
+;    ]
+;  ]
+;  ;output-print interact-list
+;
+;  let keys table:keys interact-list
+;  foreach keys [k ->
+;    if (table:get interact-list k) > (forager-moves * 5) [
+;      table:remove interact-list k
+;    ]
+;  ]
+;
+;  set interactions table:length interact-list
+
+  ;create new links with foragers on neighboring patches
+  let nforagers turtles-on neighbors
+  create-links-with nforagers with [not link-neighbor? myself] [
+    set counter 0
+    hide-link
+  ]
 
   ;increase the link age counter by 1
   ask my-links [
-    let check false
-    ask other-end [
-     set check member? patch-here neighborhood
-    ]
-
-    ifelse check [
+    ifelse member? other-end nforagers [
       set counter 0 ;if agent sees one of their links again, reset link age
     ][
       set counter counter + 1 ;increase link age of all links not currently on neighboring patches
     ]
-
 
     ;remove old links
     if counter > forager-moves * 5 [ ;currently links remain over ~5 move/forage sequences
@@ -390,17 +408,8 @@ to check-interactions
     ]
   ]
 
-  ;create new links with foragers on neighboring patches
-  let nforagers turtles-on neighbors
-  create-links-with nforagers with [not link-neighbor? myself] [
-    set counter 0
-  ]
+  set interactions count my-links
 
-  set interactions count link-neighbors
-
-  ask links [
-    hide-link
-  ]
 end
 
 
@@ -725,7 +734,7 @@ forager-energy-requirement
 forager-energy-requirement
 500
 3000
-1500.0
+500.0
 500
 1
 NIL
@@ -867,7 +876,7 @@ burnt-neighbor-limit
 burnt-neighbor-limit
 0
 8
-2.0
+8.0
 1
 1
 NIL
@@ -938,7 +947,7 @@ CHOOSER
 veg-distribution
 veg-distribution
 "random" "clustered"
-1
+0
 
 PLOT
 1014
@@ -986,7 +995,7 @@ burn-veg-type-threshold
 burn-veg-type-threshold
 1
 7
-4.0
+7.0
 1
 1
 NIL
@@ -1566,7 +1575,7 @@ file-close</postRun>
       <value value="&quot;&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="tick-limit">
-      <value value="2000"/>
+      <value value="1000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
       <value value="0"/>
@@ -1635,7 +1644,7 @@ file-close</postRun>
       <value value="&quot;sensitivity-analysis&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="tick-limit">
-      <value value="2000"/>
+      <value value="1000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
       <value value="0"/>
@@ -1648,7 +1657,7 @@ file-close</postRun>
       <value value="&quot;unproductive&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cycle-duration">
-      <value value="1000"/>
+      <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="foragers-burn?">
       <value value="true"/>
@@ -1677,7 +1686,6 @@ file-close</postRun>
       <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="movement-cost">
-      <value value="50"/>
       <value value="100"/>
       <value value="200"/>
     </enumeratedValueSet>
