@@ -1623,7 +1623,7 @@ file-close</postRun>
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis_TEST" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
+  <experiment name="sensitivity-analysis_TEST" repetitions="1" runMetricsEveryStep="false">
     <setup>setup
 reset-timer
 profiler:reset
@@ -1670,8 +1670,8 @@ file-close</postRun>
       <value value="&quot;Random Walk&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-type-modifier">
-      <value value="200"/>
-      <value value="500"/>
+      <value value="100"/>
+      <value value="300"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burnt-neighbor-limit">
       <value value="10"/>
