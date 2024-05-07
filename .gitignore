@@ -4,6 +4,7 @@ ForageModv01.nlogo
 *.DS_Store
 
 preliminary-results/
+sensitivity-analysis/
 
 
 ## R gitignore default

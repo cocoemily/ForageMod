@@ -1625,15 +1625,17 @@ file-close</postRun>
   </experiment>
   <experiment name="sensitivity-analysis_TEST" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup
-;profiler:reset
-;profiler:start</setup>
+reset-timer
+profiler:reset
+profiler:start</setup>
     <go>go</go>
-    <postRun>;profiler:stop
-;let _fname (word "profiler/report_" stamp1 ".txt")
-;carefully [file-delete _fname] []
-;file-open _fname
-;file-print profiler:report
-;file-close</postRun>
+    <postRun>profiler:stop
+let _fname (word "profiler/report_" stamp1 ".txt")
+carefully [file-delete _fname] []
+file-open _fname
+file-print profiler:report
+file-print (word "total time: " timer) 
+file-close</postRun>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
@@ -1654,7 +1656,6 @@ file-close</postRun>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-cycle-start">
       <value value="&quot;productive&quot;"/>
-      <value value="&quot;unproductive&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cycle-duration">
       <value value="500"/>
