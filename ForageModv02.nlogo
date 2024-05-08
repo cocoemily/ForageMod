@@ -17,6 +17,7 @@ globals [ stamp1 file-path patch-burn-list available-forage forage-per-capita se
 
 to setup
   clear-all
+  reset-timer
 
   ;Set file path for the experiment
   set stamp1 random-float 1
@@ -474,7 +475,7 @@ end
 
 to export-data
 
-  output-print (word "end run " stamp1)
+  output-print (word "exp " stamp1 " total run time: " timer "sec" )
 
   set patch-burn-list reduce sentence patch-burn-list
   file-open (word file-path "human-burning-amounts.csv")
@@ -1486,74 +1487,6 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="sensitivity-analysis" repetitions="15" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <enumeratedValueSet variable="export?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="export-pop?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="directory-name">
-      <value value="&quot;sensitivity-analysis&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="tick-limit">
-      <value value="2000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="natural-ignition">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-distribution">
-      <value value="&quot;random&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-cycle-start">
-      <value value="&quot;productive&quot;"/>
-      <value value="&quot;unproductive&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="cycle-duration">
-      <value value="1000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="foragers-burn?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forager-moves">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="movement-model">
-      <value value="&quot;Random Walk&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-type-modifier">
-      <value value="100"/>
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burnt-neighbor-limit">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burn-veg-type-threshold">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forager-energy-requirement">
-      <value value="1000"/>
-      <value value="3000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burn-cost">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="movement-cost">
-      <value value="50"/>
-      <value value="100"/>
-      <value value="200"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="reproduction-threshold">
-      <value value="1000"/>
-      <value value="3000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="reproduction-cost">
-      <value value="100"/>
-      <value value="500"/>
-    </enumeratedValueSet>
-  </experiment>
   <experiment name="HPC-test" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup
 profiler:reset
@@ -1623,7 +1556,7 @@ file-close</postRun>
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis_TEST" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="sensitivity-analysis_TEST" repetitions="10" runMetricsEveryStep="false">
     <setup>setup
 reset-timer
 profiler:reset
@@ -1670,7 +1603,7 @@ file-close</postRun>
       <value value="&quot;Random Walk&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-type-modifier">
-      <value value="100"/>
+      <value value="200"/>
       <value value="300"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burnt-neighbor-limit">
@@ -1681,7 +1614,7 @@ file-close</postRun>
     </enumeratedValueSet>
     <enumeratedValueSet variable="forager-energy-requirement">
       <value value="1500"/>
-      <value value="3000"/>
+      <value value="2000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burn-cost">
       <value value="0"/>
@@ -1699,7 +1632,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="burning-behaviors" repetitions="10" sequentialRunOrder="false" runMetricsEveryStep="false">
+  <experiment name="burning-behaviors" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
@@ -1712,7 +1645,7 @@ file-close</postRun>
       <value value="&quot;results&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="tick-limit">
-      <value value="1000"/>
+      <value value="2000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
       <value value="0"/>
@@ -1727,7 +1660,7 @@ file-close</postRun>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cycle-duration">
       <value value="100"/>
-      <value value="500"/>
+      <value value="250"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="foragers-burn?">
       <value value="true"/>
@@ -1761,10 +1694,10 @@ file-close</postRun>
       <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-threshold">
-      <value value="3000"/>
+      <value value="5000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
-      <value value="500"/>
+      <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
