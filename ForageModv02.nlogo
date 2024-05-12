@@ -1666,7 +1666,7 @@ file-close</postRun>
       <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="forager-moves">
-      <value value="10"/>
+      <value value="15"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="movement-model">
       <value value="&quot;Random Walk&quot;"/>
