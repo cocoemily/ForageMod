@@ -1632,7 +1632,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="burning-behaviors" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
+  <experiment name="burning-behaviors" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
@@ -1657,6 +1657,7 @@ file-close</postRun>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-cycle-start">
       <value value="&quot;productive&quot;"/>
+      <value value="&quot;unproductive&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cycle-duration">
       <value value="100"/>
@@ -1666,10 +1667,11 @@ file-close</postRun>
       <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="forager-moves">
-      <value value="5"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="movement-model">
       <value value="&quot;Random Walk&quot;"/>
+      <value value="&quot;Directed Walk&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-type-modifier">
       <value value="200"/>
