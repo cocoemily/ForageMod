@@ -1632,7 +1632,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="burning-behaviors" repetitions="10" runMetricsEveryStep="false">
+  <experiment name="burning-behaviors" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
