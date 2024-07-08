@@ -5,6 +5,11 @@ ForageModv01.nlogo
 
 preliminary-results/
 sensitivity-analysis/
+results/
+results.zip
+
+preliminary_figures/
+figures/
 
 
 ## R gitignore default
