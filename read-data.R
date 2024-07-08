@@ -1,10 +1,10 @@
 library(tidyverse)
-library(ggthemes)
 library(here)
 
 file.list = list.files("results", full.names = T)
 exp.list = list.files("results", full.names = F)
 experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by = 3)]
+experiments = unique(experiments)
 outputs = c(
   "vegetation-types",
   "burning-behavior", 
@@ -12,13 +12,17 @@ outputs = c(
   "forager-interactions",
   "forager-moves",
   "population", 
-  "human-burning-amounts"
+  "human-burning-amounts", 
+  "veg-simpsons-diversity", 
+  "veg-spat-autocorrelation"
 )
 
 data = list()
 hb.data = list()
-
+ 
+i = 1
 for (x in experiments) {
+  print(paste0("reading data from exp: ", i))
   exp.files = file.list[which(str_detect(file.list, as.character(x)))]
   
   model.parameters = read_csv(exp.files[1], skip = 5, n_max = 1)
@@ -64,6 +68,14 @@ for (x in experiments) {
   hb.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[7]))]])
   colnames(hb.df) = c("x", "y", "times.burned")
   
+  sd = read_csv(exp.files[[which(str_detect(exp.files, outputs[8]))]], skip = 16)
+  sd.df = sd[,1:2]
+  colnames(sd.df) = c("ticks", "veg.simpsons.div")
+  
+  mi = read_csv(exp.files[[which(str_detect(exp.files, outputs[9]))]], skip = 16)
+  mi.df = mi[,1:2]
+  colnames(mi.df) = c("ticks", "veg.morans.i")
+  
   all.data = pop.df %>% left_join(
     vt.df %>% pivot_wider(names_from = veg.type, names_glue = "veg_{veg.type}", values_from = count),
     by = c("ticks")
@@ -79,7 +91,16 @@ for (x in experiments) {
   ) %>% left_join(
     fm.df,
     by = c("ticks")
-  )
+  ) %>% left_join(
+    sd.df,
+    by = c("ticks")
+  ) %>% left_join(
+    mi.df,
+    by = c("ticks")
+  ) 
+  
+  rm(list = c("pop.df", "vt.df", "bb.df", "bd.df", "fi.df", "fm.df", "sd.df", "mi.df", 
+              "pop", "vt", "bb", "bd", "fi", "fm", "sd", "mis"))
   
   if(model.parameters$`veg-cycle-start` == "productive") {
     cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
@@ -97,6 +118,7 @@ for (x in experiments) {
   
   data[[x]] = final.exp.df
   hb.data[[x]] = final.hb.df
+  i = i + 1
 }
 
 final.data = bind_rows(data)
