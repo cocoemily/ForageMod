@@ -366,50 +366,31 @@ end
 
 
 to check-interactions
-  ;let neighborhood neighbors
-
-;  let n [who] of turtles-on neighborhood
-;  foreach n [ x ->
-;    ifelse table:has-key? interact-list x [
-;      let old table:get interact-list x
-;      table:put interact-list x (old + 1)
-;    ][
-;      table:put interact-list x 1
-;    ]
-;  ]
-;  ;output-print interact-list
-;
-;  let keys table:keys interact-list
-;  foreach keys [k ->
-;    if (table:get interact-list k) > (forager-moves * 5) [
-;      table:remove interact-list k
-;    ]
-;  ]
-;
-;  set interactions table:length interact-list
-
   ;create new links with foragers on neighboring patches
-  let nforagers turtles-on neighbors
-  create-links-with nforagers with [not link-neighbor? myself] [
-    set counter 0
-    hide-link
-  ]
+;  let nforagers turtles-on neighbors
+;  create-links-with nforagers with [not link-neighbor? myself] [
+;    set counter 0
+;    hide-link
+;  ]
+;
+;  ;increase the link age counter by 1
+;  ask my-links [
+;    ifelse member? other-end nforagers [
+;      set counter 0 ;if agent sees one of their links again, reset link age
+;    ][
+;      set counter counter + 1 ;increase link age of all links not currently on neighboring patches
+;    ]
+;
+;    ;remove old links
+;    if counter > forager-moves * 5 [ ;currently links remain over ~5 move/forage sequences
+;      die
+;    ]
+;  ]
+;
+;  set interactions count my-links
 
-  ;increase the link age counter by 1
-  ask my-links [
-    ifelse member? other-end nforagers [
-      set counter 0 ;if agent sees one of their links again, reset link age
-    ][
-      set counter counter + 1 ;increase link age of all links not currently on neighboring patches
-    ]
-
-    ;remove old links
-    if counter > forager-moves * 5 [ ;currently links remain over ~5 move/forage sequences
-      die
-    ]
-  ]
-
-  set interactions count my-links
+  ;count number of foragers on neighboring patches
+  set interactions count turtles-on neighbors
 
 end
 
