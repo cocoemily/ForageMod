@@ -58,21 +58,26 @@ rm(list = c("long.data", "trend.plot"))
 hist(log(data$veg_0))
 descdist(data$veg_0)
 summary(data$veg_0)
-data$veg_0 = ifelse(data$veg_0 == 0, data$veg_0 + 0.00001, data$veg_0)
 
-#veg0.fit = betareg(veg_0 ~ ticks:(.), data = data %>% dplyr::select_at(c("veg_0", "ticks", parameters)))
-#car::Anova(veg0.fit)
-#summary(veg0.fit)$coef[, 1, drop=F]
+veg0.fit = glm(veg_0 ~ ticks*(.), data = data %>% dplyr::select_at(c("veg_0", "ticks", parameters)), family = quasibinomial("logit"))
+summary(veg0.fit)
+
+veg0.fit2 = glm(veg_0 ~ ticks:(.), data = data %>% dplyr::select_at(c("veg_0", "ticks", parameters)), family = quasibinomial("logit"))
+
+#car::Anova(veg0.fit2, veg0.fit, type = 2)
 
 ##### effects of parameters on mean burn probability over time ####
 plotNormalHistogram(data$mean.burn.prob)
 descdist(data$mean.burn.prob) #normal
 mbp.fit = lm(mean.burn.prob ~ ticks:(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
-summary(mbp.fit)
+mbp.fit2 = lm(mean.burn.prob ~ ticks*(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
+
+anova(mbp.fit, mbp.fit2)
+summary(mbp.fit2)
 
 #split model by cycle-duration
-mbp.fit1 = lm(mean.burn.prob ~ ticks:(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)) %>% filter(`cycle-duration` == 100) %>% dplyr::select(-`cycle-duration`))
-mbp.fit2 = lm(mean.burn.prob ~ ticks:(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)) %>% filter(`cycle-duration` == 250) %>% dplyr::select(-`cycle-duration`))
+mbp.fit1 = lm(mean.burn.prob ~ ticks*(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)) %>% filter(`cycle-duration` == 100) %>% dplyr::select(-`cycle-duration`))
+mbp.fit2 = lm(mean.burn.prob ~ ticks*(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)) %>% filter(`cycle-duration` == 250) %>% dplyr::select(-`cycle-duration`))
 estimates = as.data.frame(summary(mbp.fit1)$coefficients[,1:2]) %>% rownames_to_column() %>%
   mutate(cycle_duration = 100)
 estimates = rbind(estimates, 
@@ -80,7 +85,11 @@ estimates = rbind(estimates,
                     mutate(cycle_duration = 250))
 colnames(estimates) = c("term", "Estimate", "error", "cycle_duration")
 
-ggplot(estimates %>% filter(term != "(Intercept)") %>% filter(term != "ticks")) + 
+ggplot(estimates %>% filter(term != "(Intercept)") %>% filter(!str_detect(term, "ticks"))) + 
+  geom_point(aes(x = term, y = Estimate, color = as.factor(cycle_duration), group = cycle_duration)) +
+  geom_errorbar(aes(x = term, ymin = Estimate - error, ymax = Estimate + error)) +
+  coord_flip()
+ggplot(estimates %>% filter(term != "(Intercept)") %>% filter(str_detect(term, "ticks"))) + 
   geom_point(aes(x = term, y = Estimate, color = as.factor(cycle_duration), group = cycle_duration)) +
   geom_errorbar(aes(x = term, ymin = Estimate - error, ymax = Estimate + error)) +
   coord_flip()
@@ -100,15 +109,17 @@ for(x in experiments) {
 bp.rates = bp.rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
 bp.rates$slope = as.numeric(bp.rates$slope)
 hist(bp.rates$slope)
+descdist(bp.rates$slope)
 rate.fit = lm(slope ~ ., data = bp.rates %>% select_at(c("slope", parameters)))
 summary(rate.fit)
 
+#how to compare to benefit gained 
+
 ##### effects of parameters on population over time ####
 hist(data$pop.count) #normal
-descdist(data$pop.count)
-pop.fit = lm(pop.count ~ ., data = data %>% dplyr::select_at(c("pop.count", "ticks", parameters)))
+descdist(data$pop.count, discrete = T)
+pop.fit = glm(pop.count ~ ., data = data %>% dplyr::select_at(c("pop.count", "ticks", parameters)), family = "poisson")
 summary(pop.fit)
-
 
 ##### forager movements ####
 hist(data$mean.fm)
@@ -117,7 +128,23 @@ descdist(data$mean.fm)
 fm.fit = lm(mean.fm ~ ticks:(.), data = data %>% dplyr::select_at(c("mean.fm", "ticks", parameters)))
 summary(fm.fit)
 
-##how to investigate relationship between spatial autocorrelation and forager movement while controlling for effects of other variables
+unprod = data %>% filter(climate.condition == "unproductive")
+hist(unprod$mean.fm)
+prod = data %>% filter(climate.condition == "productive")
+hist(prod$mean.fm)
+descdist(prod$mean.fm) #normal
+fm.fit1 = lm(mean.fm ~ ticks*(.), data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", "ticks", parameters, "veg.morans.i")))
+summary(fm.fit1)
+
+fm.fit2 = lm(mean.fm ~ ., data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", parameters, "veg.morans.i")))
+summary(fm.fit2)
+anova(fm.fit2, fm.fit1)
+
+ggplot(data %>% filter(ticks > 0)) +
+  geom_point(aes(x = mean.fm, y = veg.morans.i))
+data.ticks1 = data %>% filter(ticks > 0)
+cor(x = as.numeric(data.ticks1$mean.fm), y = as.numeric(data.ticks1$veg.morans.i), method = "spearman")
+
 
 ##### forager interactions ####
 plotNormalHistogram(data$adj.fi)
@@ -164,7 +191,9 @@ summary(fi.rates$slope)
 plotNormalHistogram(data$veg.morans.i)
 summary(data$veg.morans.i)
 descdist((data %>% filter(veg.morans.i != "NA"))$veg.morans.i)
-mi.fit = lm(veg.morans.i ~ ticks:(.), data = data %>% dplyr::select_at(c("veg.morans.i", "ticks", parameters)))
+morans.i = data %>% filter(veg.morans.i != "NA") %>% filter(ticks > 0)
+plotNormalHistogram(morans.i$veg.morans.i)
+mi.fit = lm(veg.morans.i ~ ticks:(.), data = morans.i %>% dplyr::select_at(c("veg.morans.i", "ticks", parameters)))
 summary(mi.fit)
 
 ##### vegetation diversity ####
@@ -173,9 +202,16 @@ descdist((data %>% filter(veg.simpsons.div != "NA") %>% filter(ticks > 0))$veg.s
 ggplot(data) +
   geom_density(aes(x = veg.simpsons.div, group = `movement-model`))
 #bimodality caused by movement strategy
-vd.random = data %>% filter(`movement-model` == "\"Random Walk\"")
-hist((vd.random %>% filter(veg.simpsons.div != "NA"))$veg.simpsons.div)
-vd.directed = data %>% filter(`movement-model` == "\"Directed Walk\"")
+adj.parameters = c(
+  "natural-ignition", "cycle-duration", "veg-cycle-start", "veg-distribution", "burnt-neighbor-limit", "burn-cost", "burn-veg-type-threshold" # 4, 7
+)
+
+vd.random = data %>% filter(`movement-model` == "\"Random Walk\"") %>% filter(ticks > 0) %>% filter(veg.simpsons.div != "NA")
+hist(vd.random$veg.simpsons.div)
+descdist(vd.random$veg.simpsons.div)
+summary(betareg(veg.simpsons.div ~ ticks*(.), data = vd.random %>% dplyr::select_at(c("veg.simpsons.div", "ticks", adj.parameters))))
+
+vd.directed = data %>% filter(`movement-model` == "\"Directed Walk\"") %>% filter(ticks > 0) %>% filter(veg.simpsons.div != "NA")
 hist(vd.directed$veg.simpsons.div)
 
 #### Variation between model runs ####
