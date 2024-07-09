@@ -67,7 +67,7 @@ to setup
  ;Set up all patches unburned, unforaged, at lowest productivity
   ask patches [
     set veg-type 1
-    set pcolor scale-color green max-veg-type 10 1
+    set pcolor scale-color green veg-type 10 1
     set foraged? false
     set burnt? false
     set regenerating? false
@@ -158,6 +158,14 @@ to go
     assess-movement
   ]
 
+  ;Reset forager links and interaction count
+  ask foragers [
+    ask my-links [
+      die
+    ]
+    set interactions 0
+  ]
+
   ;;after determining which agents need to move, accrue foraging cost
   ask foragers with [moves > 0] [
     set energy energy - forager-energy-requirement ;reduce energy
@@ -181,6 +189,10 @@ to go
     ask foragers [
       check-interactions
     ]
+  ]
+
+  ask foragers [
+    set interactions count my-links
   ]
 
   ;Agents check whether they are dead or reproducing, and age one time step
@@ -254,8 +266,6 @@ end
 
 ; 'Cycle maximum productivity of different patches'
 to cycle-veg
-  output-print "cycling veg"
-  output-print current-veg-regime
   ifelse current-veg-regime = "productive" [
     ask patches with [save-veg-type > 3] [
       set max-veg-type save-veg-type - 2
@@ -270,9 +280,9 @@ to cycle-veg
     set current-veg-regime "productive"
   ]
 
-  ask patches [ ;for testing
-    set pcolor scale-color green max-veg-type 10 1
-  ]
+;  ask patches [ ;for testing
+;    set pcolor scale-color green max-veg-type 10 1
+;  ]
 
 end
 
@@ -373,12 +383,12 @@ end
 
 to check-interactions
   ;create new links with foragers on neighboring patches
-;  let nforagers turtles-on neighbors
-;  create-links-with nforagers with [not link-neighbor? myself] [
-;    set counter 0
-;    hide-link
-;  ]
-;
+  let nforagers turtles-on neighbors
+  create-links-with nforagers with [not link-neighbor? myself] [
+    set counter 0
+    hide-link
+  ]
+
 ;  ;increase the link age counter by 1
 ;  ask my-links [
 ;    ifelse member? other-end nforagers [
@@ -392,12 +402,6 @@ to check-interactions
 ;      die
 ;    ]
 ;  ]
-;
-;  set interactions count my-links
-
-  ;count number of foragers on neighboring patches
-  set interactions count turtles-on neighbors
-
 end
 
 
