@@ -13,7 +13,7 @@ foragers-own [ moves move-tracker energy burn-prob age offspring interactions]
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
 
-globals [ stamp1 file-path patch-burn-list available-forage forage-per-capita self-burn other-burn offspring-count energy-intake current-veg-regime current-max-veg ]
+globals [ stamp1 file-path patch-burn-list available-forage forage-per-capita self-burn other-burn current-veg-regime current-max-veg ]
 
 to setup
   clear-all
@@ -36,38 +36,38 @@ to setup
   ;Set up initial distribution of max veg types on the landscape based on input parameter
   if veg-distribution = "random" [
     ask patches [
-      ifelse veg-cycle-start = "productive" [ ;productive environment
-        set max-veg-type one-of [3 5 7]
-        set current-max-veg 7
-      ][ ;unproductive environment
-        set max-veg-type one-of [3 5]
-        set current-max-veg 5
-      ]
+      set save-veg-type one-of [3 5 7]
     ]
   ]
 
   if veg-distribution = "clustered" [
     ask patches [
-      ifelse veg-cycle-start = "productive" [ ;productive environment
-        set max-veg-type one-of [3 5 7]
-        set current-max-veg 7
-      ][ ;unproductive environment
-        set max-veg-type one-of [3 5]
-        set current-max-veg 5
-      ]
+      set save-veg-type one-of [3 5 7]
     ]
     repeat 15 [
       ask patches [
-        set max-veg-type [max-veg-type] of one-of neighbors4
+        set save-veg-type [save-veg-type] of one-of neighbors4
       ]
     ]
   ]
 
+  ask patches [
+    ifelse veg-cycle-start = "productive" [;productive environment
+      set max-veg-type save-veg-type
+      set current-max-veg 7
+    ][ ;unproductive environment
+      ifelse save-veg-type > 3 [
+        set max-veg-type (save-veg-type - 2)
+      ][set max-veg-type save-veg-type]
+      set current-max-veg 5
+    ]
+  ]
+
+
  ;Set up all patches unburned, unforaged, at lowest productivity
   ask patches [
-    set save-veg-type max-veg-type
     set veg-type 1
-    set pcolor scale-color green veg-type 10 1
+    set pcolor scale-color green max-veg-type 10 1
     set foraged? false
     set burnt? false
     set regenerating? false
@@ -254,6 +254,8 @@ end
 
 ; 'Cycle maximum productivity of different patches'
 to cycle-veg
+  output-print "cycling veg"
+  output-print current-veg-regime
   ifelse current-veg-regime = "productive" [
     ask patches with [save-veg-type > 3] [
       set max-veg-type save-veg-type - 2
@@ -266,6 +268,10 @@ to cycle-veg
     ]
     set current-max-veg 7
     set current-veg-regime "productive"
+  ]
+
+  ask patches [ ;for testing
+    set pcolor scale-color green max-veg-type 10 1
   ]
 
 end
@@ -822,7 +828,7 @@ CHOOSER
 veg-cycle-start
 veg-cycle-start
 "productive" "unproductive"
-0
+1
 
 PLOT
 634
@@ -929,7 +935,7 @@ CHOOSER
 veg-distribution
 veg-distribution
 "random" "clustered"
-0
+1
 
 PLOT
 1014
@@ -1050,7 +1056,7 @@ ForageMod is a simple model of foraging in an environment in which a disturbance
 
 In the model, agents obtain resources (energy) from their environment, moving to new locations once local resources are exhausted. If an agent obtains more resources than needed to exceed a threshold, the agent can reproduce, adding a new agent to the world. If an agent fails to obtain enough resource to survive, the agent dies.
 
-The energy obtained from different parts of the environmentis controlled by the *veg-type*, where a higher value provides more resources, while a lower value (baseline 1) provides less. A value of 0 indicates the patch has either previously been foraged or burned. Each patch is assigned a *max-veg-type* that it can achieve; this is determined by whether the model is in a productive vegetation regime (*curret-veg-regime*) or an unproductive one. During a productive state, *max-veg-types* are either 3, 5, or 7. During an unproductive state, *max-veg-types* are limited to 3 and 5, reducing the total possible resources available in the environment. These vegetation regimes cycle throughout the model as determined by the *cycle-duration* parameter.
+The energy obtained from different parts of the environment is controlled by the *veg-type*, where a higher value provides more resources, while a lower value (baseline 1) provides less. A value of 0 indicates the patch has either previously been foraged or burned. Each patch is assigned a *max-veg-type* that it can achieve; this is determined by whether the model is in a productive vegetation regime (*curret-veg-regime*) or an unproductive one. During a productive state, *max-veg-types* are either 3, 5, or 7. During an unproductive state, *max-veg-types* are limited to 3 and 5, reducing the total possible resources available in the environment. These vegetation regimes cycle throughout the model as determined by the *cycle-duration* parameter.
 
 Each time step, the environment updates in the following ways:
 -Burned patches are reset to their *max-veg-type*
