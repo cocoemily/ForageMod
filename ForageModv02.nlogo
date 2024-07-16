@@ -489,6 +489,7 @@ to export-population-data
   output-print (word "end run " stamp1)
 
   export-plot "Population" (word file-path "population.csv")
+  export-plot "Burning Behavior" (word file-path "burning-behavior.csv") ;for sensitivity analysis
 
 end
 @#$#@#$#@
@@ -1691,6 +1692,79 @@ file-close</postRun>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
       <value value="1000"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="sensitivity_analysis_high-low" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <enumeratedValueSet variable="export?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="export-pop?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="directory-name">
+      <value value="&quot;sensitivity-analysis&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="tick-limit">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="natural-ignition">
+      <value value="0"/>
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-distribution">
+      <value value="&quot;random&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-cycle-start">
+      <value value="&quot;productive&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cycle-duration">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="foragers-burn?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="forager-moves">
+      <value value="5"/>
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="movement-model">
+      <value value="&quot;Random Walk&quot;"/>
+      <value value="&quot;Directed Walk&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="veg-type-modifier">
+      <value value="100"/>
+      <value value="300"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burnt-neighbor-limit">
+      <value value="1"/>
+      <value value="4"/>
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burn-veg-type-threshold">
+      <value value="4"/>
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="forager-energy-requirement">
+      <value value="1000"/>
+      <value value="2000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="burn-cost">
+      <value value="0"/>
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="movement-cost">
+      <value value="50"/>
+      <value value="150"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-threshold">
+      <value value="4000"/>
+      <value value="6000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-cost">
+      <value value="500"/>
+      <value value="1500"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
