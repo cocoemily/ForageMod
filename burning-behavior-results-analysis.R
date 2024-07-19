@@ -36,14 +36,16 @@ outputs = c(
   "adj.fi", #average interaction count/ population count
   "mean.fm",  #average forager movements per capita
   "veg.morans.i", 
-  "veg.simpsons.div"
+  "veg.simpsons.div", 
+  "benefit_self", 
+  "benefit_other"
 )
   
-# finished = data %>% filter(ticks == 2000)
+#finished = data %>% filter(ticks == 2000)
 # length(unique(finished$exp))
 
 #### Visualizing trends ####
-long.data = data %>% dplyr::select(c("ticks", parameters, outputs)) %>%
+long.data = data %>% dplyr::select(all_of(c("ticks", parameters, outputs))) %>%
   pivot_longer(cols = outputs, names_to = "output", values_to = "value")
 
 trend.plot = ggplot(long.data %>% filter(ticks > 0)) +
@@ -54,6 +56,9 @@ ggsave(filename = "preliminary_figures/trendlines_outputs.png", plot = trend.plo
        dpi = 100, width = 11, height = 8.5)
 rm(list = c("long.data", "trend.plot"))
 
+corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs"), method = "number")
+
+
 #### Preliminary parameter effect testing ####
 hist(log(data$veg_0))
 descdist(data$veg_0)
@@ -62,8 +67,7 @@ summary(data$veg_0)
 veg0.fit = glm(veg_0 ~ ticks*(.), data = data %>% dplyr::select_at(c("veg_0", "ticks", parameters)), family = quasibinomial("logit"))
 summary(veg0.fit)
 
-veg0.fit2 = glm(veg_0 ~ ticks:(.), data = data %>% dplyr::select_at(c("veg_0", "ticks", parameters)), family = quasibinomial("logit"))
-
+#veg0.fit2 = glm(veg_0 ~ ticks:(.), data = data %>% dplyr::select_at(c("veg_0", "ticks", parameters)), family = quasibinomial("logit"))
 #car::Anova(veg0.fit2, veg0.fit, type = 2)
 
 ##### effects of parameters on mean burn probability over time ####
@@ -112,13 +116,12 @@ hist(bp.rates$slope)
 descdist(bp.rates$slope)
 rate.fit = lm(slope ~ ., data = bp.rates %>% select_at(c("slope", parameters)))
 summary(rate.fit)
-
 #how to compare to benefit gained 
 
 ##### effects of parameters on population over time ####
 hist(data$pop.count) #normal
 descdist(data$pop.count, discrete = T)
-pop.fit = glm(pop.count ~ ., data = data %>% dplyr::select_at(c("pop.count", "ticks", parameters)), family = "poisson")
+pop.fit = glm(pop.count ~ ticks*(.), data = data %>% dplyr::select_at(c("pop.count", "ticks", parameters)), family = "poisson")
 summary(pop.fit)
 
 ##### forager movements ####
@@ -133,12 +136,15 @@ hist(unprod$mean.fm)
 prod = data %>% filter(climate.condition == "productive")
 hist(prod$mean.fm)
 descdist(prod$mean.fm) #normal
-fm.fit1 = lm(mean.fm ~ ticks*(.), data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", "ticks", parameters, "veg.morans.i")))
+fm.fit1 = lm(mean.fm ~ ticks*(.), data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", "ticks", parameters)))
 summary(fm.fit1)
 
-fm.fit2 = lm(mean.fm ~ ., data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", parameters, "veg.morans.i")))
+fm.fit2 = lm(mean.fm ~ ., data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", parameters)))
 summary(fm.fit2)
 anova(fm.fit2, fm.fit1)
+
+fm.fit3 = lm(mean.fm ~ ticks*(.), data = prod %>% filter(ticks > 0) %>% dplyr::select_at(c("mean.fm", "ticks", parameters, "veg.morans.i")))
+#anova(fm.fit3, fm.fit1) not allowing comparison
 
 ggplot(data %>% filter(ticks > 0)) +
   geom_point(aes(x = mean.fm, y = veg.morans.i))
@@ -153,21 +159,7 @@ fi.fit = lm(adj.fi ~ ticks*(.), data = data %>% dplyr::select_at(c("adj.fi", "ti
 summary(fi.fit)
 
 ggplot(data) +
-  geom_histogram(aes(x = adj.fi), binwidth = 0.0001) #the distribution is bimodal
-ggplot(data) +
-  geom_density(aes(x = adj.fi, group = `movement-model`, color = `movement-model`))
-#bimodality being caused by what type of movement model
-
-fi.random = data %>% filter(`movement-model` == "\"Random Walk\"")
-fi.directed = data %>% filter(`movement-model` == "\"Directed Walk\"")
-
-adj.parameters = c(
-  "natural-ignition", "cycle-duration", "veg-cycle-start", "veg-distribution", "burnt-neighbor-limit", "burn-cost", "burn-veg-type-threshold" # 4, 7
-)
-fir.fit = lm(adj.fi ~ ticks*(.), data = fi.random %>% dplyr::select_at(c("adj.fi", "ticks", adj.parameters)))
-summary(fir.fit)
-fid.fit = lm(adj.fi ~ ticks*(.), data = fi.directed %>% dplyr::select_at(c("adj.fi", "ticks", adj.parameters)))
-summary(fid.fit)
+  geom_histogram(aes(x = adj.fi), binwidth = 0.0001)
 
 fi.rates = data.frame(
   exp = character(0), 
@@ -193,14 +185,14 @@ summary(data$veg.morans.i)
 descdist((data %>% filter(veg.morans.i != "NA"))$veg.morans.i)
 morans.i = data %>% filter(veg.morans.i != "NA") %>% filter(ticks > 0)
 plotNormalHistogram(morans.i$veg.morans.i)
-mi.fit = lm(veg.morans.i ~ ticks:(.), data = morans.i %>% dplyr::select_at(c("veg.morans.i", "ticks", parameters)))
+mi.fit = lm(veg.morans.i ~ ticks*(.), data = morans.i %>% dplyr::select_at(c("veg.morans.i", "ticks", parameters)))
 summary(mi.fit)
 
 ##### vegetation diversity ####
 plotNormalHistogram((data %>% filter(veg.simpsons.div != "NA") %>% filter(ticks > 0))$veg.simpsons.div)
 descdist((data %>% filter(veg.simpsons.div != "NA") %>% filter(ticks > 0))$veg.simpsons.div)
 ggplot(data) +
-  geom_density(aes(x = veg.simpsons.div, group = `movement-model`))
+  geom_density(aes(x = veg.simpsons.div, group = `movement-model`, color = `movement-model`))
 #bimodality caused by movement strategy
 adj.parameters = c(
   "natural-ignition", "cycle-duration", "veg-cycle-start", "veg-distribution", "burnt-neighbor-limit", "burn-cost", "burn-veg-type-threshold" # 4, 7
@@ -209,51 +201,16 @@ adj.parameters = c(
 vd.random = data %>% filter(`movement-model` == "\"Random Walk\"") %>% filter(ticks > 0) %>% filter(veg.simpsons.div != "NA")
 hist(vd.random$veg.simpsons.div)
 descdist(vd.random$veg.simpsons.div)
-summary(betareg(veg.simpsons.div ~ ticks*(.), data = vd.random %>% dplyr::select_at(c("veg.simpsons.div", "ticks", adj.parameters))))
+#summary(betareg(veg.simpsons.div ~ ticks*(.), data = vd.random %>% dplyr::select_at(c("veg.simpsons.div", "ticks", adj.parameters))))
+sd.rand.fit1 = glm(veg.simpsons.div ~ ticks*(.), data = vd.random %>% dplyr::select_at(c("veg.simpsons.div", "ticks", adj.parameters)), family = Gamma(link = "log"))
+summary(sd.rand.fit1)
 
 vd.directed = data %>% filter(`movement-model` == "\"Directed Walk\"") %>% filter(ticks > 0) %>% filter(veg.simpsons.div != "NA")
 hist(vd.directed$veg.simpsons.div)
+descdist(vd.directed$veg.simpsons.div)
+sd.dir.fit1 = glm(veg.simpsons.div ~ ticks*(.), data = vd.directed %>% select_at(c("veg.simpsons.div", "ticks", adj.parameters)), family = Gamma(link = "log"))
+summary(sd.dir.fit1)
 
-#### Variation between model runs ####
-var.data = data %>% group_by_at(c("ticks", parameters)) %>%
-  summarize(pop.count.cv = sd(pop.count)/mean(pop.count), 
-            veg_0.cv = sd(veg_0)/mean(veg_0), 
-            mean.burn.prob.cv = sd(mean.burn.prob)/mean(mean.burn.prob), 
-            adj.fi.cv = sd(adj.fi)/mean(adj.fi), 
-            mean.fm.cv = sd(mean.fm)/mean(mean.fm), 
-            veg.simpsons.cv = sd(veg.simpsons.div)/mean(veg.simpsons.div), 
-            veg.morans.cv = sd(veg.morans.i)/mean(veg.morans.i)) %>%
-  pivot_longer(cols = c("pop.count.cv", "veg_0.cv", "mean.burn.prob.cv", 
-                        "adj.fi.cv", "mean.fm.cv", "veg.simpsons.cv", "veg.morans.cv"), 
-               names_to = "CV", values_to = "value")
-
-ggplot(var.data %>% filter(ticks > 0)) +
-  geom_boxplot(aes(x = ticks, y = value, group = ticks)) +
-  facet_grid(`cycle-duration`~ CV, scales = "free")
-
-var.data.wide = data %>% group_by_at(c("ticks", parameters)) %>%
-  summarize(pop.count.cv = sd(pop.count)/mean(pop.count), 
-            veg_0.cv = sd(veg_0)/mean(veg_0), 
-            mean.burn.prob.cv = sd(mean.burn.prob)/mean(mean.burn.prob), 
-            adj.fi.cv = sd(adj.fi)/mean(adj.fi), 
-            mean.fm.cv = sd(mean.fm)/mean(mean.fm), 
-            veg.simpsons.cv = sd(veg.simpsons.div)/mean(veg.simpsons.div), 
-            veg.morans.cv = sd(veg.morans.i)/mean(veg.morans.i))
-var.data.wide$`veg-distribution` = as.numeric(as.factor(var.data.wide$`veg-distribution`)) #clustered = 1, random = 2
-var.data.wide$`veg-cycle-start` = as.numeric(as.factor(var.data.wide$`veg-cycle-start`)) #productive = 1, unproductive = 2
-var.data.wide$`movement-model` = as.numeric(as.factor(var.data.wide$`movement-model`)) #Directed = 1, Random = 2
-#not sure modeling them as a 1 and a 2 really is correct
-
-hist(log(var.data.wide$pop.count.cv))
-fit.pop.cv = lm(pop.count.cv ~ ., data = var.data.wide %>% dplyr::select_at(c("pop.count.cv", "ticks", parameters)))
-summary(fit.pop.cv)
-lm.beta(fit.pop.cv)
-
-hist(var.data.wide$mean.burn.prob.cv)
-fit.mbp.cv = lm(mean.burn.prob.cv ~ ., data = var.data.wide %>% dplyr::select_at(c("mean.burn.prob.cv", "ticks", parameters)))
-lm.beta(fit.mbp.cv)
-
-test = lapply(var.data.wide[,c(parameters)], scale)
 
 #### Mean forager burning probability ####
 ggplot(data) +
