@@ -486,7 +486,7 @@ end
 
 to export-population-data
 
-  output-print (word "end run " stamp1)
+  output-print (word "exp " stamp1 " total run time: " timer "sec" )
 
   export-plot "Population" (word file-path "population.csv")
   export-plot "Burning Behavior" (word file-path "burning-behavior.csv") ;for sensitivity analysis
