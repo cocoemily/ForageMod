@@ -1,5 +1,4 @@
 library(tidyverse)
-library(ggthemes)
 library(here)
 
 theme_set(theme_bw())
