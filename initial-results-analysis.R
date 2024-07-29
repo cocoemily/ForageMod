@@ -27,9 +27,12 @@ data$`burn-veg-type-threshold` = as.factor(data$`burn-veg-type-threshold`)
 data$`movement-model` = as.factor(data$`movement-model`)
 
 data$adj.fi = data$mean.fi/data$pop.count
+data$pop.dens = data$pop.count/(51*51)
+data$benefit.ratio = data$benefit_self/data$benefit_other
 
 outputs = c(
-  "pop.count", 
+  #"pop.count", 
+  "pop.dens",
   "veg_0", 
   "mean.burn.prob", 
   #"mean.fi", #average forager interaction count
@@ -37,12 +40,11 @@ outputs = c(
   "mean.fm",  #average forager movements per capita
   "veg.morans.i", 
   "veg.simpsons.div", 
-  "benefit_self", 
-  "benefit_other"
+  #"benefit_self", 
+  #"benefit_other", 
+  "benefit.ratio"
 )
-  
-#finished = data %>% filter(ticks == 2000)
-# length(unique(finished$exp))
+
 
 #### Visualizing trends ####
 long.data = data %>% dplyr::select(all_of(c("ticks", parameters, outputs))) %>%
@@ -58,6 +60,52 @@ rm(list = c("long.data", "trend.plot"))
 
 corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs"), method = "number")
 
+#looking at correlation over time
+correlations = data %>% group_by_at(c("ticks", parameters)) %>%
+  summarize(pop.bp.cor = cor(pop.dens, mean.burn.prob, use = "na.or.complete"),
+            #pop.bp.pval = psych::corr.test(pop.dens, mean.burn.prob)$p,
+            pop.veg0.cor = cor(pop.dens, veg_0, use = "na.or.complete"), 
+            #pop.fi.cor = cor(pop.dens, adj.fi, use = "na.or.complete"), 
+            pop.fm.cor = cor(pop.dens, mean.fm, use = "na.or.complete"), 
+            pop.mrni.cor = cor(pop.dens, veg.morans.i, use = "na.or.complete"), 
+            pop.div.cor = cor(pop.dens, veg.simpsons.div, use = "na.or.complete"), 
+            pop.benrat.cor = cor(pop.dens, benefit.ratio, use = "na.or.complete"))
+
+hist(correlations$pop.bp.cor)
+hist(correlations$pop.veg0.cor)
+hist(correlations$pop.fi.cor)
+hist(correlations$pop.fm.cor)
+hist(correlations$pop.mrni.cor)
+hist(correlations$pop.div.cor)
+hist(correlations$pop.benrat.cor)
+
+summary(lm(pop.bp.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.bp.cor"))))
+summary(lm(pop.veg0.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.veg0.cor"))))
+summary(lm(pop.fi.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.fi.cor"))))
+summary(lm(pop.fm.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.fm.cor"))))
+summary(lm(pop.mrni.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.mrni.cor"))))
+summary(lm(pop.div.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.div.cor"))))
+summary(lm(pop.benrat.cor ~ ., data = correlations %>% select_at(c(parameters, "pop.benrat.cor"))))
+
+ggplot(correlations) +
+  geom_violin(aes(x = ticks, y = pop.bp.cor, group = ticks)) +
+  geom_smooth(aes(x = ticks, y = pop.bp.cor), se = T) +
+  facet_grid(`movement-model` ~ `veg-distribution`)
+
+ggplot(correlations) +
+  geom_violin(aes(x = ticks, y = pop.fm.cor, group = ticks)) +
+  geom_smooth(aes(x = ticks, y = pop.fm.cor), se = T) +
+  facet_grid(`movement-model` ~ `veg-distribution`)
+
+ggplot(correlations) +
+  geom_violin(aes(x = ticks, y = pop.mrni.cor, group = ticks)) +
+  geom_smooth(aes(x = ticks, y = pop.mrni.cor), se = T) +
+  facet_grid(`movement-model` ~ `veg-distribution`)
+
+ggplot(correlations) +
+  geom_violin(aes(x = ticks, y = pop.div.cor, group = ticks)) +
+  geom_smooth(aes(x = ticks, y = pop.div.cor), se = T) +
+  facet_grid(`movement-model` ~ `veg-distribution`)
 
 #### Preliminary parameter effect testing ####
 hist(log(data$veg_0))

@@ -1,0 +1,143 @@
+# ForageModv02 Supplementary Analyses
+
+```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
+library(knitr)
+library(broom)
+library(tidyverse)
+library(rcompanion)
+library(fitdistrplus)
+library(gtsummary)
+theme_set(theme_bw())
+
+data = readRDS("results/bb-data.rds")
+
+parameters = c(
+  "natural-ignition", # 0.00, 0.05
+  "cycle-duration",  # 100, 250
+  "veg-cycle-start", # productive, unproductive
+  "veg-distribution", # random, clustered
+  "burnt-neighbor-limit", # 1, 4, 8
+  "burn-cost", # 0, 50
+  "burn-veg-type-threshold", # 4, 7
+  "movement-model" #Random, Directed
+)
+data$`natural-ignition` = as.factor(data$`natural-ignition`)
+data$`cycle-duration` = as.factor(data$`cycle-duration`)
+data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
+data$`veg-distribution` = as.factor(data$`veg-distribution`)
+data$`burnt-neighbor-limit` = as.factor(data$`burnt-neighbor-limit`)
+data$`burn-cost` = as.factor(data$`burn-cost`)
+data$`burn-veg-type-threshold` = as.factor(data$`burn-veg-type-threshold`)
+data$`movement-model` = as.factor(data$`movement-model`)
+
+data$adj.fi = data$mean.fi/data$pop.count
+data$pop.dens = data$pop.count/(51*51)
+
+outputs = c(
+  #"pop.count",
+  "pop.dens", #pop count/world size
+  "veg_0", 
+  "mean.burn.prob", 
+  #"mean.fi", #average forager interaction count
+  "adj.fi", #average interaction count/ population count
+  "mean.fm",  #average forager movements per capita
+  "veg.morans.i", 
+  "veg.simpsons.div", 
+  "benefit_self", #
+  "benefit_other"
+)
+
+# data = data %>%
+#   mutate(benefit_self_0 = ifelse(benefit_self == 0, 0.000001, benefit_self), 
+#          benefit_other_0 = ifelse(benefit_other == 0, 0.000001, benefit_other))
+data$benefit.ratio = data$benefit_self/data$benefit_other
+```
+
+## Correlations of outputs over time
+First, we looked at the correlation between outputs across model runs. We also investigated how these correlations change over time by looking at the correlations between outputs at 250 ticks, 1000 ticks, and 1999 ticks.
+```{r output-correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+pvalue = psych::corr.test(data %>% select_at(outputs))$p
+corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs"),
+                   method = "square", addCoef.col = "black", 
+                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                   p.mat = pvalue, insig="blank", sig.level=0.1, 
+                   type = "lower", number.cex = 0.5, diag=F)
+
+par(mfrow = c(1,3))
+#plot at 250
+pvalue250 = psych::corr.test(data %>% filter(ticks == 250) %>% select_at(outputs))$p
+corrplot::corrplot(cor(data %>% filter(ticks == 250) %>% select_at(outputs), use = "pairwise.complete.obs"),
+                   method = "square", addCoef.col = "black", 
+                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                   p.mat = pvalue250, insig="blank", sig.level=0.1, 
+                   type = "lower", number.cex = 0.5, diag=F)
+#plot at 1000
+pvalue1000 = psych::corr.test(data %>% filter(ticks == 1000) %>% select_at(outputs))$p
+corrplot::corrplot(cor(data %>% filter(ticks == 1000) %>% select_at(outputs), use = "pairwise.complete.obs"),
+                   method = "square", addCoef.col = "black", 
+                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                   p.mat = pvalue1000, insig="blank", sig.level=0.1, 
+                   type = "lower", number.cex = 0.5, diag=F)
+
+#plot at 2000
+pvalue2000 = psych::corr.test(data %>% filter(ticks == 1999) %>% select_at(outputs))$p
+corrplot::corrplot(cor(data %>% filter(ticks == 1999) %>% select_at(outputs), use = "pairwise.complete.obs"),
+                   method = "square", addCoef.col = "black", 
+                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                   p.mat = pvalue2000, insig="blank", sig.level=0.1, 
+                   type = "lower", number.cex = 0.5, diag=F)
+
+```
+
+
+## Forager probability of burning patches
+
+We examined the effects of all model parameters on burning probability across model run using linear regressions.
+
+```{r burning-probability-regression, echo=FALSE}
+mbp.fit1 = lm(mean.burn.prob ~ ticks + (.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
+mbp.fit2 = lm(mean.burn.prob ~ ticks:(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
+mbp.fit3 = lm(mean.burn.prob ~ ticks*(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
+
+anova(mbp.fit1, mbp.fit2, mbp.fit3)
+mbp.fit3 %>% broom::tidy() %>% 
+  mutate(p.value = scales::pvalue(p.value)) %>%
+  kable()
+```
+
+The regressions show that every parameter significantly affects burning probability on average across model run (independent variables) as well as how burning probability changes during model run (interaction variables). In general, parameters that add limits to burning behaviors (*burn-cost*, *burnt-neighbor-limit*, *burn-veg-type-threshold*) reduce the rate of increase of burning probabilities through model run. The increase of burning probabilities during model run is also faster when agents move randomly and when the environment is initially unproductive and patchy with randomly distributed resource potentials.
+
+```{r burning-prob-effects-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.asp=0.8}
+ggplot(data) +
+  geom_point(aes(x = ticks, y = mean.burn.prob)) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob), color = "red") +
+  facet_grid(`burn-cost` ~ `burnt-neighbor-limit` +  `burn-veg-type-threshold`, labeller = label_both) +
+  labs(y = "mean burning probability") +
+  theme(strip.text = element_text(size = 5))
+```
+
+This model behavior is confirmed by looking at the effects of model parameters on slope of the linear relationship between ticks and burning probability.
+
+```{r rate-of-bp-increase, echo=FALSE, message=FALSE, warning=FALSE}
+bp.rates = data.frame(
+  exp = character(0), 
+  slope = numeric(0)
+)
+experiments = unique(data$exp)
+for(x in experiments) {
+  lmdata = data %>% filter(exp == x)
+  fit = lm(mean.burn.prob ~ ticks, data = lmdata)
+  bp.rates[nrow(bp.rates) + 1, ] <- c(x, summary(fit)$coefficients[2,1])
+}
+bp.rates = bp.rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
+bp.rates$slope = as.numeric(bp.rates$slope)
+
+rate.fit2 = lm(slope ~ .:., data = bp.rates %>% select_at(c("slope", parameters)))
+rate.fit2 %>% broom::tidy() %>% 
+  filter(p.value <= 0.05) %>%
+  mutate(p.value = scales::pvalue(p.value)) %>%
+  kable()
+
+```
+
+## Burnt landscape proportions
