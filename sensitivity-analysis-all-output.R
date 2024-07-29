@@ -37,14 +37,16 @@ for (x in experiments) {
   
   rm(list = c("pop.df", "bb.df", "pop", "bb"))
   
-  if(model.parameters$`veg-cycle-start` == "productive") {
-    cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
-                 (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
-    all.data$climate.condition = c("productive", cc.seq[1:(nrow(all.data) - 1)])
-  } else { #(model.parameters$`veg-cycle-start` == "unproductive") 
-    cc.seq = rep(rep(c("unproductive", "productive"), each = model.parameters$`cycle-duration`), 
-                 (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
-    all.data$climate.condition = c("unproductive", cc.seq[1:(nrow(all.data) - 1)])
+  if(nrow(all.data) > 1) {
+    if(model.parameters$`veg-cycle-start` == "productive") {
+      cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
+                   (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
+      all.data$climate.condition = c("productive", cc.seq[1:(nrow(all.data) - 1)])
+    } else { #(model.parameters$`veg-cycle-start` == "unproductive") 
+      cc.seq = rep(rep(c("unproductive", "productive"), each = model.parameters$`cycle-duration`), 
+                   (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
+      all.data$climate.condition = c("unproductive", cc.seq[1:(nrow(all.data) - 1)])
+    }
   }
   
   final.exp.df = bind_cols(all.data, model.parameters)
