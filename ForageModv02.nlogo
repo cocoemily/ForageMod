@@ -490,6 +490,7 @@ to export-population-data
 
   export-plot "Population" (word file-path "population.csv")
   export-plot "Burning Behavior" (word file-path "burning-behavior.csv") ;for sensitivity analysis
+  export-plot "Forager Moves" (word file-path "forager-moves.csv")
 
 end
 @#$#@#$#@
