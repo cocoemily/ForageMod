@@ -1694,7 +1694,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity_analysis_high-low" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="sensitivity_analysis_high-med-low" repetitions="5" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
@@ -1727,43 +1727,44 @@ file-close</postRun>
     </enumeratedValueSet>
     <enumeratedValueSet variable="forager-moves">
       <value value="5"/>
+      <value value="10"/>
       <value value="15"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="movement-model">
       <value value="&quot;Random Walk&quot;"/>
-      <value value="&quot;Directed Walk&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-type-modifier">
       <value value="100"/>
+      <value value="200"/>
       <value value="300"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burnt-neighbor-limit">
-      <value value="1"/>
-      <value value="4"/>
       <value value="8"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burn-veg-type-threshold">
-      <value value="4"/>
       <value value="7"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="forager-energy-requirement">
       <value value="1000"/>
+      <value value="1500"/>
       <value value="2000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="burn-cost">
       <value value="0"/>
-      <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="movement-cost">
       <value value="50"/>
+      <value value="100"/>
       <value value="150"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-threshold">
       <value value="4000"/>
+      <value value="5000"/>
       <value value="6000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="reproduction-cost">
       <value value="500"/>
+      <value value="1000"/>
       <value value="1500"/>
     </enumeratedValueSet>
   </experiment>
