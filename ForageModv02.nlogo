@@ -13,7 +13,7 @@ foragers-own [ moves move-tracker energy burn-prob age offspring interactions]
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
 
-globals [ stamp1 file-path patch-burn-list available-forage forage-per-capita self-burn other-burn current-veg-regime current-max-veg ]
+globals [ stamp1 file-path patch-burn-list patch-veg-list available-forage forage-per-capita self-burn other-burn current-veg-regime current-max-veg ]
 
 to setup
   clear-all
@@ -28,6 +28,7 @@ to setup
   ]
 
   set patch-burn-list []
+  set patch-veg-list []
 
   ;Tracking for burn benefit
   set self-burn 0
@@ -113,7 +114,8 @@ to go
 
   if ticks >= tick-limit [
     if export? = true [
-      set patch-burn-list lput patch-information patch-burn-list
+      set patch-burn-list lput burn-grid patch-burn-list
+      set patch-veg-list lput veg-type-grid patch-veg-list
       export-data
     ]
 
@@ -126,8 +128,10 @@ to go
   ;Reset trackers
   set self-burn 0
   set other-burn 0
-  if ticks mod (cycle-duration / 2) = 0 and ticks != 0 [
-    set patch-burn-list lput patch-information patch-burn-list
+  ;if ticks mod (cycle-duration / 2) = 0 and ticks != 0 [
+  if ticks mod 50 = 0 and ticks != 0 [
+    set patch-burn-list lput burn-grid patch-burn-list
+    set patch-veg-list lput veg-type-grid patch-veg-list
   ]
 
 
@@ -207,7 +211,8 @@ to go
 
   if count foragers = 0 [ ;if all the agents are dead, stop the model
     if export? = true [
-      set patch-burn-list lput patch-information patch-burn-list
+      set patch-burn-list lput burn-grid patch-burn-list
+      set patch-veg-list lput veg-type-grid patch-veg-list
       export-data
     ]
 
@@ -430,33 +435,42 @@ to reproduce
 end
 
 ;'Calculate global Moran's I for all patches based on veg-type'
-to-report morans-I
-  let m mean [[veg-type] of self] of patches
+;to-report morans-I
+;  let m mean [[veg-type] of self] of patches
+;
+;  let N count patches
+;  let all 8 * N
+;
+;  let num sum [sum [([veg-type] of self - m) * ([veg-type] of myself - m)] of neighbors] of patches
+;  let denom sum [([veg-type] of self - m) ^ 2] of patches
+;
+;  report (N / all) * (num / denom)
+;end
+;
+;;'Calculate Simpson's diversity index of veg-types'
+;; this includes burnt patches in the calculation
+;to-report simpsons-diversity
+;  let denom (count patches) * ((count patches) - 1)
+;  let num 0
+;
+;  let vtypes remove-duplicates [veg-type] of patches
+;  foreach vtypes [ x ->
+;    let c count patches with [veg-type = x]
+;    set num num + (c * (c - 1))
+;  ]
+;
+;  report num / denom
+;end
 
-  let N count patches
-  let all 8 * N
-
-  let num sum [sum [([veg-type] of self - m) * ([veg-type] of myself - m)] of neighbors] of patches
-  let denom sum [([veg-type] of self - m) ^ 2] of patches
-
-  report (N / all) * (num / denom)
-end
-
-;'Calculate Simpson's diversity index of veg-types'
-to-report simpsons-diversity
-  let denom (count patches) * ((count patches) - 1)
-  let num 0
-
-  let vtypes remove-duplicates [veg-type] of patches
-  foreach vtypes [ x ->
-    let c count patches with [veg-type = x]
-    set num num + (c * (c - 1))
+to-report veg-type-grid
+  let veg-list []
+  ask patches [
+    set veg-list lput (list ([pxcor] of self) ([pycor] of self) veg-type ticks) veg-list
   ]
-
-  report num / denom
+  report veg-list
 end
 
-to-report patch-information
+to-report burn-grid
   let burn-list []
   ask patches [
     set burn-list lput (list ([pxcor] of self) ([pycor] of self) times-human-burned ticks) burn-list
@@ -473,14 +487,17 @@ to export-data
   csv:to-file (word file-path "human-burning-amounts.csv") patch-burn-list
   file-close
 
+  set patch-veg-list reduce sentence patch-veg-list
+  file-open (word file-path "gridded-veg-types.csv")
+  csv:to-file (word file-path "gridded-veg-types.csv") patch-veg-list
+  file-close
+
   export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
   export-plot "Burning Behavior" (word file-path "burning-behavior.csv")
   export-plot "Population" (word file-path "population.csv")
   export-plot "Self vs Other Benefit" (word file-path "benefit-distribution.csv")
   export-plot "Forager Interactions" (word file-path "forager-interactions.csv")
   export-plot "Forager Moves" (word file-path "forager-moves.csv")
-  export-plot "Vegetation Moran's I" (word file-path "veg-spat-autocorrelation.csv")
-  export-plot "Vegetation Diversity" (word file-path "veg-simpsons-diversity.csv")
 
 end
 
@@ -994,42 +1011,6 @@ burn-veg-type-threshold
 1
 NIL
 HORIZONTAL
-
-PLOT
-1204
-77
-1391
-227
-Vegetation Moran's I
-NIL
-NIL
-0.0
-10.0
--2.0
-2.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "if ticks > 0 [ plot morans-I ]"
-
-PLOT
-1206
-238
-1393
-388
-Vegetation Diversity
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "if ticks > 0 [ plot simpsons-diversity ]"
 
 INPUTBOX
 1018
