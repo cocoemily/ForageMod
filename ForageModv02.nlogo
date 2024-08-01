@@ -1695,7 +1695,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity_analysis_high-med-low" repetitions="5" runMetricsEveryStep="true">
+  <experiment name="sensitivity_analysis_high-med-low" repetitions="3" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
