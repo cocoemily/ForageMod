@@ -7,6 +7,9 @@ library(tidyverse)
 library(rcompanion)
 library(fitdistrplus)
 library(gtsummary)
+library(jtools)
+library(betareg)
+library(mgcv)
 theme_set(theme_bw())
 
 data = readRDS("results/bb-data.rds")
@@ -46,15 +49,14 @@ outputs = c(
   "benefit_self", #
   "benefit_other"
 )
-
-# data = data %>%
-#   mutate(benefit_self_0 = ifelse(benefit_self == 0, 0.000001, benefit_self), 
-#          benefit_other_0 = ifelse(benefit_other == 0, 0.000001, benefit_other))
+data$veg.simpsons.div = 1 - data$veg.simpsons.div
 data$benefit.ratio = data$benefit_self/data$benefit_other
 ```
 
 ## Correlations of outputs over time
+
 First, we looked at the correlation between outputs across model runs. We also investigated how these correlations change over time by looking at the correlations between outputs at 250 ticks, 1000 ticks, and 1999 ticks.
+
 ```{r output-correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 pvalue = psych::corr.test(data %>% select_at(outputs))$p
 corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs"),
@@ -88,7 +90,6 @@ corrplot::corrplot(cor(data %>% filter(ticks == 1999) %>% select_at(outputs), us
                    type = "lower", number.cex = 0.5, diag=F)
 
 ```
-
 
 ## Forager probability of burning patches
 
@@ -141,3 +142,319 @@ rate.fit2 %>% broom::tidy() %>%
 ```
 
 ## Burnt landscape proportions
+
+Initial correlations reveal that the proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents.
+
+```{r burnt-landscape-proportions_plots, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data) +
+  geom_point(aes(x = pop.dens, y = veg_0, color = ticks))
+
+```
+
+When looking at the distribution of burnt landscape proportions, we see a bimodal distribution that is driven by the burnt neighbor limit parameter. If we split the dataset by this parameter and model the effects of the different parameters on the proportion of burnt landscape, the results show that the proportion of landscape that is burnt is affected by all parameters; the largest effect sizes are produced by the other parameters that control burning behaviors (*burn-cost*, *burn-veg-type-threshold*) and movement (*movement-model*).
+
+```{r veg_0-regressions, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+ggplot(data) +
+  geom_density(aes(x = veg_0, color = `burnt-neighbor-limit`))
+
+beta.data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
+
+veg_0.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
+# plotNormalHistogram(veg_0.burnn1$veg_0)
+# descdist(veg_0.burnn1$veg_0)
+burnn1.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
+                                       `movement-model`), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+
+veg_0.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
+burnn1.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+
+# AIC(burnn1.fit1)
+# AIC(burnn1.fit2)
+#lmtest::lrtest(burnn1.fit1, burnn1.fit2)
+
+veg_0.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
+# plotNormalHistogram(veg_0.burnn4$veg_0)
+# descdist(veg_0.burnn4$veg_0, discrete = F)
+burnn4.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
+                                       `movement-model`), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+veg_0.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
+burnn4.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+
+#AIC(burnn4.fit1)
+#AIC(burnn4.fit2)
+#lmtest::lrtest(burnn4.fit1, burnn4.fit2)
+
+veg_0.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
+                                       `movement-model`), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+veg_0.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+
+#AIC(burnn8.fit1)
+#AIC(burnn8.fit2)
+#lmtest::lrtest(burnn8.fit1, burnn8.fit2)
+
+
+plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6, 
+             model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
+
+# clean.data = data %>%
+#   select_at(c("ticks", "veg_0", parameters)) %>%
+#   rename(natural_ignition = `natural-ignition`, 
+#          cycle_duration = `cycle-duration`, 
+#          veg_cycle_start = `veg-cycle-start`, 
+#          veg_distribution = `veg-distribution`, 
+#          burnt_neighbor_limit = `burnt-neighbor-limit`, 
+#          burn_veg_type_threshold = `burn-veg-type-threshold`, 
+#          burn_cost = `burn-cost`, 
+#          movement_model = `movement-model`)
+# 
+# veg_0.burnn1 = clean.data %>% filter(`burnt-neighbor-limit` == 1)
+# burnn1.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+# TukeyHSD(aov(burnn1.fit2))
+# 
+# veg_0.burnn4 = clean.data %>% filter(`burnt-neighbor-limit` == 4)
+# burnn4.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+# TukeyHSD(aov(burnn4.fit2))
+# 
+# veg_0.burnn8 = clean.data %>% filter(`burnt-neighbor-limit` == 8)
+# burnn8.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+# TukeyHSD(aov(burnn8.fit2))
+rm(list = c("beta.data", "veg_0.burnn1", "veg_0.burnn4", "veg_0.burnn8"))
+```
+
+<!-- ## Spatial heterogeneity -->
+
+<!-- Spatial heterogeneity of vegetation types is assessed via Moran's I values. We assessed the effects of the different parameters using linear regressions. The results show that the spatial autocorrelation of the gridded landscape is decreased when agents perform a random walk compared to a directed walk, although over time random walks cause a slower rate of decrease compared to directed walk. Other important factors include those that controll the amount of burning that occurs within the landscape ((*burn-cost*, *burn-veg-type-threshold*, *burn-cost*, *natural-ignition*). Parameters that lead to more burning lead to decreased spatial autocorrelation (or increased spatial heterogeneity) as well as an faster rate of decrease over model time.  -->
+
+<!-- ```{r morans-i-regression, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, out.width="100%"} -->
+<!-- clean.data = data %>% -->
+<!--   select_at(c("ticks", "veg.morans.i", "veg.simpsons.div", parameters)) %>% -->
+<!--   rename(natural_ignition = `natural-ignition`,  -->
+<!--          cycle_duration = `cycle-duration`,  -->
+<!--          veg_cycle_start = `veg-cycle-start`,  -->
+<!--          veg_distribution = `veg-distribution`,  -->
+<!--          burnt_neighbor_limit = `burnt-neighbor-limit`,  -->
+<!--          burn_veg_type_threshold = `burn-veg-type-threshold`,  -->
+<!--          burn_cost = `burn-cost`,  -->
+<!--          movement_model = `movement-model`) -->
+
+
+<!-- mi.fit1 = lm(veg.morans.i ~ ticks*(.), data = clean.data[,-3]) -->
+<!-- mi.fit2 = lm(veg.morans.i ~ ., data = clean.data[,-c(1,3)]) -->
+<!-- #anova(mi.fit2, mi.fit1) -->
+<!-- #summary(mi.fit1) -->
+<!-- #export_summs(mi.fit1, digits = 6) -->
+<!-- plot_summs(mi.fit1, scale = T) -->
+
+
+<!-- rm(list = c("clean.data")) -->
+<!-- ``` -->
+
+<!-- ## Vegetation diversity -->
+
+<!-- Vegetation diversity was measured by Simpson's Diversity Index. The distribution of this metric is bimodal across model runs, with a high proportion of measurements showing a complete lack of diversity. This bimodality is caused by the different movement models used: directed walks result in less diversity than random walks. -->
+
+<!-- ```{r veg-diversity-distribution, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE} -->
+<!-- #hist(data$veg.simpsons.div) -->
+
+<!-- ggplot(data) + -->
+<!--   geom_density(aes(x = veg.simpsons.div, color = `movement-model`)) + -->
+<!--   facet_grid(climate.condition ~ `cycle-duration`+`veg-cycle-start`) -->
+<!-- ``` -->
+
+<!-- Regression analyses show that the parameters affect vegetation diversity quite differently under the two movement models. Additionally, since the current climate condition of the model dictates how many vegetation types it is possible for a patch to achieve, we need to consider the effect of this on how vegetation diversity changes throughout model run. -->
+
+<!-- ```{r veg-diversity-plots, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, out.width="100%"} -->
+<!-- rw.data = data %>% filter(`movement-model` == "\"Random Walk\"") -->
+<!-- dw.data = data %>% filter(`movement-model` == "\"Directed Walk\"") -->
+<!-- #hist(rw.data$veg.simpsons.div) -->
+<!-- #descdist((rw.data %>% filter(!is.na(veg.simpsons.div)))$veg.simpsons.div) -->
+<!-- #hist(dw.data$veg.simpsons.div) -->
+<!-- #descdist((dw.data %>% filter(!is.na(veg.simpsons.div)))$veg.simpsons.div -->
+
+<!-- p1 = ggplot(rw.data) + -->
+<!--   geom_point(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`), alpha = 0.01, size = 1) + -->
+<!--   geom_smooth(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`)) + -->
+<!--   labs(y = "Simpson's Diversity Index") + -->
+<!--   facet_grid(`veg-cycle-start` + `cycle-duration` ~ `burnt-neighbor-limit`, labeller = label_both)  + -->
+<!--   theme(strip.text = element_text(size = 6)) -->
+
+<!-- p2 = ggplot(dw.data) + -->
+<!--   geom_point(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`), alpha = 0.01, size = 1) + -->
+<!--   geom_smooth(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`)) + -->
+<!--   labs(y = "Simpson's Diversity Index") + -->
+<!--   facet_grid(`veg-cycle-start` + `cycle-duration` ~ `burnt-neighbor-limit`, labeller = label_both) + -->
+<!--   theme(strip.text = element_text(size = 6)) -->
+
+<!-- ggpubr::ggarrange(p1, p2, legend = "bottom", labels = c("RW", "DW"), common.legend = T) -->
+<!-- ``` -->
+<!-- When agents do directed walks, the overall patterns remain the same: sharp and fast decrease in diversity (increase in *D* values). Long climatic cycles result in more wiggling as *D* values increase during periods of unproductive vegetation. -->
+
+<!-- When agents do random walks, the patterns are more complicated. We again see an increase in diversity during unproductive periods, but we also see that the burning limit parameters also produce different slopes. For example, strict burning limits result in more diversity, whereas relaxed burning limits see a sharper decrease to the end of model run.  -->
+
+<!-- To further investigate the effects of the parameters over time on vegetation diversity, we fit GAM models to the random walk data split by cycle duration. -->
+
+<!-- #### Model with climate cycle duration = 100 -->
+<!-- ```{r RW-100_veg-diversity-GAM, eval=FALSE, message=FALSE, warning=FALSE, , out.width="100%", include=FALSE} -->
+<!-- clean.data = data %>% -->
+<!--   select_at(c("ticks", "veg.morans.i", "veg.simpsons.div", parameters)) %>% -->
+<!--   rename(natural_ignition = `natural-ignition`,  -->
+<!--          cycle_duration = `cycle-duration`,  -->
+<!--          veg_cycle_start = `veg-cycle-start`,  -->
+<!--          veg_distribution = `veg-distribution`,  -->
+<!--          burnt_neighbor_limit = `burnt-neighbor-limit`,  -->
+<!--          burn_veg_type_threshold = `burn-veg-type-threshold`,  -->
+<!--          burn_cost = `burn-cost`,  -->
+<!--          movement_model = `movement-model`) -->
+
+<!-- rw.c100 = clean.data %>% filter(movement_model == "\"Random Walk\"") %>% filter(cycle_duration == 100) -->
+
+<!-- rw.gam4 = gam(veg.simpsons.div ~  s(ticks, by = natural_ignition) + -->
+<!--                 s(ticks, by = veg_cycle_start) + -->
+<!--                 s(ticks, by = veg_distribution) + -->
+<!--                 s(ticks, by = burn_cost)  +  -->
+<!--                 s(ticks, by = burn_veg_type_threshold) + -->
+<!--                 s(ticks, by = as.factor(burnt_neighbor_limit)), -->
+<!--               data = rw.c100) -->
+<!-- #summary(rw.gam4) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam4, select=1, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=2, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam4, select=3, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=4, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam4, select=5, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=6, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam4, select=7, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=8, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam4, select=9, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=10, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,3), cex=1.1) -->
+<!-- plot(rw.gam4, select=11, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=12, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam4, select=13, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- ``` -->
+
+<!-- These results confirm that the parameters that set the limits for burning behaviors have the most varied effects on vegetation diversity across model run. This is especially true when comparing the effects over time of *burnt-neighbor-limit* = 1 vs *burnt-neighbor-limit* = 4 or 7. The strict condition increases diversity over time, but the relaxed conditions decrease diversity over time.   -->
+
+<!-- #### Model with climate cycle duration = 250 -->
+<!-- ```{r RW-250_veg-diversity-GAM, eval=FALSE, message=FALSE, warning=FALSE, , out.width="100%", include=FALSE} -->
+<!-- clean.data = data %>% -->
+<!--   select_at(c("ticks", "veg.morans.i", "veg.simpsons.div", parameters)) %>% -->
+<!--   rename(natural_ignition = `natural-ignition`,  -->
+<!--          cycle_duration = `cycle-duration`,  -->
+<!--          veg_cycle_start = `veg-cycle-start`,  -->
+<!--          veg_distribution = `veg-distribution`,  -->
+<!--          burnt_neighbor_limit = `burnt-neighbor-limit`,  -->
+<!--          burn_veg_type_threshold = `burn-veg-type-threshold`,  -->
+<!--          burn_cost = `burn-cost`,  -->
+<!--          movement_model = `movement-model`) -->
+
+<!-- rw.c250 = clean.data %>% filter(movement_model == "\"Random Walk\"") %>% filter(cycle_duration == 250) -->
+
+<!-- rw.gam5 = gam(veg.simpsons.div ~  s(ticks, by = natural_ignition) + -->
+<!--                 s(ticks, by = veg_cycle_start) + -->
+<!--                 s(ticks, by = veg_distribution) + -->
+<!--                 s(ticks, by = burn_cost)  +  -->
+<!--                 s(ticks, by = burn_veg_type_threshold) + -->
+<!--                 s(ticks, by = as.factor(burnt_neighbor_limit)), -->
+<!--               data = rw.c250) -->
+<!-- #summary(rw.gam4) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam5, select=1, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=2, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam5, select=3, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=4, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam5, select=5, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=6, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam5, select=7, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=8, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,2), cex=1.1) -->
+<!-- plot(rw.gam5, select=9, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=10, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+
+<!-- par(mfrow=c(1,3), cex=1.1) -->
+<!-- plot(rw.gam5, select=11, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=12, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.gam5, select=13, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- ``` -->
+
+<!-- We see similar parameter effects with longer climatic cycles. Although the differences between the values for *burnt-neighbor-limit* are not as pronounced. This is likely because there is more variation in diversity values between the productive and unproductive periods within model run.  -->
+
+<!-- We investigate what is causing this patterning in diversity by looking at how the proportions of the different vegetation types occur through time. These patterns clearly show that the lack of diversity is driven by the high proportions of burnt landscape relative to all other vegetation types by the end of model run.  -->
+<!-- ```{r veg-props, eval=FALSE, include=FALSE} -->
+<!-- veg.props = data %>% dplyr::select_at(c("ticks", parameters, "climate.condition", "veg_0", "veg_1", "veg_2", "veg_3", "veg_4", "veg_5", "veg_6", "veg_7")) %>% -->
+<!--   pivot_longer(cols = c("veg_0", "veg_1", "veg_2", "veg_3", "veg_4", "veg_5", "veg_6", "veg_7"),  -->
+<!--                names_to = "veg_type", values_to = "prop") -->
+
+<!-- ggplot(veg.props) + -->
+<!--   geom_line(aes(x = ticks, y = prop, color = veg_type)) + -->
+<!--   facet_grid(`movement-model` ~ `veg-cycle-start` + `cycle-duration`, labeller = label_both) + -->
+<!--   theme(strip.text = element_text(size = 6)) -->
+
+<!-- ``` -->
+
+<!-- Furthermore, these vegetation proportion trends show why "unproductive" periods during model run have higher diversity measures. During productive periods, there is a larger range of vegetation types that a patch can have, which means that... -->
+
+## Spatial distribution of burning events
+```{r burning-events}
+all.morans.100 <- readRDS("results/outputs/morans.i_cycle.100.rds")
+all.morans.250 <- readRDS("results/outputs/morans.i_cycle.250.rds")
+
+bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+names(bt.labs) = c(4, 7)
+
+ggplot(all.morans.100 %>% filter(signif == T)) +
+  geom_point(mapping = aes(x = ticks, y = morans.i)) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = as.factor(`burnt-neighbor-limit`), group = as.factor(`burnt-neighbor-limit`)), method = "lm") +
+  facet_grid(`burn-veg-type-threshold`~`movement-model` + `veg-distribution`, scales = "free", labeller = labeller(`burn-veg-type-threshold` = bt.labs))
+
+```
+

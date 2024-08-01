@@ -1,0 +1,144 @@
+# sensitivity analysis
+
+```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
+library(knitr)
+library(broom)
+library(tidyverse)
+library(rcompanion)
+library(fitdistrplus)
+library(gtsummary)
+library(jtools)
+library(betareg)
+library(mgcv)
+library(marginaleffects)
+theme_set(theme_bw())
+
+data = readRDS("sensitivity-analysis/SA-data.rds")
+
+parameters = c(
+  "natural_ignition", 
+  "cycle_duration", 
+  "veg_cycle_start", 
+  "veg_distribution",
+  "forager_moves", 
+  "movement_model", 
+  "veg_type_modifier", 
+  "burnt_neighbor_limit", 
+  "burn_veg_type_threshold", 
+  "forager_energy_requirement",  
+  "burn_cost", 
+  "reproduction_threshold", 
+  "reproduction_cost"
+)
+
+clean.data = data %>%
+  rename(natural_ignition = `natural-ignition`, 
+         cycle_duration = `cycle-duration`, 
+         veg_cycle_start = `veg-cycle-start`, 
+         veg_distribution = `veg-distribution`,
+         forager_moves = `forager-moves`, 
+         movement_model = `movement-model`,
+         veg_type_modifier = `veg-type-modifier`,
+         burnt_neighbor_limit = `burnt-neighbor-limit`,  
+         burn_veg_type_threshold = `burn-veg-type-threshold`,
+         forager_energy_requirement = `forager-energy-requirement`, 
+         burn_cost = `burn-cost`, 
+         reproduction_threshold = `reproduction-threshold`, 
+         reproduction_cost = `reproduction-cost`) %>%
+  mutate_at(c(parameters), as.factor)
+
+data = clean.data
+rm(list = c("clean.data"))
+```
+
+### What parameters result in population dying off?
+```{r pop-death, fig.height=8, fig.width=10, message=FALSE, warning=FALSE, out.width='100%'}
+all.exp = unique(data$exp)
+
+end.tick = unique(data$`tick-limit`)
+fd = data %>% filter(ticks == end.tick)
+finished.exp = unique(fd$exp)
+
+finished.data = data %>% filter(exp %in% finished.exp)
+unfinished.data = data %>% filter(!(exp %in% finished.exp))
+
+
+max.ticks = unfinished.data %>% group_by_at(c("exp", parameters)) %>%
+  summarize(max.tick = max(ticks))
+
+# ggplot(max.ticks) +
+#   geom_density(aes(x = max.tick))
+summary(max.ticks$max.tick)
+
+ggplot(max.ticks) + 
+  geom_histogram(aes(x = max.tick, fill = veg_type_modifier)) +
+  facet_grid(reproduction_threshold ~ forager_energy_requirement + reproduction_cost, labeller = label_both)
+
+finished.data$pop.dens = finished.data$pop.count/(51*51)
+
+ggplot(finished.data) +
+  geom_smooth(aes(x = ticks, y = pop.dens, color = veg_type_modifier)) +
+  facet_grid(reproduction_threshold + reproduction_cost ~ forager_energy_requirement + forager_moves, labeller = label_both) +
+  theme(strip.text = element_text(size = 6), legend.text = element_text(size = 6))
+
+rm(list = c("all.max.ticks", "less.than.five", "fd", "max.ticks"))
+```
+
+### How do the parameters affect burning probabilities?
+```{r burning-probabilities, message=FALSE, warning=FALSE, out.width='100%'}
+# 
+# ggplot(finished.data) +
+#   geom_smooth(aes(x = ticks, y = mean.burn.prob, color = interaction(burnt_neighbor_limit, burn_veg_type_threshold, burn_cost))) +
+#   facet_grid(veg_type_modifier ~ forager_energy_requirement) +
+#   theme(legend.title = element_blank())
+
+ggplot(finished.data) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob, color = veg_type_modifier)) +
+  facet_grid(forager_moves ~ forager_energy_requirement + reproduction_threshold + reproduction_cost)
+
+reg.parameters = parameters[c(1, 5:13)]
+lapply(finished.data[,c(reg.parameters)], summary)
+
+# gam1 = gam(mean.burn.prob ~  s(ticks, by = natural_ignition) +
+#              s(ticks, by = forager_moves) +
+#              s(ticks, by = movement_model) +
+#              s(ticks, by = veg_type_modifier) +
+#              s(ticks, by = as.factor(burnt_neighbor_limit)) + 
+#              s(ticks, by = burn_cost)  + 
+#              s(ticks, by = burn_veg_type_threshold) +
+#              s(ticks, by = forager_energy_requirement) +
+#              s(ticks, by = reproduction_threshold) + 
+#              s(ticks, by = reproduction_cost),
+#            data = finished.data)
+# summary(gam1)
+# 
+# plot_slopes(gam1, variables = "ticks", condition = c("ticks", "forager_moves")) +
+#   geom_hline(yintercept = 0, linetype = 'dashed')
+# par(mfrow=c(1,2), cex=1.1)
+# plot(gam1, select=3, shade=T)
+# abline(h=0, lty = 2)
+# plot(gam1, select=4, shade=T)
+# abline(h=0, lty = 2)
+# 
+# plot_slopes(gam1, variables = "ticks", condition = c("ticks", "veg_type_modifier")) +
+#   geom_hline(yintercept = 0, linetype = 'dashed')
+# par(mfrow=c(1,2), cex=1.1)
+# plot(gam1, select=7, shade=T)
+# abline(h=0, lty = 2)
+# plot(gam1, select=8, shade=T)
+# abline(h=0, lty = 2)
+# 
+# plot_slopes(gam1, variables = "ticks", condition = c("ticks", "forager_energy_requirement")) +
+#   geom_hline(yintercept = 0, linetype = 'dashed')
+# par(mfrow=c(1,2), cex=1.1)
+# plot(gam1, select=16, shade=T)
+# abline(h=0, lty = 2)
+# plot(gam1, select=17, shade=T)
+# abline(h=0, lty = 2)
+# 
+# plot_slopes(gam1, variables = "ticks", condition = c("ticks", "forager_energy_requirement", "veg_type_modifier")) +
+#   geom_hline(yintercept = 0, linetype = 'dashed')
+# plot_predictions(gam1, condition = c("ticks", "forager_energy_requirement", "veg_type_modifier"))
+
+```
+

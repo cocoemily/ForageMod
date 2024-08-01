@@ -109,35 +109,51 @@ ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = b
        dpi = 300, width = 8, height = 6)
 
 
-data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
+# data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
 #betafit1 = betareg(veg_0 ~ ticks*(.), data = data %>% select_at(c("veg_0", "ticks", parameters)))
 #summary(betafit1) #cannot see this because of vector limits
 
+beta.data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
+
+veg_0.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
+# plotNormalHistogram(veg_0.burnn1$veg_0)
+# descdist(veg_0.burnn1$veg_0)
+burnn1.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
+                                       `movement-model`), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+
 veg_0.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
-plotNormalHistogram(veg_0.burnn1$veg_0)
-descdist(veg_0.burnn1$veg_0)
-burnn1.fit1 = betareg(veg_0 ~ ticks*(.), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-summary(burnn1.fit1)
 burnn1.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-summary(burnn1.fit2)
-AIC(burnn1.fit1)
-AIC(burnn1.fit2)
 
+# AIC(burnn1.fit1)
+# AIC(burnn1.fit2)
+lmtest::lrtest(burnn1.fit1, burnn1.fit2)
 
+veg_0.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
+# plotNormalHistogram(veg_0.burnn4$veg_0)
+# descdist(veg_0.burnn4$veg_0, discrete = F)
+burnn4.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
+                                       `movement-model`), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
 veg_0.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
-plotNormalHistogram(veg_0.burnn4$veg_0)
-descdist(veg_0.burnn4$veg_0, discrete = F)
-burnn4.fit1 = betareg(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-summary(burnn1.fit1)
 burnn4.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-summary(burnn4.fit2)
-#burnn4.fit3 = glm(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])), family = "poisson")
-AIC(burnn4.fit1)
-AIC(burnn4.fit2)
-#AIC(burnn4.fit3)
 
+#AIC(burnn4.fit1)
+#AIC(burnn4.fit2)
+lmtest::lrtest(burnn4.fit1, burnn4.fit2)
+
+veg_0.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
+                                       `movement-model`), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
 veg_0.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
-plotNormalHistogram(veg_0.burnn8$veg_0)
-descdist(veg_0.burnn8$veg_0)
 burnn8.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-summary(burnn8.fit2)
+
+#AIC(burnn8.fit1)
+#AIC(burnn8.fit2)
+lmtest::lrtest(burnn8.fit1, burnn8.fit2)
+
+
+plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6, 
+           model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
+

@@ -49,7 +49,8 @@ for(exp in unique(grid.data.100$exp.group)) {
   for(r in unique(tick.grid$run)) {
     run.grid = tick.grid %>% filter(run == r)
     
-    for(t in c(250, 500, 1000, 1500, 2000)) {
+    #for(t in c(250, 500, 1000, 1500, 2000)) {
+    for(t in unique(run.grid$ticks)) {
       grid = run.grid %>% filter(ticks == t)
       coordinates(grid) = ~y+x
       gridded(grid) = TRUE
@@ -195,7 +196,8 @@ for(exp in unique(grid.data.250$exp.group)) {
   for(r in unique(tick.grid$run)) {
     run.grid = tick.grid %>% filter(run == r)
     
-    for(t in c(250, 500, 1000, 1500, 2000)) {
+    #for(t in c(250, 500, 1000, 1500, 2000)) {
+    for(t in unique(run.grid$ticks)) {
       grid = run.grid %>% filter(ticks == t)
       coordinates(grid) = ~y+x
       gridded(grid) = TRUE
