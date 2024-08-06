@@ -13,13 +13,13 @@ outputs = c(
   "forager-moves",
   "population", 
   "human-burning-amounts", 
-  "veg-simpsons-diversity", 
-  "veg-spat-autocorrelation"
+  "gridded-veg-types"
 )
 
 data = list()
 hb.data = list()
- 
+vt.data = list()
+
 i = 1
 for (x in experiments) {
   print(paste0("reading data from exp: ", i))
@@ -39,8 +39,6 @@ for (x in experiments) {
     vt[,29:30] %>% mutate(veg.type = 0)
   )
   colnames(vt.df) = c("ticks", "count", "veg.type")
-  
-  #vt.df2 = vt.df %>% pivot_wider(names_from = veg.type, names_glue = "veg_{veg.type}", values_from = count)
   
   bb = read_csv(exp.files[[which(str_detect(exp.files, outputs[2]))]], skip = 18)
   bb.df = bb[,1:2]
@@ -66,15 +64,10 @@ for (x in experiments) {
   colnames(fm.df) = c("ticks", "mean.fm", "high.fm", "low.fm")
   
   hb.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[7]))]])
-  colnames(hb.df) = c("x", "y", "times.burned")
+  colnames(hb.df) = c("x", "y", "times.burned", "ticks")
   
-  sd = read_csv(exp.files[[which(str_detect(exp.files, outputs[8]))]], skip = 16)
-  sd.df = sd[,1:2]
-  colnames(sd.df) = c("ticks", "veg.simpsons.div")
-  
-  mi = read_csv(exp.files[[which(str_detect(exp.files, outputs[9]))]], skip = 16)
-  mi.df = mi[,1:2]
-  colnames(mi.df) = c("ticks", "veg.morans.i")
+  gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[8]))]])
+  colnames(gvt.df) = c("x", "y", "veg.type", "ticks")
   
   all.data = pop.df %>% left_join(
     vt.df %>% pivot_wider(names_from = veg.type, names_glue = "veg_{veg.type}", values_from = count),
@@ -91,16 +84,10 @@ for (x in experiments) {
   ) %>% left_join(
     fm.df,
     by = c("ticks")
-  ) %>% left_join(
-    sd.df,
-    by = c("ticks")
-  ) %>% left_join(
-    mi.df,
-    by = c("ticks")
   ) 
   
-  rm(list = c("pop.df", "vt.df", "bb.df", "bd.df", "fi.df", "fm.df", "sd.df", "mi.df", 
-              "pop", "vt", "bb", "bd", "fi", "fm", "sd", "mis"))
+  rm(list = c("pop.df", "vt.df", "bb.df", "bd.df", "fi.df", "fm.df",
+              "pop", "vt", "bb", "bd", "fi", "fm"))
   
   if(model.parameters$`veg-cycle-start` == "productive") {
     cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
@@ -115,14 +102,18 @@ for (x in experiments) {
   final.exp.df = bind_cols(all.data, model.parameters)
   final.exp.df$exp = x
   final.hb.df = bind_cols(hb.df, model.parameters)
+  final.vt.df = bind_cols(gvt.df, model.parameters)
   
   data[[x]] = final.exp.df
   hb.data[[x]] = final.hb.df
+  vt.data[[x]] = final.vt.df
   i = i + 1
 }
 
 final.data = bind_rows(data)
 final.hb.data = bind_rows(hb.data)
+final.vt.data = bind_rows(vt.data)
 
 saveRDS(final.data, file = "bb-data.rds")
 saveRDS(final.hb.data, file = "bb-hb-data.rds")
+saveRDS(final.vt.data, file = "bb-vt-data.rds")
