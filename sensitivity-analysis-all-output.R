@@ -9,6 +9,7 @@ experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by
 experiments = unique(experiments)
 outputs = c(
   "burning-behavior", 
+  "forager-moves",
   "population"
 )
 
@@ -24,7 +25,11 @@ for (x in experiments) {
   bb.df = bb[,1:2]
   colnames(bb.df) = c("ticks", "mean.burn.prob")
   
-  pop = read_csv(exp.files[[which(str_detect(exp.files, outputs[2]))]], skip = 16)
+  fm = read_csv(exp.files[[which(str_detect(exp.files, outputs[2]))]], skip = 18)
+  fm.df = fm[,c(1:2, 6, 10)]
+  colnames(fm.df) = c("ticks", "mean.fm", "high.fm", "low.fm")
+  
+  pop = read_csv(exp.files[[which(str_detect(exp.files, outputs[3]))]], skip = 16)
   pop.df = pop[,1:2]
   colnames(pop.df) = c("ticks", "pop.count")
   
@@ -32,9 +37,12 @@ for (x in experiments) {
     left_join(
       bb.df, 
       by = c("ticks")
+    ) %>% left_join(
+      fm.df,
+      by = c("ticks")
     ) 
   
-  rm(list = c("pop.df", "bb.df", "pop", "bb"))
+  rm(list = c("pop.df", "bb.df", "fm.df", "pop", "bb", "fm"))
   
   if(nrow(all.data) > 1) {
     if(model.parameters$`veg-cycle-start` == "productive") {
