@@ -5,6 +5,9 @@ file.list = list.files("results", full.names = T)
 exp.list = list.files("results", full.names = F)
 experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by = 3)]
 experiments = unique(experiments)
+print(experiments)
+print(length(experiments))
+
 outputs = c(
   "vegetation-types",
   "burning-behavior", 
@@ -102,7 +105,9 @@ for (x in experiments) {
   final.exp.df = bind_cols(all.data, model.parameters)
   final.exp.df$exp = x
   final.hb.df = bind_cols(hb.df, model.parameters)
+  final.hb.df$exp = x
   final.vt.df = bind_cols(gvt.df, model.parameters)
+  final.vt.df$exp = x
   
   data[[x]] = final.exp.df
   hb.data[[x]] = final.hb.df
