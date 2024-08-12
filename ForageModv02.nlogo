@@ -1606,7 +1606,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="burning-behaviors" repetitions="5" runMetricsEveryStep="false">
+  <experiment name="burning-behaviors" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
@@ -1676,7 +1676,7 @@ file-close</postRun>
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity_analysis_high-med-low" repetitions="3" runMetricsEveryStep="true">
+  <experiment name="sensitivity_analysis_high-med-low" repetitions="10" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="export?">
