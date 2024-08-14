@@ -14,14 +14,10 @@ outputs = c(
   "benefit-distribution", 
   "forager-interactions",
   "forager-moves",
-  "population", 
-  "human-burning-amounts", 
-  "gridded-veg-types"
+  "population"
 )
 
 data = list()
-hb.data = list()
-vt.data = list()
 
 i = 1
 for (x in experiments) {
@@ -65,13 +61,7 @@ for (x in experiments) {
   fm = read_csv(exp.files[[which(str_detect(exp.files, outputs[5]))]], skip = 18)
   fm.df = fm[,c(1:2, 6, 10)]
   colnames(fm.df) = c("ticks", "mean.fm", "high.fm", "low.fm")
-  
-  hb.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[7]))]])
-  colnames(hb.df) = c("x", "y", "times.burned", "ticks")
-  
-  gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[8]))]])
-  colnames(gvt.df) = c("x", "y", "veg.type", "ticks")
-  
+ 
   all.data = pop.df %>% left_join(
     vt.df %>% pivot_wider(names_from = veg.type, names_glue = "veg_{veg.type}", values_from = count),
     by = c("ticks")
@@ -104,21 +94,11 @@ for (x in experiments) {
   
   final.exp.df = bind_cols(all.data, model.parameters)
   final.exp.df$exp = x
-  final.hb.df = bind_cols(hb.df, model.parameters)
-  final.hb.df$exp = x
-  final.vt.df = bind_cols(gvt.df, model.parameters)
-  final.vt.df$exp = x
   
   data[[x]] = final.exp.df
-  hb.data[[x]] = final.hb.df
-  vt.data[[x]] = final.vt.df
   i = i + 1
 }
 
 final.data = bind_rows(data)
-final.hb.data = bind_rows(hb.data)
-final.vt.data = bind_rows(vt.data)
 
 saveRDS(final.data, file = "bb-data.rds")
-saveRDS(final.hb.data, file = "bb-hb-data.rds")
-saveRDS(final.vt.data, file = "bb-vt-data.rds")
