@@ -22,7 +22,7 @@ for (x in experiments) {
   
   model.parameters = read_csv(exp.files[1], skip = 5, n_max = 1)
 
-  gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[8]))]])
+  gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]])
   colnames(gvt.df) = c("x", "y", "veg.type", "ticks")
 
   final.vt.df = bind_cols(gvt.df, model.parameters)
