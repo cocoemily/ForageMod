@@ -7,6 +7,7 @@ library(spdep)
 
 
 data = readRDS("bb-hb-data.rds")
+colnames(data)
 
 #hist(data$times.burned)
 
@@ -21,25 +22,19 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 
-grid.data = data[,c("x", "y", "ticks", "times.burned", parameters)]
-grid.data = grid.data  %>% group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
+grid.data = data[,c("exp", "x", "y", "ticks", "times.burned", parameters)]
 rm(list = c("data"))
 
 grid.data.100 = grid.data %>% filter(`cycle-duration` == 100)
 grid.data.250 = grid.data %>% filter(`cycle-duration` == 250)
 rm(list = c("grid.data"))
 
-grid.data.100 = grid.data.100 %>% group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
-grid.data.250 = grid.data.250 %>% group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
-
-
 #### Global Moran's I, cycle duration = 100 ####
 morans.data = list()
-exp.list = unique(grid.data.100$exp.group)[1]
 
 #for(exp in exp.list) { #for testing
-for(exp in unique(grid.data.100$exp.group)) {
-  tick.grid = grid.data.100 %>% filter(exp.group == exp)
+for(e in unique(grid.data.100$exp)) {
+  tick.grid = grid.data.100 %>% filter(exp == e)
   tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
@@ -66,7 +61,7 @@ for(exp in unique(grid.data.100$exp.group)) {
       
       #create data frame 
       output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp.group", "run")) %>%
+        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
         first() %>%
         mutate(morans.i = MC$statistic, 
                p.value = MC$p.value)
@@ -84,11 +79,10 @@ write_rds(all.morans.100, file = "outputs/morans.i_cycle.100.rds")
 
 #### Global Moran's I, cycle duration = 250 ####
 morans.data = list()
-exp.list = unique(grid.data.250$exp.group)[1]
 
 #for(exp in exp.list) { #for testing
-for(exp in unique(grid.data.250$exp.group)) {
-  tick.grid = grid.data.250 %>% filter(exp.group == exp)
+for(e in unique(grid.data.250$exp)) {
+  tick.grid = grid.data.250 %>% filter(exp == e)
   tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
@@ -115,7 +109,7 @@ for(exp in unique(grid.data.250$exp.group)) {
       
       #create data frame 
       output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp.group", "run")) %>%
+        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
         first() %>%
         mutate(morans.i = MC$statistic, 
                p.value = MC$p.value)
