@@ -21,34 +21,29 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 
-grid.data = data[,c("x", "y", "ticks", "veg.type", parameters)]
-grid.data = grid.data  %>% group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
+grid.data = data[,c("exp", "x", "y", "ticks", "veg.type", parameters)]
 rm(list = c("data"))
 
 grid.data.100.prod = grid.data %>% 
   filter(`cycle-duration` == 100) %>% 
-  filter(`veg-cycle-start` == "\"productive\"") %>% 
-  group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
+  filter(`veg-cycle-start` == "\"productive\"") 
 grid.data.100.unprod = grid.data %>% 
   filter(`cycle-duration` == 100) %>% 
-  filter(`veg-cycle-start` == "\"unproductive\"") %>% 
-  group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
+  filter(`veg-cycle-start` == "\"unproductive\"") 
 
 grid.data.250.prod = grid.data %>% 
   filter(`cycle-duration` == 250) %>% 
-  filter(`veg-cycle-start` == "\"productive\"") %>% 
-  group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
+  filter(`veg-cycle-start` == "\"productive\"") 
 grid.data.250.unprod = grid.data %>% 
   filter(`cycle-duration` == 250) %>% 
-  filter(`veg-cycle-start` == "\"unproductive\"") %>% 
-  group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())
+  filter(`veg-cycle-start` == "\"unproductive\"") 
 
 rm(list = c("grid.data"))
 
 #### get data for cycle duration = 100 & productive start ####
 veg.data = list()
-for(exp in unique(grid.data.100.prod$exp.group)) {
-  tick.grid = grid.data.100.prod %>% filter(exp.group == exp)
+for(e in unique(grid.data.100.prod$exp)) {
+  tick.grid = grid.data.100.prod %>% filter(exp == e)
   tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
@@ -83,7 +78,7 @@ for(exp in unique(grid.data.100.prod$exp.group)) {
       
       #create data frame 
       output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp.group", "run")) %>%
+        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
         first() %>%
         mutate(morans.i = MC$statistic, 
                p.value = MC$p.value, 
@@ -102,8 +97,8 @@ write_rds(veg.100.prod, file = "outputs/veg_moransi_100-prod.rds")
 
 #### get data for cycle duration = 100 & unproductive start ####
 veg.data = list()
-for(exp in unique(grid.data.100.unprod$exp.group)) {
-  tick.grid = grid.data.100.unprod %>% filter(exp.group == exp)
+for(e in unique(grid.data.100.unprod$exp)) {
+  tick.grid = grid.data.100.unprod %>% filter(exp == e)
   tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
@@ -133,7 +128,7 @@ for(exp in unique(grid.data.100.unprod$exp.group)) {
       
       #create data frame 
       output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp.group", "run")) %>%
+        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
         first() %>%
         mutate(morans.i = MC$statistic, 
                p.value = MC$p.value, 
@@ -152,8 +147,8 @@ write_rds(veg.100.unprod, file = "outputs/veg_moransi_100-unprod.rds")
 
 #### get data for cycle duration = 250 & productive start ####
 veg.data = list()
-for(exp in unique(grid.data.250.prod$exp.group)) {
-  tick.grid = grid.data.250.prod %>% filter(exp.group == exp)
+for(e in unique(grid.data.250.prod$exp)) {
+  tick.grid = grid.data.250.prod %>% filter(exp == e)
   tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
@@ -184,7 +179,7 @@ for(exp in unique(grid.data.250.prod$exp.group)) {
       
       #create data frame 
       output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp.group", "run")) %>%
+        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
         first() %>%
         mutate(morans.i = MC$statistic, 
                p.value = MC$p.value, 
@@ -203,8 +198,8 @@ write_rds(veg.250.prod, file = "outputs/veg_moransi_250-prod.rds")
 
 #### get data for cycle duration = 250 & unproductive start ####
 veg.data = list()
-for(exp in unique(grid.data.250.unprod$exp.group)) {
-  tick.grid = grid.data.250.unprod %>% filter(exp.group == exp)
+for(e in unique(grid.data.250.unprod$exp)) {
+  tick.grid = grid.data.250.unprod %>% filter(exp == e)
   tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
@@ -235,7 +230,7 @@ for(exp in unique(grid.data.250.unprod$exp.group)) {
       
       #create data frame 
       output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp.group", "run")) %>%
+        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
         first() %>%
         mutate(morans.i = MC$statistic, 
                p.value = MC$p.value, 
