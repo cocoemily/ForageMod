@@ -7,7 +7,7 @@ library(spdep)
 
 theme_set(theme_bw())
 
-data = readRDS("results/bb-vt-data.rds")
+data = readRDS("bb-vt-data.rds")
 
 parameters = c(
   "natural-ignition", # 0.00, 0.05
