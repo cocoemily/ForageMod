@@ -21,7 +21,7 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 
-grid.data = data[,c("exp", "x", "y", "ticks", "veg.type", parameters)]
+grid.data = as.data.frame(data[,c("exp", "x", "y", "ticks", "veg.type", parameters)])
 rm(list = c("data"))
 
 colnames(grid.data) = c("exp", "x", "y", "ticks", "veg.type",
