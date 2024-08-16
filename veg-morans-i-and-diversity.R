@@ -4,9 +4,7 @@ library(fitdistrplus)
 library(sp)
 library(ggspatial)
 library(spdep)
-library(ggpubr)
-library(vegan)
-library(jtools)
+
 theme_set(theme_bw())
 
 data = readRDS("results/bb-vt-data.rds")
@@ -21,14 +19,6 @@ parameters = c(
   "burn-veg-type-threshold", # 4, 7
   "movement-model" #Random, Directed
 )
-data$`natural-ignition` = as.factor(data$`natural-ignition`)
-data$`cycle-duration` = as.factor(data$`cycle-duration`)
-data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
-data$`veg-distribution` = as.factor(data$`veg-distribution`)
-data$`burnt-neighbor-limit` = as.factor(data$`burnt-neighbor-limit`)
-data$`burn-cost` = as.factor(data$`burn-cost`)
-data$`burn-veg-type-threshold` = as.factor(data$`burn-veg-type-threshold`)
-data$`movement-model` = as.factor(data$`movement-model`)
 
 grid.data = data[,c("x", "y", "ticks", "veg.type", parameters)]
 grid.data = grid.data  %>% group_by_at(c(parameters)) %>% mutate(exp.group = cur_group_id())

@@ -4,7 +4,7 @@ library(fitdistrplus)
 library(sp)
 library(ggspatial)
 library(spdep)
-library(ggpubr)
+
 
 data = readRDS("results/bb-hb-data.rds")
 
