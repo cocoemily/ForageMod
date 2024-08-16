@@ -24,19 +24,40 @@ parameters = c(
 grid.data = data[,c("exp", "x", "y", "ticks", "veg.type", parameters)]
 rm(list = c("data"))
 
+grid.data = grid.data %>% rename(natural_ignition = `natural-ignition`,
+                                 cycle_duration = `cycle-duration`,
+                                 veg_cycle_start = `veg-cycle-start`,
+                                 veg_distribution = `veg-distribution`,
+                                 burnt_neighbor_limit = `burnt-neighbor-limit`,
+                                 burn_veg_type_threshold = `burn-veg-type-threshold`,
+                                 burn_cost = `burn-cost`,
+                                 movement_model = `movement-model`)
+colnames(grid.data)
+
+parameters = c(
+  "natural_ignition", # 0.00, 0.05
+  "cycle_duration",  # 100, 250
+  "veg_cycle_start", # productive, unproductive
+  "veg_distribution", # random, clustered
+  "burnt_neighbor_limit", # 1, 4, 8
+  "burn_cost", # 0, 50
+  "burn_veg_type_threshold", # 4, 7
+  "movement_model" #Random, Directed
+)
+
 grid.data.100.prod = grid.data %>% 
-  filter(`cycle-duration` == 100) %>% 
-  filter(`veg-cycle-start` == "\"productive\"") 
+  filter(cycle_duration == 100) %>% 
+  filter(veg_cycle_start == "\"productive\"") 
 grid.data.100.unprod = grid.data %>% 
-  filter(`cycle-duration` == 100) %>% 
-  filter(`veg-cycle-start` == "\"unproductive\"") 
+  filter(cycle_duration == 100) %>% 
+  filter(veg_cycle_start == "\"unproductive\"") 
 
 grid.data.250.prod = grid.data %>% 
-  filter(`cycle-duration` == 250) %>% 
-  filter(`veg-cycle-start` == "\"productive\"") 
+  filter(cycle_duration == 250) %>% 
+  filter(veg_cycle_start == "\"productive\"") 
 grid.data.250.unprod = grid.data %>% 
-  filter(`cycle-duration` == 250) %>% 
-  filter(`veg-cycle-start` == "\"unproductive\"") 
+  filter(cycle_duration == 250) %>% 
+  filter(veg_cycle_start == "\"unproductive\"") 
 
 rm(list = c("grid.data"))
 
