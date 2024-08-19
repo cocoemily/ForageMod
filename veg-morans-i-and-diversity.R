@@ -26,18 +26,6 @@ grid.data = data %>% select_at(c("exp", "x", "y", "ticks", "veg.type", parameter
 rm(list = c("data"))
 colnames(grid.data)
 
-# colnames(grid.data) = c("exp", "x", "y", "ticks", "veg.type",
-#                         "natural_ignition", # 0.00, 0.05
-#                         "cycle_duration",  # 100, 250
-#                         "veg_cycle_start", # productive, unproductive
-#                         "veg_distribution", # random, clustered
-#                         "burnt_neighbor_limit", # 1, 4, 8
-#                         "burn_cost", # 0, 50
-#                         "burn_veg_type_threshold", # 4, 7
-#                         "movement_model" #Random, Directed
-# )
-#colnames(grid.data)
-
 parameters = c(
   "natural_ignition", # 0.00, 0.05
   "cycle_duration",  # 100, 250

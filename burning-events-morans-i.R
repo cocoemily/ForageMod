@@ -22,8 +22,21 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 
-grid.data = data[,c("exp", "x", "y", "ticks", "times.burned", parameters)]
+grid.data = select_at(c("exp", "x", "y", "ticks", "times.burned", parameters)) %>%
+  rename_with(~ tolower(gsub("-", "_", .x, fixed = TRUE)))
 rm(list = c("data"))
+colnames(grid.data)
+
+parameters = c(
+  "natural_ignition", # 0.00, 0.05
+  "cycle_duration",  # 100, 250
+  "veg_cycle_start", # productive, unproductive
+  "veg_distribution", # random, clustered
+  "burnt_neighbor_limit", # 1, 4, 8
+  "burn_cost", # 0, 50
+  "burn_veg_type_threshold", # 4, 7
+  "movement_model" #Random, Directed
+)
 
 grid.data.100 = grid.data %>% filter(`cycle-duration` == 100)
 grid.data.250 = grid.data %>% filter(`cycle-duration` == 250)
