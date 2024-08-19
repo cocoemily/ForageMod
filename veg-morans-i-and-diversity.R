@@ -22,7 +22,7 @@ parameters = c(
 )
 
 grid.data = data %>% select_at(c("exp", "x", "y", "ticks", "veg.type", parameters)) %>%
-  rename(~ tolower(gsub("-", "_", .x, fixed = TRUE)))
+  rename_with(~ tolower(gsub("-", "_", .x, fixed = TRUE)))
 rm(list = c("data"))
 colnames(grid.data)
 
