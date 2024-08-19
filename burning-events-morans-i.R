@@ -22,7 +22,7 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 
-grid.data = select_at(c("exp", "x", "y", "ticks", "times.burned", parameters)) %>%
+grid.data = data %>% select_at(c("exp", "x", "y", "ticks", "times.burned", parameters)) %>%
   rename_with(~ tolower(gsub("-", "_", .x, fixed = TRUE)))
 rm(list = c("data"))
 colnames(grid.data)
@@ -47,40 +47,35 @@ morans.data = list()
 
 #for(exp in exp.list) { #for testing
 for(e in unique(grid.data.100$exp)) {
-  tick.grid = grid.data.100 %>% filter(exp == e)
-  tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
+  run.grid = grid.data.100 %>% filter(exp == e)
   
-  for(r in unique(tick.grid$run)) {
-    run.grid = tick.grid %>% filter(run == r)
+  for(t in c(250, 500, 1000, 1500, 2000)) {
+    #for(t in unique(run.grid$ticks)) {
+    grid = run.grid %>% filter(ticks == t)
+    coordinates(grid) = ~y+x
+    gridded(grid) = TRUE
+    grid = as(grid, "SpatialPolygonsDataFrame")
+    #spplot(grid, c("times.burned"))
     
-    for(t in c(250, 500, 1000, 1500, 2000)) {
-      #for(t in unique(run.grid$ticks)) {
-      grid = run.grid %>% filter(ticks == t)
-      coordinates(grid) = ~y+x
-      gridded(grid) = TRUE
-      grid = as(grid, "SpatialPolygonsDataFrame")
-      #spplot(grid, c("times.burned"))
-      
-      nb = poly2nb(grid, queen = T)
-      lw = nb2listw(nb, zero.policy = T)
-      #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
-      #spplot(grid, c("Gi.stat"))
-      
-      if(moran(grid$times.burned, lw, length(nb), Szero(lw))$I > 0){
-        MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")
-      } else {
-        MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "less")
-      }
-      
-      #create data frame 
-      output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
-        first() %>%
-        mutate(morans.i = MC$statistic, 
-               p.value = MC$p.value)
-      
-      morans.data[[length(morans.data) + 1]] <- output.data
+    nb = poly2nb(grid, queen = T)
+    lw = nb2listw(nb, zero.policy = T)
+    #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
+    #spplot(grid, c("Gi.stat"))
+    
+    if(moran(grid$times.burned, lw, length(nb), Szero(lw))$I > 0){
+      MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")
+    } else {
+      MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "less")
     }
+    
+    #create data frame 
+    output.data = as.data.frame(grid@data) %>% 
+      dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
+      first() %>%
+      mutate(morans.i = MC$statistic, 
+             p.value = MC$p.value)
+    
+    morans.data[[length(morans.data) + 1]] <- output.data
   }
 }
 
@@ -95,40 +90,35 @@ morans.data = list()
 
 #for(exp in exp.list) { #for testing
 for(e in unique(grid.data.250$exp)) {
-  tick.grid = grid.data.250 %>% filter(exp == e)
-  tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
+  run.grid = grid.data.250 %>% filter(exp == e)
   
-  for(r in unique(tick.grid$run)) {
-    run.grid = tick.grid %>% filter(run == r)
+  for(t in c(250, 500, 1000, 1500, 2000)) {
+    #for(t in unique(run.grid$ticks)) {
+    grid = run.grid %>% filter(ticks == t)
+    coordinates(grid) = ~y+x
+    gridded(grid) = TRUE
+    grid = as(grid, "SpatialPolygonsDataFrame")
+    #spplot(grid, c("times.burned"))
     
-    for(t in c(250, 500, 1000, 1500, 2000)) {
-      #for(t in unique(run.grid$ticks)) {
-      grid = run.grid %>% filter(ticks == t)
-      coordinates(grid) = ~y+x
-      gridded(grid) = TRUE
-      grid = as(grid, "SpatialPolygonsDataFrame")
-      #spplot(grid, c("times.burned"))
-      
-      nb = poly2nb(grid, queen = T)
-      lw = nb2listw(nb, zero.policy = T)
-      #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
-      #spplot(grid, c("Gi.stat"))
-      
-      if(moran(grid$times.burned, lw, length(nb), Szero(lw))$I > 0){
-        MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")
-      } else {
-        MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "less")
-      }
-      
-      #create data frame 
-      output.data = as.data.frame(grid@data) %>% 
-        dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
-        first() %>%
-        mutate(morans.i = MC$statistic, 
-               p.value = MC$p.value)
-      
-      morans.data[[length(morans.data) + 1]] <- output.data
+    nb = poly2nb(grid, queen = T)
+    lw = nb2listw(nb, zero.policy = T)
+    #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
+    #spplot(grid, c("Gi.stat"))
+    
+    if(moran(grid$times.burned, lw, length(nb), Szero(lw))$I > 0){
+      MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")
+    } else {
+      MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "less")
     }
+    
+    #create data frame 
+    output.data = as.data.frame(grid@data) %>% 
+      dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
+      first() %>%
+      mutate(morans.i = MC$statistic, 
+             p.value = MC$p.value)
+    
+    morans.data[[length(morans.data) + 1]] <- output.data
   }
 }
 
