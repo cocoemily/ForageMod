@@ -92,7 +92,7 @@ for(e in unique(grid.data.100.prod$exp)) {
     
     #create data frame
     output.data = as.data.frame(grid@data) %>%
-      dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
+      dplyr::select_at(c("ticks", "exp", parameters)) %>%
       first() %>%
       mutate(morans.i = MC$statistic,
              p.value = MC$p.value,
@@ -138,7 +138,7 @@ for(e in unique(grid.data.100.unprod$exp)) {
     
     #create data frame
     output.data = as.data.frame(grid@data) %>%
-      dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
+      dplyr::select_at(c("ticks", "exp", parameters)) %>%
       first() %>%
       mutate(morans.i = MC$statistic,
              p.value = MC$p.value,
@@ -186,7 +186,7 @@ for(e in unique(grid.data.250.prod$exp)) {
     
     #create data frame
     output.data = as.data.frame(grid@data) %>%
-      dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
+      dplyr::select_at(c("ticks", "exp", parameters)) %>%
       first() %>%
       mutate(morans.i = MC$statistic,
              p.value = MC$p.value,
@@ -233,7 +233,7 @@ for(e in unique(grid.data.250.unprod$exp)) {
     
     #create data frame
     output.data = as.data.frame(grid@data) %>%
-      dplyr::select_at(c("ticks", parameters, "exp", "run")) %>%
+      dplyr::select_at(c("ticks", "exp", parameters)) %>%
       first() %>%
       mutate(morans.i = MC$statistic,
              p.value = MC$p.value,
