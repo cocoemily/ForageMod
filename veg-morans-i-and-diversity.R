@@ -4,6 +4,7 @@ library(fitdistrplus)
 library(sp)
 library(ggspatial)
 library(spdep)
+library(vegan)
 
 theme_set(theme_bw())
 
