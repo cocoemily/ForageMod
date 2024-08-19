@@ -23,6 +23,7 @@ parameters = c(
 
 grid.data = as.data.frame(data[,c("exp", "x", "y", "ticks", "veg.type", parameters)])
 rm(list = c("data"))
+colnames(grid.data)
 
 colnames(grid.data) = c("exp", "x", "y", "ticks", "veg.type",
                         "natural_ignition", # 0.00, 0.05
@@ -34,7 +35,7 @@ colnames(grid.data) = c("exp", "x", "y", "ticks", "veg.type",
                         "burn_veg_type_threshold", # 4, 7
                         "movement_model" #Random, Directed
 )
-colnames(grid.data)
+#colnames(grid.data)
 
 parameters = c(
   "natural_ignition", # 0.00, 0.05
