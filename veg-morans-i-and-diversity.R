@@ -52,12 +52,15 @@ grid.data.250.unprod = grid.data %>%
   filter(veg_cycle_start == "\"unproductive\"") 
 
 rm(list = c("grid.data"))
+unique(grid.data.100.prod$exp)
 
 #### get data for cycle duration = 100 & productive start ####
 veg.data = list()
 for(e in unique(grid.data.100.prod$exp)) {
   tick.grid = grid.data.100.prod %>% filter(exp == e)
-  tick.grid$run = rep(1:5, each = (51*51*length(unique(tick.grid$ticks))) - 1)
+  nrow(tick.grid)
+  length(unique(tick.grid$ticks))
+  tick.grid$run = rep(1:10, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
     run.grid = tick.grid %>% filter(run == r)
