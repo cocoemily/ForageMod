@@ -38,8 +38,8 @@ parameters = c(
   "movement_model" #Random, Directed
 )
 
-grid.data.100 = grid.data %>% filter(`cycle-duration` == 100)
-grid.data.250 = grid.data %>% filter(`cycle-duration` == 250)
+grid.data.100 = grid.data %>% filter(cycle_duration == 100)
+grid.data.250 = grid.data %>% filter(cycle_duration == 250)
 rm(list = c("grid.data"))
 
 #### Global Moran's I, cycle duration = 100 ####
