@@ -57,10 +57,11 @@ unique(grid.data.100.prod$exp)
 #### get data for cycle duration = 100 & productive start ####
 veg.data = list()
 for(e in unique(grid.data.100.prod$exp)) {
+  print(e)
   tick.grid = grid.data.100.prod %>% filter(exp == e)
   nrow(tick.grid)
   length(unique(tick.grid$ticks))
-  tick.grid$run = rep(1:10, each = (51*51*length(unique(tick.grid$ticks))) - 1)
+  #tick.grid$run = rep(1:10, each = (51*51*length(unique(tick.grid$ticks))) - 1)
   
   for(r in unique(tick.grid$run)) {
     run.grid = tick.grid %>% filter(run == r)
