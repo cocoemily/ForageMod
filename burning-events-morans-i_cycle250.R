@@ -48,8 +48,6 @@ morans.data = list()
 #for(exp in exp.list) { #for testing
 for(e in unique(grid.data.250$exp)) {
   run.grid = grid.data.250 %>% filter(exp == e)
-  print(colnames(run.grid))
-  print(unique(run.grid$ticks))
   
   for(t in c(250, 500, 1000, 1500, 2000)) {
     grid = run.grid %>% filter(ticks == t)
