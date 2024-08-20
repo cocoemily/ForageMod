@@ -41,7 +41,7 @@ parameters = c(
 grid.data.100.prod = grid.data %>% 
   filter(cycle_duration == 100) %>% 
   filter(veg_cycle_start == "\"productive\"") 
-
+print("processing cycle = 100 & start = productive")
 rm(list = c("grid.data"))
 
 #### get data for cycle duration = 100 & productive start ####
