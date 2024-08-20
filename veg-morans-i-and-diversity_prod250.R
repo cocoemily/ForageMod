@@ -96,6 +96,7 @@ for(e in unique(grid.data.250.prod$exp)) {
     
     output.data$climate.condition = cc
     cc = ifelse(cc == "productive", "unproductive", "productive")
+    
     veg.data[[length(veg.data) + 1]] <- output.data
   }
 }

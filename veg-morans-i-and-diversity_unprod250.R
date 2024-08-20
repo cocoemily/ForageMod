@@ -88,5 +88,5 @@ for(e in unique(grid.data.250.unprod$exp)) {
 }
 
 veg.250.unprod = do.call("rbind", veg.data[1:length(veg.data)])
-veg.250.unprod = veg.250.prod %>% mutate(signif = ifelse(p.value < 0.05, T, F))
+veg.250.unprod = veg.250.unprod %>% mutate(signif = ifelse(p.value < 0.05, T, F))
 write_rds(veg.250.unprod, file = "outputs/veg_moransi_250-unprod.rds")
