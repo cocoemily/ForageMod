@@ -52,30 +52,38 @@ for(e in unique(grid.data.250$exp)) {
   print(unique(run.grid$ticks))
   
   for(t in c(250, 500, 1000, 1500, 2000)) {
-    #for(t in unique(run.grid$ticks)) {
     grid = run.grid %>% filter(ticks == t)
-    coordinates(grid) = ~y+x
-    gridded(grid) = TRUE
-    grid = as(grid, "SpatialPolygonsDataFrame")
-    #spplot(grid, c("times.burned"))
-    
-    nb = poly2nb(grid, queen = T)
-    lw = nb2listw(nb, zero.policy = T)
-    #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
-    #spplot(grid, c("Gi.stat"))
-    
-    if(moran(grid$times.burned, lw, length(nb), Szero(lw))$I > 0){
-      MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")
+    if(nrow(grid) > 0) {
+      coordinates(grid) = ~y+x
+      gridded(grid) = TRUE
+      grid = as(grid, "SpatialPolygonsDataFrame")
+      #spplot(grid, c("times.burned"))
+      
+      nb = poly2nb(grid, queen = T)
+      lw = nb2listw(nb, zero.policy = T)
+      #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
+      #spplot(grid, c("Gi.stat"))
+      
+      if(moran(grid$times.burned, lw, length(nb), Szero(lw))$I > 0){
+        MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")
+      } else {
+        MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "less")
+      }
+      
+      #create data frame 
+      output.data = as.data.frame(grid@data) %>% 
+        dplyr::select_at(c("ticks", "exp", parameters)) %>%
+        first() %>%
+        mutate(morans.i = MC$statistic, 
+               p.value = MC$p.value)
     } else {
-      MC <- moran.mc(grid$times.burned, lw, nsim = 999, alternative = "less")
+      output.data = run.grid %>% 
+        dplyr::select_at(c("ticks", "exp", parameters)) %>%
+        first() %>%
+        mutate(ticks = t,
+               morans.i = NA, 
+               p.value = NA)
     }
-    
-    #create data frame 
-    output.data = as.data.frame(grid@data) %>% 
-      dplyr::select_at(c("ticks", "exp", parameters)) %>%
-      first() %>%
-      mutate(morans.i = MC$statistic, 
-             p.value = MC$p.value)
     
     morans.data[[length(morans.data) + 1]] <- output.data
   }

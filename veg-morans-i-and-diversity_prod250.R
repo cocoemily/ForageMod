@@ -59,31 +59,43 @@ for(e in unique(grid.data.250.prod$exp)) {
              1100, 1200, 1350, 1450, 1600, 1700,
              1850, 1950)) {
     grid = run.grid %>% filter(ticks == t)
-    coordinates(grid) = ~y+x
-    gridded(grid) = TRUE
-    grid = as(grid, "SpatialPolygonsDataFrame")
-    #spplot(grid, c("times.burned"))
     
-    nb = poly2nb(grid, queen = T)
-    lw = nb2listw(nb, zero.policy = T)
-    #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
-    #spplot(grid, c("Gi.stat"))
+    if(nrow(grid) > 0){
+      coordinates(grid) = ~y+x
+      gridded(grid) = TRUE
+      grid = as(grid, "SpatialPolygonsDataFrame")
+      #spplot(grid, c("times.burned"))
+      
+      nb = poly2nb(grid, queen = T)
+      lw = nb2listw(nb, zero.policy = T)
+      #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
+      #spplot(grid, c("Gi.stat"))
+      
+      MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
+      
+      counts = as.data.frame(grid@data) %>% count(veg.type)
+      div = diversity(counts$n, index = "shannon")
+      
+      #create data frame
+      output.data = as.data.frame(grid@data) %>%
+        dplyr::select_at(c("ticks", "exp", parameters)) %>%
+        first() %>%
+        mutate(morans.i = MC$statistic,
+               p.value = MC$p.value,
+               shannon.div = div)
+      
+    } else {
+      output.data = run.grid %>% 
+        dplyr::select_at(c("ticks", "exp", parameters)) %>%
+        first() %>%
+        mutate(ticks = t,
+               morans.i = NA, 
+               p.value = NA, 
+               shannon.div = NA)
+    }
     
-    MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
-    
-    counts = as.data.frame(grid@data) %>% count(veg.type)
-    div = diversity(counts$n, index = "shannon")
-    
-    #create data frame
-    output.data = as.data.frame(grid@data) %>%
-      dplyr::select_at(c("ticks", "exp", parameters)) %>%
-      first() %>%
-      mutate(morans.i = MC$statistic,
-             p.value = MC$p.value,
-             shannon.div = div)
     output.data$climate.condition = cc
     cc = ifelse(cc == "productive", "unproductive", "productive")
-    
     veg.data[[length(veg.data) + 1]] <- output.data
   }
 }
