@@ -5,7 +5,7 @@ library(sp)
 library(ggspatial)
 library(spdep)
 
-data = readRDS("bb-hb-data.rds")
+data = readRDS("results/bb-hb-data.rds")
 #colnames(data)
 
 #hist(data$times.burned)
@@ -46,6 +46,10 @@ viz.100 = grid.data.100 %>%
   filter(veg_distribution == "\"clustered\"") %>%
   filter(burnt_neighbor_limit == 8) %>%
   filter(burn_veg_type_threshold == 7)
+
+print(colnames(viz.100))
+print(head(viz.100$exp))
+print(typeof(viz.100$exp))
 
 viz.100.exp = viz.100 %>% filter(exp == "\"0.7374532202200634\"")
 print(head(viz.100.exp))
