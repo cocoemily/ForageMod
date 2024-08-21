@@ -54,9 +54,9 @@ for(e in unique(grid.data.250.unprod$exp)) {
   
   #for(t in c(50, 150, 250, 350)) {
   #for(t in c(150, 400, 650, 900, 1150, 1400, 1650, 1900)) {
-  for(t in c(100, 200, 350, 450, 600, 700, 850, 950,
+  for(t in c(100, 200, 350, 450, 600, 700, 850, 950, 1000,
              1100, 1200, 1350, 1450, 1600, 1700,
-             1850, 1950)) {
+             1850, 1950, 2000)) {
     grid = run.grid %>% filter(ticks == t)
     coordinates(grid) = ~y+x
     gridded(grid) = TRUE
