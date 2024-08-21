@@ -42,10 +42,10 @@ rm(list = c("grid.data"))
 
 ##### visualization -- clustering #####
 viz.100 = grid.data.100 %>% 
-  filter(`movement-model` == "\"Random Walk\"") %>%
-  filter(`veg-distribution` == "\"clustered\"") %>%
-  filter(`burnt-neighbor-limit` == 8) %>%
-  filter(`burn-veg-type-threshold` == 7)
+  filter(movement_model == "\"Random Walk\"") %>%
+  filter(veg_distribution == "\"clustered\"") %>%
+  filter(burnt_neighbor_limit == 8) %>%
+  filter(burn_veg_type_threshold == 7)
 
 unique(viz.100$exp.group)
 viz.100.exp = viz.100 %>% filter(exp == 0.7374532202200634)
@@ -82,10 +82,10 @@ ggsave(filename = "preliminary_figures/landscape_use_clustering.png",
 
 ##### visualization -- dispersion #####
 viz.100 = grid.data.100 %>% 
-  filter(`movement-model` == "\"Random Walk\"") %>%
-  filter(`veg-distribution` == "\"random\"") %>%
-  filter(`burnt-neighbor-limit` == 1) %>%
-  filter(`burn-veg-type-threshold` == 4)
+  filter(movement_model == "\"Random Walk\"") %>%
+  filter(veg_distribution == "\"random\"") %>%
+  filter(burnt_neighbor_limit == 1) %>%
+  filter(burn_veg_type_threshold == 4)
 
 viz.100.exp = viz.100 %>% filter(exp == 0.8411285183431887)
 
