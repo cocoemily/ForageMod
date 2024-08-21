@@ -47,7 +47,7 @@ viz.100 = grid.data.100 %>%
   filter(burnt_neighbor_limit == 8) %>%
   filter(burn_veg_type_threshold == 7)
 
-unique(viz.100$exp.group)
+print(unique(viz.100$exp))
 viz.100.exp = viz.100 %>% filter(exp == 0.7374532202200634)
 print(head(viz.100.exp))
 
