@@ -4,6 +4,7 @@ library(fitdistrplus)
 library(sp)
 library(ggspatial)
 library(spdep)
+library(ggpubr)
 
 data = readRDS("bb-hb-data.rds")
 #colnames(data)
