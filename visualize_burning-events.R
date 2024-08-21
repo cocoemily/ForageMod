@@ -49,6 +49,7 @@ viz.100 = grid.data.100 %>%
 
 unique(viz.100$exp.group)
 viz.100.exp = viz.100 %>% filter(exp == 0.7374532202200634)
+print(head(viz.100.exp))
 
 plot.list = list()
 for(t in c(250, 1000, 2000)) {
