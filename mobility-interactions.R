@@ -1,0 +1,262 @@
+library(tidyverse)
+library(rcompanion)
+library(fitdistrplus)
+library(QuantPsyc)
+library(betareg)
+library(segmented)
+library(lme4)
+library(lmerTest)
+library(ggthemes)
+library(mgcv)
+theme_set(theme_bw())
+
+data = readRDS("results/bb-data.rds")
+
+parameters = c(
+  "natural-ignition", # 0.00, 0.05
+  "cycle-duration",  # 100, 250
+  "veg-cycle-start", # productive, unproductive
+  "veg-distribution", # random, clustered
+  "burnt-neighbor-limit", # 1, 4, 8
+  "burn-cost", # 0, 50
+  "burn-veg-type-threshold", # 4, 7
+  "movement-model" #Random, Directed
+)
+data$`natural-ignition` = as.factor(data$`natural-ignition`)
+data$`cycle-duration` = as.factor(data$`cycle-duration`)
+data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
+data$`veg-distribution` = as.factor(data$`veg-distribution`)
+data$`burnt-neighbor-limit` = as.factor(data$`burnt-neighbor-limit`)
+data$`burn-cost` = as.factor(data$`burn-cost`)
+data$`burn-veg-type-threshold` = as.factor(data$`burn-veg-type-threshold`)
+data$`movement-model` = as.factor(data$`movement-model`)
+
+data$adj.fi = data$mean.fi/data$pop.count
+data$pop.dens = data$pop.count/(51*51)
+
+outputs = c(
+  "pop.count",
+  "pop.dens", #pop count/world size
+  "veg_0", 
+  "mean.burn.prob", 
+  #"mean.fi", #average forager interaction count
+  "adj.fi", #average interaction count/ population count
+  "mean.fm",  #average forager movements per capita
+  "veg.morans.i", 
+  "veg.simpsons.div", 
+  "benefit_self", #
+  "benefit_other"
+)
+
+data$benefit.ratio = data$benefit_self/data$benefit_other
+
+#### mobility analysis ####
+hist(data$mean.fm)
+descdist(data$mean.fm)
+
+start.labs = c("start with unproductive vegetation", "start with productive vegetation")
+names(start.labs) = c("\"unproductive\"", "\"productive\"")
+cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
+names(cycle.labs) = c(250, 100)
+dist.labs = c("random environmental potential", "clustered environmental potential")
+names(dist.labs) = c("\"random\"", "\"clustered\"")
+
+fm.plot = ggplot(data %>% filter(ticks > 0)) +
+  geom_point(aes(x = ticks, y = mean.fm, color = `movement-model`), alpha = 0.01, size = 0.1) +
+  geom_smooth(aes(x = ticks, y = mean.fm, color = `movement-model`), method = "lm") +
+  #geom_hline(yintercept = 0, linetype = "dotted") +
+  facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
+    `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
+  )) +
+  scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+  theme(strip.text = element_text(size = 6), legend.title = element_blank(), legend.position = "bottom") +
+  labs(y = "average steps per foraging bout")
+
+ggsave(filename = "preliminary_figures/average-forager-movement.png", plot = fm.plot,
+       dpi = 300, width = 6, height = 5)
+
+
+
+# fit1 = lm(mean.fm ~ ticks , data = data)
+# seg1 = segmented(fit1, seg.Z = ~ ticks, psi = NA)
+# summary(seg1)
+
+##split by cycle duration
+#filter out ticks = 0
+c100 = data %>% filter(`cycle-duration` == 100) %>% filter(ticks > 0)
+c250 = data %>% filter(`cycle-duration` == 250) %>% filter(ticks > 0)
+
+mm.fit1 = lmer(mean.fm ~ ticks  + (1 | `veg-cycle-start`), data = c100)
+summary(mm.fit1)
+
+mm.fit1.1 = lmer(mean.fm ~ ticks + (1 | `movement-model`)  + (1 | `veg-cycle-start`), data = c100)
+anova(mm.fit1, mm.fit1.1)
+
+mm.fit1.2 = lmer(mean.fm ~ ticks + `veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + (1 | `veg-cycle-start`), data = c100)
+
+mm.fit1.3 = lmer(mean.fm ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition`) + (1 | `veg-cycle-start`), data = c100)
+
+mm.fit1.4 = lmer(mean.fm ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition`) + (1 | `veg-cycle-start`) + (1 | `movement-model`), data = c100)
+anova(mm.fit1.1, mm.fit1.2, mm.fit1.3, mm.fit1.4)
+summary(mm.fit1.4)
+
+ggeffects::ggpredict(mm.fit1.4, terms = c("ticks", "veg-distribution")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(mm.fit1.4, terms = c("ticks", "burnt-neighbor-limit")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(mm.fit1.4, terms = c("ticks", "burn-cost")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(mm.fit1.4, terms = c("ticks", "burn-veg-type-threshold")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+mm.fit2.4 = lmer(mean.fm ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition`) + (1 | `veg-cycle-start`) + (1 | `movement-model`), data = c250)
+summary(mm.fit2.4)
+
+ggeffects::ggpredict(mm.fit2.4, terms = c("ticks", "veg-distribution")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(mm.fit2.4, terms = c("ticks", "burnt-neighbor-limit")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(mm.fit2.4, terms = c("ticks", "burn-cost")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(mm.fit2.4, terms = c("ticks", "burn-veg-type-threshold")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+# c100 = c100 %>% rename(natural_ignition = `natural-ignition`, 
+#                        cycle_duration = `cycle-duration`, 
+#                        veg_cycle_start = `veg-cycle-start`,  
+#                        veg_distribution = `veg-distribution`, 
+#                        burnt_neighbor_limit = `burnt-neighbor-limit`, 
+#                        burn_veg_type_threshold = `burn-veg-type-threshold`, 
+#                        burn_cost = `burn-cost`, 
+#                        movement_model = `movement-model`)
+# 
+# gamm.fit1 = gam(mean.fm ~ 
+#                   s(ticks, by = natural_ignition) +
+#                   s(ticks, by = veg_distribution) +
+#                   s(ticks, by = burnt_neighbor_limit) +
+#                   s(ticks, by = burn_cost) +
+#                   s(ticks, by = burn_veg_type_threshold) +
+#                   s(veg_cycle_start, bs = "re"), 
+#                 data = c100)
+# 
+# gamm.fit1.1 = gam(mean.fm ~ 
+#                     s(ticks, by = natural_ignition) +
+#                     s(ticks, by = veg_distribution) +
+#                     s(ticks, by = burnt_neighbor_limit) +
+#                     s(ticks, by = burn_cost) +
+#                     s(ticks, by = burn_veg_type_threshold) +
+#                     s(veg_cycle_start, ticks, bs = "re"), 
+#                   data = c100)
+# 
+# gamm.fit1.2 = gam(mean.fm ~ 
+#                     s(ticks, by = natural_ignition) +
+#                     s(ticks, by = veg_distribution) +
+#                     s(ticks, by = burnt_neighbor_limit) +
+#                     s(ticks, by = burn_cost) +
+#                     s(ticks, by = burn_veg_type_threshold) +
+#                     s(veg_cycle_start, ticks, bs = "re") +
+#                     s(veg_cycle_start, bs = "re"), 
+#                   data = c100)
+# 
+# gamm.fit1.3 = gam(mean.fm ~ 
+#                     s(ticks, by = natural_ignition) +
+#                     s(ticks, by = veg_distribution) +
+#                     s(ticks, by = burnt_neighbor_limit) +
+#                     s(ticks, by = burn_cost) +
+#                     s(ticks, by = burn_veg_type_threshold) +
+#                     s(veg_cycle_start, ticks, bs = "fs", m = 1), 
+#                   data = c100)
+# 
+# anova(gamm.fit1, gamm.fit1.1, gamm.fit1.2, gamm.fit1.3, test = "Chisq")
+# AIC(gamm.fit1, gamm.fit1.1, gamm.fit1.2, gamm.fit1.3)
+# gam.check(gamm.fit1.3)
+# summary(gamm.fit1.3)
+# plot(gamm.fit1.3, scale = 0)
+
+#### interaction analysis ####
+ggplot(data %>% filter(ticks > 0)) +
+  geom_density(aes(x = log(adj.fi)))
+summary(data$adj.fi)
+
+fi.fit1 = lm(adj.fi ~ ticks*(.), data = data %>% dplyr::select_at(c(parameters, "ticks", "adj.fi")))
+summary(fi.fit1)
+
+fi.plot = ggplot(data %>% filter(ticks > 0)) +
+  geom_point(aes(x = ticks, y = adj.fi, color = `movement-model`), alpha = 0.01, size = 0.05) +
+  geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T) +
+  facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
+    `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
+  )) +
+  scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+  theme(strip.text = element_text(size = 6), legend.title = element_blank(), legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.025)) +
+  labs(y = "average proportion of population a forager interacts with")
+
+ggsave(filename = "preliminary_figures/average-adjusted-interaction.png", plot = fi.plot,
+       dpi = 300, width = 6, height = 5)
+
+ggplot(data %>% filter(ticks > 0)) +
+  geom_point(aes(x = ticks, y = adj.fi, color = `movement-model`), alpha = 0.01, size = 0.05) +
+  geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T, method = "lm") +
+  facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
+    `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
+  )) +
+  scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+  theme(strip.text = element_text(size = 6), legend.title = element_blank(), legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.025))
+
+summary(fi.fit1)
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "veg-cycle-start")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "veg-distribution")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "burnt-neighbor-limit")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "burn-veg-type-threshold")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "burn-cost")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "natural-ignition")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "movement-model")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+ggeffects::ggpredict(fi.fit1, terms = c("ticks", "cycle-duration")) %>%
+  plot(show_data = FALSE, show_ci = FALSE)
+
+
+fi.fit1 = lm(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `veg-cycle-start` + `movement-model` + `cycle-duration` + `natural-ignition`), data = data)
+fi.fit2 = lmer(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `veg-cycle-start` + `natural-ignition`) + (1 | `movement-model`) , data = data)
+anova(fi.fit2, fi.fit1)
+
+###final figure
+long.agent.data = data %>% pivot_longer(c(mean.fm, adj.fi), names_to = "output")
+output.labs = c("moves per bout", "interaction proportion per bout")
+names(output.labs) = c("mean.fm", "adj.fi")
+
+all.plot = ggplot(long.agent.data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100)) +
+  geom_point(aes(x = ticks, y = value, color = `movement-model`), alpha = 0.01, size = 0.05) +
+  geom_smooth(aes(x = ticks, y = value, color = `movement-model`), se = T, method = "lm") +
+  facet_wrap(output ~ `veg-cycle-start`, scales = "free", labeller = labeller(
+    `veg-cycle-start` = start.labs, output = output.labs
+  ), ncol = 2, dir = "v") +
+  scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+  theme(strip.text = element_text(size = 6.5), legend.title = element_blank(), legend.position = "bottom") +
+  scale_y_continuous(expand = c(0.2, 0)) + 
+  labs(y = "value")
+#plot(all.plot)
+
+ggsave(filename = "figures/average-mobility+adjusted-interaction.png", plot = all.plot,
+       dpi = 300, width = 8, height = 5)

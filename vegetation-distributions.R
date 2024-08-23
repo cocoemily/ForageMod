@@ -1,224 +1,164 @@
 library(tidyverse)
 library(rcompanion)
 library(fitdistrplus)
-library(QuantPsyc)
+library(sp)
+library(ggspatial)
+library(spdep)
+library(ggpubr)
+library(vegan)
 library(jtools)
-library(mgcv)
 theme_set(theme_bw())
 
-data = readRDS("results/bb-data.rds")
-
 parameters = c(
-  "natural-ignition", # 0.00, 0.05
-  "cycle-duration",  # 100, 250
-  "veg-cycle-start", # productive, unproductive
-  "veg-distribution", # random, clustered
-  "burnt-neighbor-limit", # 1, 4, 8
-  "burn-cost", # 0, 50
-  "burn-veg-type-threshold", # 4, 7
-  "movement-model" #Random, Directed
-)
-data$`natural-ignition` = as.factor(data$`natural-ignition`)
-data$`cycle-duration` = as.factor(data$`cycle-duration`)
-data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
-data$`veg-distribution` = as.factor(data$`veg-distribution`)
-data$`burnt-neighbor-limit` = as.factor(data$`burnt-neighbor-limit`)
-data$`burn-cost` = as.factor(data$`burn-cost`)
-data$`burn-veg-type-threshold` = as.factor(data$`burn-veg-type-threshold`)
-data$`movement-model` = as.factor(data$`movement-model`)
-
-data$adj.fi = data$mean.fi/data$pop.count
-data$pop.dens = data$pop.count/(51*51)
-
-outputs = c(
-  "pop.count",
-  "pop.dens", #pop count/world size
-  "veg_0", 
-  "mean.burn.prob", 
-  #"mean.fi", #average forager interaction count
-  "adj.fi", #average interaction count/ population count
-  "mean.fm",  #average forager movements per capita
-  "veg.morans.i", 
-  "veg.simpsons.div", 
-  "benefit_self", #
-  "benefit_other"
+  "natural_ignition", # 0.00, 0.05
+  "cycle_duration",  # 100, 250
+  "veg_cycle_start", # productive, unproductive
+  "veg_distribution", # random, clustered
+  "burnt_neighbor_limit", # 1, 4, 8
+  "burn_cost", # 0, 50
+  "burn_veg_type_threshold", # 4, 7
+  "movement_model" #Random, Directed
 )
 
-data$veg.simpsons.div = 1 - data$veg.simpsons.div #fixing Simpson's D calculation from model
+veg.100.prod = readRDS("results/outputs/veg_moransi_100-prod.rds")
+veg.100.unprod = readRDS("results/outputs/veg_moransi_100-unprod.rds")
+veg.250.prod = readRDS("results/outputs/veg_moransi_250-prod.rds")
+veg.250.unprod = readRDS("results/outputs/veg_moransi_250-unprod.rds")
+#veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod)
 
-hist(data$veg.morans.i)
-hist(data$veg.simpsons.div)
+#filtering out ticks used for correlations
+veg.100.prod = veg.100.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.100.unprod = veg.100.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.250.prod = veg.250.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.250.unprod = veg.250.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+
+reg.params = parameters[-c(2:3)]
+
+#### cycle duration = 100 & productive start ####
+##### morans i #####
+hist(veg.100.prod$morans.i)
+# veg.100.prod[,reg.params] = lapply(veg.100.prod[,reg.params] , as.factor)
+# 
+# veg.100.prod.fit1 = lm(morans.i ~ ticks*(.), data = veg.100.prod %>% filter(signif == T) %>% select_at(c("ticks", "morans.i", reg.params)))
+# plot_summs(veg.100.prod.fit1, scale = T)
+
+prod100.plot = ggplot(veg.100.prod %>% filter(signif == T)) +
+  geom_boxplot(mapping = aes(x = ticks, y = morans.i, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i), method = "lm") +
+  facet_wrap(~ movement_model) +
+  labs(color = "model climate condition", y = "Global Moran's I") +
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "bottom")
+
+##### shannon diversity #####
+hist(veg.100.prod$shannon.div)
+descdist(veg.100.prod$shannon.div)
+
+ggplot(veg.100.prod) +
+  geom_density(aes(x = shannon.div, color = movement_model))
+
+ggplot(veg.100.prod) +
+  geom_boxplot(mapping = aes(x = ticks, y = 1 - shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = 1 - shannon.div)) +
+  facet_wrap(~movement_model)
 
 
-clean.data = data %>%
-  select_at(c("ticks", "veg.morans.i", "veg.simpsons.div", parameters, "climate.condition")) %>%
-  rename(natural_ignition = `natural-ignition`, 
-         cycle_duration = `cycle-duration`, 
-         veg_cycle_start = `veg-cycle-start`, 
-         veg_distribution = `veg-distribution`, 
-         burnt_neighbor_limit = `burnt-neighbor-limit`, 
-         burn_veg_type_threshold = `burn-veg-type-threshold`, 
-         burn_cost = `burn-cost`, 
-         movement_model = `movement-model`)
+####cycle duration = 100 & unproductive start ####
+hist(veg.100.unprod$morans.i)
+# veg.100.unprod[,reg.params] = lapply(veg.100.unprod[,reg.params] , as.factor)
+# 
+# veg.100.unprod.fit1 = lm(morans.i ~ ticks*(.), data = veg.100.unprod %>% filter(signif == T) %>% select_at(c("ticks", "morans.i", reg.params)))
+# plot_summs(veg.100.unprod.fit1, scale = T)
 
-#### SPATIAL HETEROGENEITY ####
+unprod100.plot = ggplot(veg.100.unprod %>% filter(signif == T)) +
+  geom_boxplot(mapping = aes(x = ticks, y = morans.i, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i), method = "lm") +
+  facet_wrap(~ movement_model) +
+  labs(color = "model climate condition", y = "Global Moran's I") +
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "bottom")
 
-mi.fit1 = lm(veg.morans.i ~ ticks*(.), data = clean.data[,-c(3, 12)])
-mi.fit2 = lm(veg.morans.i ~ ., data = clean.data[,-c(1,3, 12)])
-mi.fit3 = lm(veg.morans.i ~ ticks*(.), data = clean.data[,-3])
-anova(mi.fit2, mi.fit1, mi.fit3)
-summary(mi.fit1)
-plot_summs(mi.fit1, mi.fit3, scale = T)
+##### shannon diversity #####
+hist(veg.100.unprod$shannon.div)
+descdist(veg.100.unprod$shannon.div)
 
-mi.plot = ggplot(data) +
-  geom_point(aes(x = ticks, y = veg.morans.i, color = `movement-model`), alpha = 0.01, size = 1) +
-  geom_smooth(aes(x = ticks, y = veg.morans.i, color = `movement-model`)) +
-  geom_hline(yintercept = 0) +
-  labs(y = "Moran's I") +
-  scale_color_brewer(palette = "Dark2", labels = c("Directed Walk", "Random Walk")) +
-  theme(legend.title = element_blank(), legend.position = "bottom") 
-plot(mi.plot)
+ggplot(veg.100.unprod) +
+  geom_density(aes(x = shannon.div, color = movement_model))
 
-mi.plot2 = mi.plot +
-  facet_grid(`cycle-duration` + `veg-cycle-start` ~ climate.condition)
-plot(mi.plot2)
+ggplot(veg.100.unprod) +
+  geom_boxplot(mapping = aes(x = ticks, y = 1 - shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = 1 - shannon.div)) +
+  facet_wrap(~movement_model)
 
-ggsave(filename = "preliminary_figures/morans-i.png", plot = mi.plot,
-       dpi = 300, width = 6, height = 4)
+####cycle duration = 250 & productive start ####
+hist(veg.250.prod$morans.i)
+
+hist(veg.250.prod$shannon.div)
+ggplot(veg.250.prod) +
+  geom_density(aes(x = shannon.div, color = movement_model))
+
+####cycle duration = 250 & unproductive start ####
+hist(veg.250.unprod$morans.i)
+
+hist(veg.250.unprod$shannon.div)
+ggplot(veg.250.unprod) +
+  geom_density(aes(x = shannon.div, color = movement_model))
 
 
-#### VEGETATION DIVERSITY ####
-sd.plot = ggplot(data) +
-  geom_point(aes(x = ticks, y = veg.simpsons.div, color = `movement-model`), alpha = 0.01, size = 1) +
-  geom_smooth(aes(x = ticks, y = veg.simpsons.div, color = `movement-model`)) +
-  labs(y = "Simpson's Diversity Index") +
-  scale_color_brewer(palette = "Dark2", labels = c("Directed Walk", "Random Walk")) +
-  theme(legend.title = element_blank(), legend.position = "bottom")
+####vegetation spatial autocorrelation####
+veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod) 
 
+#create labels
 start.labs = c("start with unproductive vegetation", "start with productive vegetation")
 names(start.labs) = c("\"unproductive\"", "\"productive\"")
 cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
 names(cycle.labs) = c(250, 100)
-sd.plot2 = sd.plot +
-  facet_grid(`cycle-duration`~`veg-cycle-start`, 
-             labeller = labeller(`cycle-duration` = cycle.labs,`veg-cycle-start` = start.labs)) +
-  theme(legend.title = element_blank(), legend.position = "bottom", strip.text = element_text(size = 7))
-#plot(sd.plot2)
+move.labs = c("random walks", "directed walks")
+names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
 
-ggsave(filename = "preliminary_figures/simpsons-diversity.png", plot = sd.plot2,
-       dpi = 300, width = 6, height = 4)
+veg.cluster.plot = ggplot(veg.data %>% filter(signif == T)) +
+  geom_boxplot(mapping = aes(x = ticks, y = morans.i, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i), method = "lm") +
+  facet_grid(movement_model ~ cycle_duration + veg_cycle_start , labeller = 
+               labeller(cycle_duration = cycle.labs, 
+                        veg_cycle_start = start.labs, 
+                        movement_model = move.labs)) +
+  labs(color = "climate condition", y = "Global Moran's I") +
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
 
-ggplot(data) +
-  geom_density(aes(x = veg.simpsons.div, color = `movement-model`))
+ggsave(filename = "preliminary_figures/veg-type-clustering.png", plot = veg.cluster.plot,
+       dpi = 300, width = 8, height = 5.5)
 
-##### random walk data ####
-rw.data = data %>% filter(`movement-model` == "\"Random Walk\"")
-
-ggplot(rw.data) +
-  geom_point(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`), alpha = 0.01, size = 1) +
-  geom_smooth(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`)) +
-  labs(y = "Simpson's Diversity Index") +
-  facet_grid(`burnt-neighbor-limit` ~`veg-cycle-start` + `cycle-duration`)
-
-rw.gam1 = gam(veg.simpsons.div ~ s(ticks), data = rw.data)
-#plot(rw.gam1)
-
-rw.fit1 = glm(veg.simpsons.div ~ ticks*(.), data = rw.data %>% select_at(c(parameters, "ticks", "veg.simpsons.div")) %>% dplyr::select(-`movement-model`), family = "Gamma")
-
-rw.gam2 = gam(veg.simpsons.div ~ 
-                s(ticks, by = cycle_duration) + 
-                s(ticks, by = veg_cycle_start) +
-                s(ticks, by = veg_distribution),
-              data = clean.data %>% filter(movement_model == "\"Random Walk\""))
-
-rw.gam3 = gam(veg.simpsons.div ~  s(ticks, by = natural_ignition) +
-                s(ticks, by = cycle_duration) +
-                s(ticks, by = veg_cycle_start) +
-                s(ticks, by = veg_distribution) +
-                s(ticks, by = burn_cost)  + 
-                s(ticks, by = burn_veg_type_threshold) +
-                s(ticks, by = as.factor(burnt_neighbor_limit)),
-              data = clean.data %>% filter(movement_model == "\"Random Walk\""))
-anova(rw.gam1, rw.gam2, rw.gam3, test = "Chisq")
-AIC(rw.fit1)
-AIC(rw.gam3)
-
-par(mar=c(1,1,1,1))
-plot(rw.gam3, pages = 1)
-summary(rw.gam3)
-
-###### split by cycle duration length #####
-rw.c100 = clean.data %>% filter(movement_model == "\"Random Walk\"") %>% filter(cycle_duration == 100)
-rw.c250 = clean.data %>% filter(movement_model == "\"Random Walk\"") %>% filter(cycle_duration == 250)
-
-rw.gam4 = gam(veg.simpsons.div ~  s(ticks, by = natural_ignition) +
-                s(ticks, by = veg_cycle_start) +
-                s(ticks, by = veg_distribution) +
-                s(ticks, by = burn_cost)  + 
-                s(ticks, by = burn_veg_type_threshold) +
-                s(ticks, by = as.factor(burnt_neighbor_limit)),
-              data = rw.c100)
-summary(rw.gam4)
-
-par(mfrow=c(1,3), cex=1.1)
-plot(rw.gam4, select=11, shade=T)
-abline(h=0, lty = 2)
-plot(rw.gam4, select=12, shade=T)
-abline(h=0, lty = 2)
-plot(rw.gam4, select=13, shade=T)
-abline(h=0, lty = 2)
+#### vegetation diversity####
+veg.div.plot = ggplot(veg.data %>% filter(signif == T)) +
+  geom_boxplot(mapping = aes(x = ticks, y = shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div)) +
+  facet_grid(movement_model ~ cycle_duration + veg_cycle_start , labeller = 
+               labeller(cycle_duration = cycle.labs, 
+                        veg_cycle_start = start.labs, 
+                        movement_model = move.labs)) +
+  labs(color = "climate condition", y = "Shannon Diversity Index") +
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
+#plot(veg.div.plot)
+ggsave(filename = "preliminary_figures/veg-type-diversity.png", plot = veg.div.plot,
+       dpi = 300, width = 8, height = 5.5)
 
 
-rw.gam5 = gam(veg.simpsons.div ~  s(ticks, by = natural_ignition) +
-                s(ticks, by = veg_cycle_start) +
-                s(ticks, by = veg_distribution) +
-                s(ticks, by = burn_cost)  + 
-                s(ticks, by = burn_veg_type_threshold) +
-                s(ticks, by = as.factor(burnt_neighbor_limit)),
-              data = rw.c250)
-summary(rw.gam5)
+##all data together
+long.veg = veg.data %>% pivot_longer(c(morans.i, shannon.div), names_to = "metric", values_to = "value")
+metric.labs = c("Global Moran's I", "Shannon Diversity Index")
+names(metric.labs) = c("morans.i", "shannon.div")
 
+all.plot = ggplot(long.veg %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")) +
+  geom_boxplot(mapping = aes(x = ticks, y = value, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = value), method = "gam", color = "black") +
+  facet_grid(metric ~ movement_model, labeller = 
+               labeller(movement_model = move.labs, metric = metric.labs), scales = "free") +
+  labs(color = "climate condition") +
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "bottom")
 
-##### directed walk data #####
-dw.data = data %>% filter(`movement-model` == "\"Directed Walk\"")
-
-# ggplot(dw.data) +
-#   geom_point(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`), alpha = 0.01, size = 1) +
-#   geom_smooth(aes(x = ticks, y = veg.simpsons.div, color = `burn-veg-type-threshold`)) +
-#   labs(y = "Simpson's Diversity Index") +
-#   facet_grid(`burnt-neighbor-limit` ~`veg-cycle-start` + `cycle-duration`)
-
-#hist(rw.data$veg.simpsons.div)
-#descdist((rw.data %>% filter(!is.na(veg.simpsons.div)))$veg.simpsons.div)
-#hist(dw.data$veg.simpsons.div)
-#descdist((dw.data %>% filter(!is.na(veg.simpsons.div)))$veg.simpsons.div
-
-dw.gam1 = gam(veg.simpsons.div ~  s(ticks, by = natural_ignition) +
-                s(ticks, by = cycle_duration) +
-                s(ticks, by = veg_cycle_start) +
-                s(ticks, by = veg_distribution) +
-                s(ticks, by = burn_cost)  + 
-                s(ticks, by = burn_veg_type_threshold) +
-                s(ticks, by = as.factor(burnt_neighbor_limit)),
-              data = clean.data %>% filter(movement_model == "\"Directed Walk\""))
-summary(dw.gam1)
-plot(dw.gam1)
-
-
-
-
-#### visualizing vegetation proportions ####
-veg.props = data %>% dplyr::select_at(c("ticks", parameters, "climate.condition", "veg_0", "veg_1", "veg_2", "veg_3", "veg_4", "veg_5", "veg_6", "veg_7")) %>%
-  pivot_longer(cols = c("veg_0", "veg_1", "veg_2", "veg_3", "veg_4", "veg_5", "veg_6", "veg_7"), 
-               names_to = "veg_type", values_to = "prop")
-
-# ggplot(veg.props) +
-#   geom_point(aes(x = ticks, y = prop, color = veg_type), alpha = 0.1, size = 0.1) +
-#   facet_grid(`movement-model` ~ `veg-cycle-start` + `cycle-duration`)
-
-ggplot(veg.props) +
-  geom_smooth(aes(x = ticks, y = prop, color = veg_type, group = veg_type)) +
-  facet_grid(`movement-model` ~ `veg-cycle-start` + `cycle-duration`)
-
-
-
+ggsave(filename = "figures/veg-type-clustering+diversity.png", plot = all.plot,
+       dpi = 300, width = 8, height = 5)
