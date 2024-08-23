@@ -18,7 +18,7 @@ library(ggthemes)
 library(lme4)
 theme_set(theme_bw())
 
-data = readRDS("results/bb-data.rds")
+data = readRDS("bb-data.rds")
 
 parameters = c(
   "natural-ignition", # 0.00, 0.05
@@ -119,13 +119,13 @@ outputs = c(
   "be_morans.i"
 )
 
-veg.100.prod = readRDS("results/outputs/veg_moransi_100-prod.rds")
-veg.100.unprod = readRDS("results/outputs/veg_moransi_100-unprod.rds")
-veg.250.prod = readRDS("results/outputs/veg_moransi_250-prod.rds")
-veg.250.unprod = readRDS("results/outputs/veg_moransi_250-unprod.rds")
+veg.100.prod = readRDS("outputs/veg_moransi_100-prod.rds")
+veg.100.unprod = readRDS("outputs/veg_moransi_100-unprod.rds")
+veg.250.prod = readRDS("outputs/veg_moransi_250-prod.rds")
+veg.250.unprod = readRDS("outputs/veg_moransi_250-unprod.rds")
 veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod)
-be.100 = readRDS("results/outputs/be_morans.i_cycle.100.rds")
-be.250 = readRDS("results/outputs/be_morans.i_cycle.250.rds")
+be.100 = readRDS("outputs/be_morans.i_cycle.100.rds")
+be.250 = readRDS("outputs/be_morans.i_cycle.250.rds")
 be.data = bind_rows(be.100, be.250)
 
 
@@ -482,10 +482,10 @@ Natural ignition of the landscape obviously results in higher proportions of bur
 Spatial heterogeneity of vegetation types is assessed via Moran's I values. We limit our analysis to those significant values of Moran's I to assess the degree of clustering (positive values) or dispersion (negative values). We assessed the effects of the different parameters using linear regressions. 
 
 ```{r morans-i-regression_1, echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
-veg.100.prod = readRDS("results/outputs/veg_moransi_100-prod.rds")
-veg.100.unprod = readRDS("results/outputs/veg_moransi_100-unprod.rds")
-veg.250.prod = readRDS("results/outputs/veg_moransi_250-prod.rds")
-veg.250.unprod = readRDS("results/outputs/veg_moransi_250-unprod.rds")
+veg.100.prod = readRDS("outputs/veg_moransi_100-prod.rds")
+veg.100.unprod = readRDS("outputs/veg_moransi_100-unprod.rds")
+veg.250.prod = readRDS("outputs/veg_moransi_250-prod.rds")
+veg.250.unprod = readRDS("outputs/veg_moransi_250-unprod.rds")
 
 veg.100.prod = veg.100.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
 veg.100.unprod = veg.100.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
@@ -722,9 +722,9 @@ parameters = c(
   "movement_model" #Random, Directed
 )
 
-be.morans.100 <- readRDS("results/outputs/be_morans.i_cycle.100.rds")
+be.morans.100 <- readRDS("outputs/be_morans.i_cycle.100.rds")
 be.morans.100[,parameters[-2]] = lapply(be.morans.100[,parameters[-2]] , as.factor)
-be.morans.250 <- readRDS("results/outputs/be_morans.i_cycle.250.rds")
+be.morans.250 <- readRDS("outputs/be_morans.i_cycle.250.rds")
 be.morans.250[,parameters[-2]] = lapply(be.morans.250[,parameters[-2]] , as.factor)
 
 #hist(all.morans.100$morans.i)
