@@ -102,7 +102,7 @@ We can see that population density is highly correlated with most of the other o
 
 We also investigated how these correlations change over time by looking at the correlations between outputs at 250 ticks, 1000 ticks, and 2000 ticks. For this, we also include spatial autocorrelation values of vegetation types and burning events, as well as a diversity metric of vegetation types.
 
-```{r output-correlations_2, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, out.width='100%'}
+```{r output-correlations_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 
 outputs = c(
   #"pop.count",
@@ -556,7 +556,7 @@ These significant differences between *movement-model* and *natural-ignition* ar
 
 Vegetation diversity was measured by Shannon's Diversity Index. This metric considers the proportional abundances of vegetation types to indicate whether one type dominates or abundances are more evenly spread across all types. A SDI value of 0 indicates a lack of diversity with abundance being concentrated in a single species. Higher SDI values indicate more diversity of vegetation types. 
 
-```{r veg-diversity-distribution, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, out.width='100%', fig.height = 4}
+```{r veg-diversity-distribution, echo=FALSE, fig.height=, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod) 
 
 hist(veg.data$shannon.div)
@@ -567,7 +567,7 @@ ggplot(veg.data) +
 ```
 The distribution of this metric is bimodal across model runs, with a high proportion of measurements showing a complete lack of diversity. This bimodality is caused by the different movement models used: directed walks result in less diversity than random walks.
 
-```{r veg-diversity-regression_1, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, out.width='100%', fig.height=3}
+```{r veg-diversity-regression_1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data.r = veg.data %>% filter(movement_model == "\"Random Walk\"")
 reg.params = parameters = c(
   "natural_ignition", # 0.00, 0.05
@@ -636,7 +636,7 @@ abline(h=0, lty = 2)
 ```
 TEXT HERE
 
-```{r veg-diversity-regression_2, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, out.width='100%', fig.height=3}
+```{r veg-diversity-regression_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data.d = veg.data %>% filter(movement_model == "\"Directed Walk\"")
 reg.params = parameters = c(
   "natural_ignition", # 0.00, 0.05
@@ -779,7 +779,7 @@ Movement in the model is, therefore, patterned primarily by the energy available
 
 While cycle duration clearly causes fluctuations in agent movement behaviors, we chose to investigate average steps per foraging bout as a linear trend, splitting the data by cycle duration. Using mixed linear models, we can see how the other parameters affect forager movement while controlling for starting vegetation state.  
 
-```{r fm-mm-regs, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=3}
+```{r fm-mm-regs, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width="100%"}
 c100 = data %>% filter(`cycle-duration` == 100) %>% filter(ticks > 0)
 c250 = data %>% filter(`cycle-duration` == 250) %>% filter(ticks > 0)
 
@@ -848,7 +848,7 @@ When looking at forager interactions, we have to consider them in relation to po
 
 First, we investigate parameter effects via linear regression.
 
-```{r adj-fi-reg_1, echo=FALSE, message=FALSE, warning=FALSE}
+```{r adj-fi-reg_1, echo=TRUE, message=FALSE, warning=FALSE}
 # ggplot(data %>% filter(ticks > 0)) +
 #   geom_density(aes(x = log(adj.fi)))
 # summary(data$adj.fi)
@@ -939,66 +939,66 @@ For the random walk data, we can see that initially forager interactions are aff
 ```{r parameter-effects-adj-fi, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 3}
 ggarrange(
   ggeffects::ggpredict(dw.fit1, terms = c("ticks", "veg-cycle-start")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   ggeffects::ggpredict(rw.fit3, terms = c("ticks", "veg-cycle-start")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)),
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)),
   ggeffects::ggpredict(rw.fit4, terms = c("ticks", "veg-cycle-start")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk (ticks < 216)", "Random Walk (ticks > 216)"), nrow = 1, ncol = 3, font.label = list(size = 8), vjust = 0.8
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7)) 
 
 ggarrange(
   ggeffects::ggpredict(dw.fit1, terms = c("ticks", "veg-distribution")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   ggeffects::ggpredict(rw.fit3, terms = c("ticks", "veg-distribution")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)),
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)),
   ggeffects::ggpredict(rw.fit4, terms = c("ticks", "veg-distribution")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk (ticks < 216)", "Random Walk (ticks > 216)"), nrow = 1, ncol = 3, font.label = list(size = 8), vjust = 0.8
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7)) 
 
 ggarrange(
   ggeffects::ggpredict(dw.fit1, terms = c("ticks", "burnt-neighbor-limit")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   ggeffects::ggpredict(rw.fit3, terms = c("ticks", "burnt-neighbor-limit")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)),
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)),
   ggeffects::ggpredict(rw.fit4, terms = c("ticks", "burnt-neighbor-limit")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk (ticks < 216)", "Random Walk (ticks > 216)"), nrow = 1, ncol = 3, font.label = list(size = 8), vjust = 0.8
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7)) 
 
 ggarrange(
   ggeffects::ggpredict(dw.fit1, terms = c("ticks", "burn-veg-type-threshold")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   ggeffects::ggpredict(rw.fit3, terms = c("ticks", "burn-veg-type-threshold")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)),
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)),
   ggeffects::ggpredict(rw.fit4, terms = c("ticks", "burn-veg-type-threshold")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk (ticks < 216)", "Random Walk (ticks > 216)"), nrow = 1, ncol = 3, font.label = list(size = 8), vjust = 0.8
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7)) 
 
 ggarrange(
   ggeffects::ggpredict(dw.fit1, terms = c("ticks", "burn-cost")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   ggeffects::ggpredict(rw.fit3, terms = c("ticks", "burn-cost")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)),
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)),
   ggeffects::ggpredict(rw.fit4, terms = c("ticks", "burn-cost")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk (ticks < 216)", "Random Walk (ticks > 216)"), nrow = 1, ncol = 3, font.label = list(size = 8), vjust = 0.8
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7))
 
 ggarrange(
   ggeffects::ggpredict(dw.fit1, terms = c("ticks", "natural-ignition")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   ggeffects::ggpredict(rw.fit3, terms = c("ticks", "natural-ignition")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)),
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)),
   ggeffects::ggpredict(rw.fit4, terms = c("ticks", "natural-ignition")) %>%
-    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.0155)), 
+    plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)), 
   common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk (ticks < 216)", "Random Walk (ticks > 216)"), nrow = 1, ncol = 3, font.label = list(size = 8), vjust = 0.8
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7))
