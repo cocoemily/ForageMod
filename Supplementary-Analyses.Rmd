@@ -556,7 +556,7 @@ These significant differences between *movement-model* and *natural-ignition* ar
 
 Vegetation diversity was measured by Shannon's Diversity Index. This metric considers the proportional abundances of vegetation types to indicate whether one type dominates or abundances are more evenly spread across all types. A SDI value of 0 indicates a lack of diversity with abundance being concentrated in a single species. Higher SDI values indicate more diversity of vegetation types. 
 
-```{r veg-diversity-distribution, echo=FALSE, fig.height=, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-diversity-distribution, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod) 
 
 hist(veg.data$shannon.div)
