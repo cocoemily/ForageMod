@@ -241,22 +241,37 @@ fi.fit1 = lm(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn
 fi.fit2 = lmer(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `veg-cycle-start` + `natural-ignition`) + (1 | `movement-model`) , data = data)
 anova(fi.fit2, fi.fit1)
 
-###final figure
-long.agent.data = data %>% pivot_longer(c(mean.fm, adj.fi), names_to = "output")
-output.labs = c("moves per bout", "interaction proportion per bout")
-names(output.labs) = c("mean.fm", "adj.fi")
-
-all.plot = ggplot(long.agent.data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100)) +
-  geom_point(aes(x = ticks, y = value, color = `movement-model`), alpha = 0.01, size = 0.05) +
-  geom_smooth(aes(x = ticks, y = value, color = `movement-model`), se = T, method = "lm") +
-  facet_wrap(output ~ `veg-cycle-start`, scales = "free", labeller = labeller(
-    `veg-cycle-start` = start.labs, output = output.labs
-  ), ncol = 2, dir = "v") +
-  scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
-  theme(strip.text = element_text(size = 6.5), legend.title = element_blank(), legend.position = "bottom") +
-  scale_y_continuous(expand = c(0.2, 0)) + 
-  labs(y = "value")
-#plot(all.plot)
+#### final figure ####
+all.plot = ggarrange(
+  ggplot(data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100)) +
+    geom_point(aes(x = ticks, y = mean.fm, color = `movement-model`), alpha = 0.01, size = 0.1) +
+    geom_smooth(aes(x = ticks, y = mean.fm, color = `movement-model`), method = "lm") +
+    #geom_hline(yintercept = 0, linetype = "dotted") +
+    facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
+      `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
+    )) +
+    scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+    theme(strip.text = element_text(size = 6), 
+          legend.title = element_blank(), 
+          legend.position = "bottom", 
+          axis.title = element_text(size = 7.5)) +
+    scale_y_continuous(limits = c(6.000, 10.500), labels = scales::number_format(accuracy = 0.001)) + 
+    labs(y = "average steps per foraging bout"),
+  ggplot(data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100)) +
+    geom_point(aes(x = ticks, y = adj.fi, color = `movement-model`), alpha = 0.01, size = 0.05) +
+    geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T) +
+    facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
+      `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
+    )) +
+    scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+    theme(strip.text = element_text(size = 6), 
+          legend.title = element_blank(), 
+          legend.position = "bottom", 
+          axis.title = element_text(size = 7.5)) +
+    scale_y_continuous(limits = c(0, 0.025)) +
+    labs(y = "interaction proportion per bout"), 
+  ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
+)
 
 ggsave(filename = "figures/average-mobility+adjusted-interaction.png", plot = all.plot,
        dpi = 300, width = 8, height = 5)

@@ -4,13 +4,11 @@ ForageModv01.nlogo
 *.DS_Store
 
 preliminary-results/
-sensitivity-analysis/
-results/
-results.zip
-
-preliminary_figures/
-figures/
-
+sensitivity-analysis/*.csv
+sensitivity-analysis/*.rds
+results/*.csv
+results/*.rds
+results/outputs/*.rds
 
 ## R gitignore default
 # History files

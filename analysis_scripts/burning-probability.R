@@ -82,8 +82,9 @@ ggplot(data) +
   geom_point(aes(x = benefit_self, y = mean.burn.prob))
 
 br.plot = ggplot(data) +
-  geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp), alpha = 0.25, color = "darkslategrey") +
+  geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.25) +
   geom_smooth(aes(x = ticks, y = benefit.ratio)) +
+  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   labs(x = "ticks", y = "ratio of self benefit to other benefit")
 #plot(br.plot)

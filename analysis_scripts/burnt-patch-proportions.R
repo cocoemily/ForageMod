@@ -157,3 +157,60 @@ lmtest::lrtest(burnn8.fit1, burnn8.fit2)
 plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6, 
            model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
 
+
+#### plot all burning behaviors ####
+mbp.plot2 = ggplot(data) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = `burn-cost`), alpha = 0.25) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "red") +
+  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
+  labs(y = "mean probability of burning", x = "ticks", color = "cost of burning") +
+  theme(legend.position = "bottom", axis.title = element_text(size = 5.5))
+
+br.plot2 = ggplot(data) +
+  geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.25) +
+  geom_smooth(aes(x = ticks, y = benefit.ratio), se = F, color = "red") +
+  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(x = "ticks", y = "ratio of self benefit to other benefit") +
+  theme(legend.position = "bottom", axis.title = element_text(size = 5.5))
+
+img = png::readPNG("preliminary_figures/ForageModv02_view.png")
+img.in = grid::rasterGrob(img, interpolate = T)
+img.plot = ggplot()+
+  geom_blank()+
+  annotation_custom(img.in, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_minimal()
+
+bprop.plot2 = ggplot(plot.data) +
+  geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 8), mapping = 
+               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+  geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 4), mapping = 
+               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+  geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 1), mapping = 
+               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+  geom_smooth(aes(x = ticks, y = veg_0, color = `burnt-neighbor-limit`), se = F) +
+  geom_hline(yintercept = 1.0, linetype = "dotted") +
+  facet_wrap(`burn-cost` ~ `burn-veg-type-threshold`, labeller = labeller(
+    `burn-veg-type-threshold` = bt.labs, 
+    `burn-cost` = bc.labs
+  )) +
+  labs(y = "proportion of patches that are burnt") +
+  scale_color_brewer(palette = "Set1",
+                     labels = c("can burn patch with 8 burnt adjacent neighbors", 
+                                "can burn patch with 4 burnt adjacent neighbors", 
+                                "can burn patch with 1 burnt adjacent neighbor")) +
+  theme(legend.title = element_blank(), legend.position = "bottom", 
+        legend.text = element_text(size = 7), 
+        strip.text = element_text(size = 7), axis.title = element_text(size = 7))
+
+all.plot = ggarrange(
+  ggarrange(
+    ggarrange(mbp.plot, br.plot,
+              common.legend = T, legend = "top", labels = "AUTO", 
+              nrow = 1) + theme(legend.title = element_text(size = 7)), 
+    img.plot, nrow = 1, labels = c("", "C"), widths = c(2,1)), 
+  bprop.plot2, nrow = 2, labels = c("", "D")
+)
+
+ggsave(filename = "figures/burning-behaviors-plot.png", plot = all.plot,
+       dpi = 300, width = 8, height = 7)

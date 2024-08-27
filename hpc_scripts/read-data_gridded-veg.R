@@ -34,4 +34,4 @@ for (x in experiments) {
 
 final.vt.data = rbindlist(vt.data)
 
-saveRDS(final.vt.data, file = "bb-vt-data.rds")
+saveRDS(final.vt.data, file = "results/bb-vt-data.rds")

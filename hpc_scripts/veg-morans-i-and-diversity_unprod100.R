@@ -8,7 +8,7 @@ library(vegan)
 
 theme_set(theme_bw())
 
-data = readRDS("bb-vt-data.rds")
+data = readRDS("../results/bb-vt-data.rds")
 #colnames(data)
 
 parameters = c(
@@ -38,22 +38,20 @@ parameters = c(
   "movement_model" #Random, Directed
 )
 
-grid.data.100.prod = grid.data %>% 
+
+grid.data.100.unprod = grid.data %>% 
   filter(cycle_duration == 100) %>% 
-  filter(veg_cycle_start == "\"productive\"") 
-print("processing cycle = 100 & start = productive")
+  filter(veg_cycle_start == "\"unproductive\"") 
+print("processing cycle = 100 & start = unproductive")
 rm(list = c("grid.data"))
 
-#### get data for cycle duration = 100 & productive start ####
+#### get data for cycle duration = 100 & unproductive start ####
 veg.data = list()
-for(e in unique(grid.data.100.prod$exp)) {
-  #print(e)
-  run.grid = grid.data.100.prod %>% filter(exp == e)
-  #print(nrow(run.grid))
-  #print(length(unique(run.grid$ticks)))
+for(e in unique(grid.data.100.unprod$exp)) {
+  run.grid = grid.data.100.unprod %>% filter(exp == e)
   
-  run.grid$climate.condition = "productive"
-  cc = "productive"
+  run.grid$climate.condition = "unproductive"
+  cc = "unproductive"
   
   #for(t in c(50, 150, 250, 350)) {
   for(t in c(50, 150, 250, 350, 450, 550, 650,
@@ -70,11 +68,6 @@ for(e in unique(grid.data.100.prod$exp)) {
     #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
     #spplot(grid, c("Gi.stat"))
     
-    # if(moran(grid$veg.type, lw, length(nb), Szero(lw))$I > 0){
-    #   MC <- moran.mc(grid$veg.type, lw, nsim = 999, alternative = "greater")
-    # } else {
-    #   MC <- moran.mc(grid$veg.type, lw, nsim = 999, alternative = "less")
-    # }
     MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
     
     counts = as.data.frame(grid@data) %>% count(veg.type)
@@ -92,8 +85,9 @@ for(e in unique(grid.data.100.prod$exp)) {
     
     veg.data[[length(veg.data) + 1]] <- output.data
   }
+  
 }
 
-veg.100.prod = do.call("rbind", veg.data[1:length(veg.data)])
-veg.100.prod = veg.100.prod %>% mutate(signif = ifelse(p.value < 0.05, T, F))
-write_rds(veg.100.prod, file = "outputs/veg_moransi_100-prod.rds")
+veg.100.unprod = do.call("rbind", veg.data[1:length(veg.data)])
+veg.100.unprod = veg.100.unprod %>% mutate(signif = ifelse(p.value < 0.05, T, F))
+write_rds(veg.100.unprod, file = "outputs/veg_moransi_100-unprod.rds")

@@ -8,7 +8,7 @@ library(vegan)
 
 theme_set(theme_bw())
 
-data = readRDS("bb-vt-data.rds")
+data = readRDS("results/bb-vt-data.rds")
 #colnames(data)
 
 parameters = c(
@@ -38,25 +38,27 @@ parameters = c(
   "movement_model" #Random, Directed
 )
 
-grid.data.250.unprod = grid.data %>% 
-  filter(cycle_duration == 250) %>% 
-  filter(veg_cycle_start == "\"unproductive\"") 
-print("processing cycle = 250 & start = unproductive")
+grid.data.100.prod = grid.data %>% 
+  filter(cycle_duration == 100) %>% 
+  filter(veg_cycle_start == "\"productive\"") 
+print("processing cycle = 100 & start = productive")
 rm(list = c("grid.data"))
 
-#### get data for cycle duration = 250 & unproductive start ####
+#### get data for cycle duration = 100 & productive start ####
 veg.data = list()
-for(e in unique(grid.data.250.unprod$exp)) {
-  run.grid = grid.data.250.unprod %>% filter(exp == e)
+for(e in unique(grid.data.100.prod$exp)) {
+  #print(e)
+  run.grid = grid.data.100.prod %>% filter(exp == e)
+  #print(nrow(run.grid))
+  #print(length(unique(run.grid$ticks)))
   
-  run.grid$climate.condition = "unproductive"
-  cc = "unproductive"
+  run.grid$climate.condition = "productive"
+  cc = "productive"
   
   #for(t in c(50, 150, 250, 350)) {
-  #for(t in c(150, 400, 650, 900, 1150, 1400, 1650, 1900)) {
-  for(t in c(100, 200, 350, 450, 600, 700, 850, 950, 1000,
-             1100, 1200, 1350, 1450, 1600, 1700,
-             1850, 1950, 2000)) {
+  for(t in c(50, 150, 250, 350, 450, 550, 650,
+             750, 850, 950, 1050, 1000, 1150, 1250, 1350,
+             1450, 1550, 1650, 1750, 1850, 1950, 2000)) {
     grid = run.grid %>% filter(ticks == t)
     coordinates(grid) = ~y+x
     gridded(grid) = TRUE
@@ -68,6 +70,11 @@ for(e in unique(grid.data.250.unprod$exp)) {
     #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
     #spplot(grid, c("Gi.stat"))
     
+    # if(moran(grid$veg.type, lw, length(nb), Szero(lw))$I > 0){
+    #   MC <- moran.mc(grid$veg.type, lw, nsim = 999, alternative = "greater")
+    # } else {
+    #   MC <- moran.mc(grid$veg.type, lw, nsim = 999, alternative = "less")
+    # }
     MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
     
     counts = as.data.frame(grid@data) %>% count(veg.type)
@@ -87,6 +94,6 @@ for(e in unique(grid.data.250.unprod$exp)) {
   }
 }
 
-veg.250.unprod = do.call("rbind", veg.data[1:length(veg.data)])
-veg.250.unprod = veg.250.unprod %>% mutate(signif = ifelse(p.value < 0.05, T, F))
-write_rds(veg.250.unprod, file = "outputs/veg_moransi_250-unprod.rds")
+veg.100.prod = do.call("rbind", veg.data[1:length(veg.data)])
+veg.100.prod = veg.100.prod %>% mutate(signif = ifelse(p.value < 0.05, T, F))
+write_rds(veg.100.prod, file = "results/outputs/veg_moransi_100-prod.rds")

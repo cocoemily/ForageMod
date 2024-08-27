@@ -34,4 +34,4 @@ for (x in experiments) {
 
 final.hb.data = rbindlist(hb.data)
 
-saveRDS(final.hb.data, file = "bb-hb-data.rds")
+saveRDS(final.hb.data, file = "results/bb-hb-data.rds")

@@ -8,7 +8,7 @@ library(vegan)
 
 theme_set(theme_bw())
 
-data = readRDS("bb-vt-data.rds")
+data = readRDS("../results/bb-vt-data.rds")
 #colnames(data)
 
 parameters = c(

@@ -6,7 +6,7 @@ library(ggspatial)
 library(spdep)
 library(ggpubr)
 
-data = readRDS("bb-hb-data.rds")
+data = readRDS("results/bb-hb-data.rds")
 #colnames(data)
 
 #hist(data$times.burned)

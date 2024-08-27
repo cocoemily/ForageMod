@@ -24,7 +24,7 @@ library(ggsignif)
 theme_set(theme_bw())
 opts_chunk$set(tidy.opts=list(width.cutoff=70),tidy=TRUE)
 
-data = readRDS("sensitivity-analysis/SA-data.rds")
+data = readRDS("SA-data.rds")
 
 parameters = c(
   "natural_ignition", 

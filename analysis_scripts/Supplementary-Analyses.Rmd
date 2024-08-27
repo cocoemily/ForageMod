@@ -18,7 +18,7 @@ library(ggthemes)
 library(lme4)
 theme_set(theme_bw())
 
-data = readRDS("bb-data.rds")
+data = readRDS("results/bb-data.rds")
 
 parameters = c(
   "natural-ignition", # 0.00, 0.05

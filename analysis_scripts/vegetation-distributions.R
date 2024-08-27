@@ -147,18 +147,47 @@ ggsave(filename = "preliminary_figures/veg-type-diversity.png", plot = veg.div.p
 
 
 ##all data together
-long.veg = veg.data %>% pivot_longer(c(morans.i, shannon.div), names_to = "metric", values_to = "value")
-metric.labs = c("Global Moran's I", "Shannon Diversity Index")
-names(metric.labs) = c("morans.i", "shannon.div")
+# long.veg = veg.data %>% pivot_longer(c(morans.i, shannon.div), names_to = "metric", values_to = "value")
+# metric.labs = c("Global Moran's I", "Shannon Diversity Index")
+# names(metric.labs) = c("morans.i", "shannon.div")
+# 
+# all.plot = ggplot(long.veg %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")) +
+#   geom_boxplot(mapping = aes(x = ticks, y = value, color = climate.condition, group = ticks)) +
+#   geom_smooth(mapping = aes(x = ticks, y = value), method = "gam", color = "black") +
+#   facet_grid(metric ~ movement_model, labeller = 
+#                labeller(movement_model = move.labs, metric = metric.labs), scales = "free") +
+#   labs(color = "climate condition") +
+#   scale_color_brewer(palette = "Dark2") +
+#   theme(legend.position = "bottom")
 
-all.plot = ggplot(long.veg %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")) +
-  geom_boxplot(mapping = aes(x = ticks, y = value, color = climate.condition, group = ticks)) +
-  geom_smooth(mapping = aes(x = ticks, y = value), method = "gam", color = "black") +
-  facet_grid(metric ~ movement_model, labeller = 
-               labeller(movement_model = move.labs, metric = metric.labs), scales = "free") +
-  labs(color = "climate condition") +
+all.plot =  ggarrange(
+  ggplot(veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")) +
+    geom_boxplot(mapping = aes(x = ticks, y = morans.i, color = climate.condition, group = ticks)) +
+    geom_smooth(mapping = aes(x = ticks, y = morans.i), method = "lm") +
+    facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
+                 labeller(cycle_duration = cycle.labs, 
+                          veg_cycle_start = start.labs, 
+                          movement_model = move.labs)) +
+    labs(color = "climate condition", y = "Global Moran's I") +
+    scale_color_brewer(palette = "Dark2") +
+    theme(legend.position = "bottom", 
+          strip.text = element_text(size = 6), 
+          axis.title = element_text(size = 7.5)), 
+  ggplot(veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\""))  +
+  geom_boxplot(mapping = aes(x = ticks, y = shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div)) +
+  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
+               labeller(cycle_duration = cycle.labs, 
+                        veg_cycle_start = start.labs, 
+                        movement_model = move.labs)) +
+  labs(color = "climate condition", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Dark2") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", 
+        strip.text = element_text(size = 6), 
+        axis.title = element_text(size = 7.5)), 
+  ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
+) +
+  theme(axis.title = element_text(size = 7))
 
 ggsave(filename = "figures/veg-type-clustering+diversity.png", plot = all.plot,
        dpi = 300, width = 8, height = 5)

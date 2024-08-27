@@ -6,7 +6,7 @@ library(ggspatial)
 library(spdep)
 
 
-data = readRDS("bb-hb-data.rds")
+data = readRDS("results/bb-hb-data.rds")
 #colnames(data)
 
 #hist(data$times.burned)
@@ -90,4 +90,4 @@ for(e in unique(grid.data.250$exp)) {
 all.morans.250 = do.call("rbind", morans.data[1:length(morans.data)])
 all.morans.250 = all.morans.250 %>%
   mutate(signif = ifelse(p.value < 0.05, T, F))
-write_rds(all.morans.250, file = "outputs/be_morans.i_cycle.250.rds")
+write_rds(all.morans.250, file = "results/outputs/be_morans.i_cycle.250.rds")
