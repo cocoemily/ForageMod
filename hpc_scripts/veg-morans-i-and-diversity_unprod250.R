@@ -73,13 +73,17 @@ for(e in unique(grid.data.250.unprod$exp)) {
     counts = as.data.frame(grid@data) %>% count(veg.type)
     div = diversity(counts$n, index = "shannon")
     
+    counts2 = as.data.frame(grid@data) %>% filter(veg.type != 0) %>% count(veg.type)
+    div2 = diversity(counts2$n, index = "shannon")
+    
     #create data frame
     output.data = as.data.frame(grid@data) %>%
       dplyr::select_at(c("ticks", "exp", parameters)) %>%
       first() %>%
       mutate(morans.i = MC$statistic,
              p.value = MC$p.value,
-             shannon.div = div)
+             shannon.div = div, 
+             shannon.div.no0 = div2)
     output.data$climate.condition = cc
     cc = ifelse(cc == "productive", "unproductive", "productive")
     
