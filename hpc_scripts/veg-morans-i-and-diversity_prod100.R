@@ -70,11 +70,8 @@ for(e in unique(grid.data.100.prod$exp)) {
     #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
     #spplot(grid, c("Gi.stat"))
     
-    # if(moran(grid$veg.type, lw, length(nb), Szero(lw))$I > 0){
-    #   MC <- moran.mc(grid$veg.type, lw, nsim = 999, alternative = "greater")
-    # } else {
-    #   MC <- moran.mc(grid$veg.type, lw, nsim = 999, alternative = "less")
-    # }
+    grid$veg.type = grid$veg.type + 1
+    
     MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
     
     counts = as.data.frame(grid@data) %>% count(veg.type)
