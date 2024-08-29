@@ -1133,7 +1133,7 @@ ggpubr::ggarrange(
 
 These models demonstrate that strict burning limits lead to higher mobility across model run. When burning is more frequent, mobility decreases quickly over model run. This is likely related to the increased vegetation diversity and higher proportions of high value vegetation types toward the end of model run. This trend is visible by looking at the correlations between diversity and vegetation proportions with forager mobility (*mean.fm*). 
 
-```{r SDI-no-burnt_correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r mobility-veg-correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
@@ -1329,7 +1329,7 @@ As noted above, the only parameter that seems to have varied effects on the init
 
 When the underlying distribution of resource potential is clustered, we see more forager interactions than when that distribution is random. We also see more forager interactions when burning behaviors are not limited by burnt neighboring patches. This is interesting because the other two burning parameters, *burn-veg-type-threshold* and *burn-cost*, show increased forager interactions with stricter burning limits. 
 
-```{r veg-clustering_and_interactions}
+```{r veg-clustering_and_interactions, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,2))
 #plot at 2000
 pvalue.r = psych::corr.test(data2000 %>% filter(`veg-distribution` == "\"random\"") %>% select(mean.fm, adj.fi, veg_morans.i))$p
