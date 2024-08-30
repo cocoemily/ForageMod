@@ -2,7 +2,7 @@
 title: "ForageModv02 Supplementary Analysis"
 output: html_document
 bibliography: grateful-refs.bib
-csl: peerj.csl
+csl: pnas.csl
 ---
 
 ```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
