@@ -209,7 +209,7 @@ ggplot(data) +
 
 We model population count across model run with a Poisson regression. We model the change in population across time by including "ticks" as a independent variable. We also investigate the interaction between time and model parameters. 
 
-```{r population_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%"}
+```{r population_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%", fig.height=3}
 #hist(data$pop.count)
 #hist(data$pop.dens)
 
@@ -243,7 +243,7 @@ Population increases over time. The results from the regression analysis demonst
 
 We examined the effects of all model parameters on burning probability across model run using linear regressions. We model the effect of the different parameter settings on model behavior. We also model change over model run by including "ticks" as a independent variable. Finally, we investigate the interaction between time and model parameters. 
 
-```{r burning-probability-regression, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probability-regression, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 #hist(data$mean.burn.prob)
 
 hist(data$mean.burn.prob)
@@ -263,7 +263,7 @@ mbp.fit3 %>% broom::tidy() %>%
 
 The regressions show that every parameter significantly affects burning probability on average across model run (independent variables) as well as how burning probability changes during model run (interaction variables).
 
-```{r burning-probability-regression_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probability-regression_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=3}
 
 ggarrange(
   #   ggeffects::ggpredict(mbp.fit3, terms = c("ticks", "veg-cycle-start")) %>%
@@ -300,7 +300,7 @@ In general, parameters that add limits to burning behaviors (*burn-cost*, *burnt
 
 This model behavior is confirmed by looking at the effects of model parameters on slope of the linear relationship between ticks and burning probability.  
 
-```{r rate-of-bp-increase, echo=TRUE, message=FALSE, warning=FALSE}
+```{r rate-of-bp-increase, echo=TRUE, message=FALSE, warning=FALSE, fig.height=4, out.width='100%'}
 bp.rates = data.frame(
   exp = character(0), 
   slope = numeric(0)
@@ -338,7 +338,7 @@ The parameters that have the strongest positive impacts on the rate of change (i
 
 Initial correlations reveal that the proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents. 
 
-```{r burnt-landscape-proportions_plots, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5}
+```{r burnt-landscape-proportions_plots, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 ggarrange(
   ggplot(data) +
     geom_point(aes(x = pop.dens, y = veg_0, color = ticks)),
@@ -359,7 +359,7 @@ ggplot(data) +
 
 We split the data by *burnt-neighbor-limit* values and ran separate regressions on the proportions of burnt landscape. We compared Beta regression, which are often used for modeling proportion data, and linear regressions using likelihood ratio tests. In all cases, the linear regressions performed better.
 
-```{r veg_0-regressions_2, out.width = '100%', echo=TRUE, message=FALSE, warning=FALSE}
+```{r veg_0-regressions_2, out.width = '100%', fig.height=3, echo=TRUE, message=FALSE, warning=FALSE}
 beta.data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
 
 ##burnt neighbor limit = 1
@@ -972,7 +972,7 @@ This is confirmed by the increasingly positive correlation between average proba
 
 We also looked at the spatial autocorrelation of where burning events occur within the landscape to assess land use by the agents. This analysis is split *cycle-duration.* We first use linear regressions to assess how the parameters and time affect the spatial autocorrelation of burning events. For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
 
-```{r burning-events_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+```{r burning-events_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
 parameters = c(
   "natural_ignition", # 0.00, 0.05
   "cycle_duration",  # 100, 250
@@ -1015,7 +1015,7 @@ The intercept values show that burning events are on average marginally clustere
 plot_summs(fit1, fit2, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"), scale = T)
 ```
 
-When looking at scaled regression coefficients, we can see that burning limits, movement models, and 
+When looking at scaled regression coefficients, we can see that burning limits, movement models, and time have the strongest effects on the spatial clustering of burning events.
 
 ```{r burning-events_2_2, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
@@ -1169,7 +1169,7 @@ When looking at forager interactions, we have to consider them in relation to po
 
 First, we investigate parameter effects via linear regression.
 
-```{r adj-fi-reg_1, echo=TRUE, message=FALSE, warning=FALSE}
+```{r adj-fi-reg_1, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5}
 # ggplot(data %>% filter(ticks > 0)) +
 #   geom_density(aes(x = log(adj.fi)))
 # summary(data$adj.fi)
@@ -1216,7 +1216,7 @@ When we visualize these differences, we can see that random walks result in a st
 
 For this reason, we split the regression of the random walk data into two segments. 
 
-```{r adj-fi-reg_2, echo=TRUE, message=FALSE, warning=FALSE}
+```{r adj-fi-reg_2, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 rw.data = data %>% filter(`movement-model` == "\"Random Walk\"") %>% filter(ticks > 0)
 dw.data = data %>% filter(`movement-model` == "\"Directed Walk\"") %>% filter(ticks > 0)
 
@@ -1329,7 +1329,7 @@ As noted above, the only parameter that seems to have varied effects on the init
 
 When the underlying distribution of resource potential is clustered, we see more forager interactions than when that distribution is random. We also see more forager interactions when burning behaviors are not limited by burnt neighboring patches. This is interesting because the other two burning parameters, *burn-veg-type-threshold* and *burn-cost*, show increased forager interactions with stricter burning limits. 
 
-```{r veg-clustering_and_interactions, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-clustering_and_interactions, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height = 4}
 par(mfrow = c(1,2))
 #plot at 2000
 pvalue.r = psych::corr.test(data2000 %>% filter(`veg-distribution` == "\"random\"") %>% select(mean.fm, adj.fi, veg_morans.i))$p
@@ -1351,7 +1351,7 @@ corrplot::corrplot(cor(data2000 %>% filter(`veg-distribution` == "\"clustered\""
 
 
 ## References
-```{r citations}
+```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
 pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc"))
 knitr::kable(pkgs)
 ```
