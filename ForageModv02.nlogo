@@ -1665,6 +1665,8 @@ file-close</postRun>
     <enumeratedValueSet variable="burn-cost">
       <value value="0"/>
       <value value="50"/>
+      <value value="100"/>
+      <value value="150"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="movement-cost">
       <value value="100"/>
