@@ -58,34 +58,47 @@ for(e in unique(grid.data.100.unprod$exp)) {
              750, 850, 950, 1050, 1000, 1150, 1250, 1350,
              1450, 1550, 1650, 1750, 1850, 1950, 2000)) {
     grid = run.grid %>% filter(ticks == t)
-    coordinates(grid) = ~y+x
-    gridded(grid) = TRUE
-    grid = as(grid, "SpatialPolygonsDataFrame")
-    #spplot(grid, c("times.burned"))
     
-    nb = poly2nb(grid, queen = T)
-    lw = nb2listw(nb, zero.policy = T)
-    #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
-    #spplot(grid, c("Gi.stat"))
-    
-    grid$veg.type = grid$veg.type + 1
-    
-    MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
-    
-    counts = as.data.frame(grid@data) %>% count(veg.type)
-    div = diversity(counts$n, index = "shannon")
-    
-    counts2 = as.data.frame(grid@data) %>% filter(veg.type != 0) %>% count(veg.type)
-    div2 = diversity(counts2$n, index = "shannon")
-    
-    #create data frame
-    output.data = as.data.frame(grid@data) %>%
-      dplyr::select_at(c("ticks", "exp", parameters)) %>%
-      first() %>%
-      mutate(morans.i = MC$statistic,
-             p.value = MC$p.value,
-             shannon.div = div, 
-             shannon.div.no0 = div2)
+    if(nrow(grid) > 0){
+      coordinates(grid) = ~y+x
+      gridded(grid) = TRUE
+      grid = as(grid, "SpatialPolygonsDataFrame")
+      #spplot(grid, c("times.burned"))
+      
+      nb = poly2nb(grid, queen = T)
+      lw = nb2listw(nb, zero.policy = T)
+      #grid$Gi.stat = localG_perm(grid$times.burned, lw, nsim = 100, zero.policy = T)
+      #spplot(grid, c("Gi.stat"))
+      
+      grid$veg.type = grid$veg.type + 1
+      
+      MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
+      
+      counts = as.data.frame(grid@data) %>% count(veg.type)
+      div = diversity(counts$n, index = "shannon")
+      
+      counts2 = as.data.frame(grid@data) %>% filter(veg.type != 0) %>% count(veg.type)
+      div2 = diversity(counts2$n, index = "shannon")
+      
+      #create data frame
+      output.data = as.data.frame(grid@data) %>%
+        dplyr::select_at(c("ticks", "exp", parameters)) %>%
+        first() %>%
+        mutate(morans.i = MC$statistic,
+               p.value = MC$p.value,
+               shannon.div = div, 
+               shannon.div.no0 = div2)
+      
+    } else {
+      output.data = run.grid %>% 
+        dplyr::select_at(c("ticks", "exp", parameters)) %>%
+        first() %>%
+        mutate(ticks = t,
+               morans.i = NA, 
+               p.value = NA, 
+               shannon.div = NA, 
+               shannon.div.no0 = NA)
+    }
     output.data$climate.condition = cc
     cc = ifelse(cc == "productive", "unproductive", "productive")
     
