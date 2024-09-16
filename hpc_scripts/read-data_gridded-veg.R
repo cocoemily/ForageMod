@@ -2,8 +2,8 @@ library(tidyverse)
 library(here)
 library(data.table)
 
-file.list = list.files("results", full.names = T)
-exp.list = list.files("results", full.names = F)
+file.list = list.files("results", pattern = "\\.csv$", full.names = T)
+exp.list = list.files("results", pattern = "\\.csv$", full.names = F)
 experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by = 3)]
 experiments = unique(experiments)
 print(experiments)
