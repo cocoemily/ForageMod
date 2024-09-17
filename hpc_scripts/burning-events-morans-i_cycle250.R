@@ -47,6 +47,7 @@ rm(list = c("grid.data"))
 morans.data = list()
 #for(exp in exp.list) { #for testing
 for(e in unique(grid.data.250$exp)) {
+  print(e)
   run.grid = grid.data.250 %>% filter(exp == e)
   
   for(t in c(250, 500, 1000, 1500, 2000)) {

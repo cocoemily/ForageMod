@@ -47,6 +47,7 @@ rm(list = c("grid.data"))
 #### get data for cycle duration = 250 & unproductive start ####
 veg.data = list()
 for(e in unique(grid.data.250.unprod$exp)) {
+  print(e)
   run.grid = grid.data.250.unprod %>% filter(exp == e)
   
   run.grid$climate.condition = "unproductive"
