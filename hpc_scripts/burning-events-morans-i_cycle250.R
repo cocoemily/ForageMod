@@ -53,6 +53,9 @@ for(e in unique(grid.data.250$exp)) {
   for(t in c(250, 500, 1000, 1500, 2000)) {
     grid = run.grid %>% filter(ticks == t)
     if(nrow(grid) > 0) {
+      if(nrow(grid) = 51*51*2) { #dealing with the case where model ends at a recording tick
+        grid = grid[1:2601,]
+      }
       coordinates(grid) = ~y+x
       gridded(grid) = TRUE
       grid = as(grid, "SpatialPolygonsDataFrame")
