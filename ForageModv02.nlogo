@@ -258,7 +258,7 @@ to forage
             set times-human-burned (times-human-burned + 1)
             set pcolor black
             set who-burned myself
-            set veg-type 0
+            set veg-type -1
           ]
         ;get a little extra energy from burning
           set energy energy + veg-type-modifier
@@ -295,7 +295,7 @@ end
 to update-veg
   set time-to-last-burn time-to-last-burn + 1
 
-  ;Burnt patches are restored to highest productivity (after lag)
+  ;Burnt patches are restored to highest productivity
   ifelse burnt? = true [
 ;    if times-human-burned > regen-threshold [
 ;      set max-veg-type 5
@@ -393,20 +393,6 @@ to check-interactions
     set counter 0
     hide-link
   ]
-
-;  ;increase the link age counter by 1
-;  ask my-links [
-;    ifelse member? other-end nforagers [
-;      set counter 0 ;if agent sees one of their links again, reset link age
-;    ][
-;      set counter counter + 1 ;increase link age of all links not currently on neighboring patches
-;    ]
-;
-;    ;remove old links
-;    if counter > forager-moves * 5 [ ;currently links remain over ~5 move/forage sequences
-;      die
-;    ]
-;  ]
 end
 
 
@@ -876,7 +862,8 @@ PENS
 "veg3" 1.0 0 -11085214 true "" "plot (count patches with [veg-type = 3]) / (count patches)"
 "veg2" 1.0 0 -8330359 true "" "plot (count patches with [veg-type = 2]) / (count patches)"
 "veg1" 1.0 0 -5509967 true "" "plot (count patches with [veg-type = 1]) / (count patches)"
-"veg0" 1.0 0 -16777216 true "" "plot (count patches with [burnt? = true]) / (count patches)"
+"veg0" 1.0 0 -5987164 true "" "plot (count patches with [veg-type = 0]) / (count patches)"
+"burnt" 1.0 0 -16777216 true "" "plot (count patches with [burnt? = true]) / (count patches)"
 
 SLIDER
 17
