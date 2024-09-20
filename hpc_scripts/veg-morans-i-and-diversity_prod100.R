@@ -77,9 +77,11 @@ for(e in unique(grid.data.100.prod$exp)) {
       MC <- moran.mc(grid$veg.type, lw, nsim=99, alternative="two.sided")
       
       counts = as.data.frame(grid@data) %>% count(veg.type)
+      print(counts)
       div = diversity(counts$n, index = "shannon")
       
       counts2 = as.data.frame(grid@data) %>% filter(veg.type != 0) %>% count(veg.type)
+      print(counts)
       div2 = diversity(counts2$n, index = "shannon")
       
       #create data frame
