@@ -3,6 +3,7 @@ library(rcompanion)
 library(fitdistrplus)
 library(QuantPsyc)
 library(betareg)
+library(ggpubr)
 theme_set(theme_bw())
 
 data = readRDS("results/bb-data.rds")
@@ -79,12 +80,13 @@ descdist(data$veg_0)
 plot.data = data %>% select_at(c("ticks", "veg_0", parameters)) %>%
   group_by_at(c(parameters)) %>%
   mutate(high.veg0 = mean(veg_0) + sd(veg_0), 
-         low.veg0 = mean(veg_0) - sd(veg_0)) 
+         low.veg0 = mean(veg_0) - sd(veg_0)) %>%
+  filter(`burn-cost` %in% c(0, 150))
 
 bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
 names(bt.labs) = c(4, 7)
-bc.labs = c("no burn cost (0)", "low burn cost (50)")
-names(bc.labs) = c(0, 50)
+bc.labs = c("no burn cost (0)", "high burn cost (150)")
+names(bc.labs) = c(0, 150)
 
 bprop.plot = ggplot(plot.data) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 8), mapping = 
@@ -154,22 +156,22 @@ burnn8.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn8 %>% select_at(c("ticks",
 lmtest::lrtest(burnn8.fit1, burnn8.fit2)
 
 
-plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6, 
-           model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
+# plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6, 
+#            model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
 
 
 #### plot all burning behaviors ####
 mbp.plot2 = ggplot(data) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = `burn-cost`), alpha = 0.25) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "red") +
-  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
+  scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
   labs(y = "mean probability of burning", x = "ticks", color = "cost of burning") +
   theme(legend.position = "bottom", axis.title = element_text(size = 5.5))
 
 br.plot2 = ggplot(data) +
   geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.25) +
-  geom_smooth(aes(x = ticks, y = benefit.ratio), se = F, color = "red") +
-  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
+  geom_smooth(aes(x = ticks, y = benefit.ratio)) +
+  scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   labs(x = "ticks", y = "ratio of self benefit to other benefit") +
   theme(legend.position = "bottom", axis.title = element_text(size = 5.5))

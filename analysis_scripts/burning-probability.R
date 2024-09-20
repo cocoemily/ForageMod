@@ -52,7 +52,7 @@ data$benefit.ratio = data$benefit_self/data$benefit_other
 mbp.plot = ggplot(data) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = `burn-cost`), alpha = 0.25) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "red") +
-  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
+  scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
   labs(y = "mean probability of burning", x = "ticks", color = "cost of burning") +
   theme(legend.position = "bottom")
 #plot(mbp.plot)
@@ -84,7 +84,7 @@ ggplot(data) +
 br.plot = ggplot(data) +
   geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.25) +
   geom_smooth(aes(x = ticks, y = benefit.ratio)) +
-  scale_color_manual(values = c("darkslategrey", "dimgrey")) +
+  scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   labs(x = "ticks", y = "ratio of self benefit to other benefit")
 #plot(br.plot)

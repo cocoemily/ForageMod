@@ -8,6 +8,7 @@ library(lme4)
 library(lmerTest)
 library(ggthemes)
 library(mgcv)
+library(ggpubr)
 theme_set(theme_bw())
 
 data = readRDS("results/bb-data.rds")
