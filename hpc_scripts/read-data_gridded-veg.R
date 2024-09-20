@@ -24,6 +24,7 @@ for (x in experiments) {
 
   gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]])
   colnames(gvt.df) = c("x", "y", "veg.type", "ticks")
+  gvt.df$veg.type = as.numeric(gvt.df$veg.type)
 
   final.vt.df = bind_cols(gvt.df, model.parameters)
   final.vt.df$exp = x
