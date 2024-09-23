@@ -148,7 +148,7 @@ to go
   ask n-of ((count patches) * natural-ignition) patches [
     set burnt? true
     set who-burned nobody
-    set veg-type 0
+    set veg-type -1
   ]
 
   ;Update forage availability trackers
