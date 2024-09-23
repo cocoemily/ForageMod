@@ -5,7 +5,7 @@ file.list = list.files("results", pattern = "\\.csv$", full.names = T)
 exp.list = list.files("results", pattern = "\\.csv$", full.names = F)
 experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by = 3)]
 experiments = unique(experiments)
-print(experiments)
+#print(experiments)
 print(length(experiments))
 
 outputs = c(
@@ -21,12 +21,12 @@ data = list()
 
 i = 1
 for (x in experiments) {
-  print(paste0("reading data from exp: ", i))
+  print(paste0("reading data from exp: ", x))
   exp.files = file.list[which(str_detect(file.list, as.character(x)))]
   
   model.parameters = read_csv(exp.files[1], skip = 5, n_max = 1)
   
-  vt = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]], skip = 23)
+  vt = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]], skip = 24)
   vt.df = bind_rows(
     vt[,1:2] %>% mutate(veg.type = 7), 
     vt[,5:6] %>% mutate(veg.type = 6), 
@@ -35,7 +35,8 @@ for (x in experiments) {
     vt[,17:18] %>% mutate(veg.type = 3), 
     vt[,21:22] %>% mutate(veg.type = 2), 
     vt[,25:26] %>% mutate(veg.type = 1), 
-    vt[,29:30] %>% mutate(veg.type = 0)
+    vt[,29:30] %>% mutate(veg.type = 0), 
+    vt[,33:34] %>% mutate(veg.type = -1)
   )
   colnames(vt.df) = c("ticks", "count", "veg.type")
   
