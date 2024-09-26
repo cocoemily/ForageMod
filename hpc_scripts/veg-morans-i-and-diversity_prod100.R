@@ -65,7 +65,6 @@ for(e in unique(grid.data.100.prod$exp)) {
       coordinates(grid) = ~y+x
       gridded(grid) = TRUE
       grid = as(grid, "SpatialPolygonsDataFrame")
-      #spplot(grid, c("times.burned"))
       
       nb = poly2nb(grid, queen = T)
       lw = nb2listw(nb, zero.policy = T)
@@ -80,7 +79,7 @@ for(e in unique(grid.data.100.prod$exp)) {
       print(counts)
       div = diversity(counts$n, index = "shannon")
       
-      counts2 = as.data.frame(grid@data) %>% filter(veg.type != -1) %>% count(veg.type)
+      counts2 = as.data.frame(grid@data) %>% filter(veg.type != 0) %>% count(veg.type)
       print(counts)
       div2 = diversity(counts2$n, index = "shannon")
       

@@ -78,7 +78,7 @@ for(e in unique(grid.data.250.prod$exp)) {
       counts = as.data.frame(grid@data) %>% count(veg.type)
       div = diversity(counts$n, index = "shannon")
       
-      counts2 = as.data.frame(grid@data) %>% filter(veg.type != -1) %>% count(veg.type)
+      counts2 = as.data.frame(grid@data) %>% filter(veg.type != 0) %>% count(veg.type)
       div2 = diversity(counts2$n, index = "shannon")
       
       #create data frame
