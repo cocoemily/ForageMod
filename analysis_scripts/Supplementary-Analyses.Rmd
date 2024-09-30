@@ -363,7 +363,7 @@ ggplot(data) +
 We split the data by *burnt-neighbor-limit* values and ran separate regressions on the proportions of burnt landscape. We compared Beta regression, which are often used for modeling proportion data, and linear regressions using likelihood ratio tests. In all cases, the linear regressions performed better.
 
 ```{r veg_0-regressions_2, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
-beta.data = data %>% mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt))
+beta.data = data %>% mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt)) %>% mutate(burnt = ifelse(burnt == 1, burnt - 0.00001, burnt))
 
 ##burnt neighbor limit = 1
 burnt.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
