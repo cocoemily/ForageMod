@@ -4,6 +4,7 @@ library(fitdistrplus)
 library(QuantPsyc)
 library(betareg)
 library(ggpubr)
+library(jtools)
 theme_set(theme_bw())
 
 data = readRDS("results/bb-data.rds")
@@ -29,6 +30,7 @@ data$`movement-model` = as.factor(data$`movement-model`)
 
 data$adj.fi = data$mean.fi/data$pop.count
 data$pop.dens = data$pop.count/(51*51)
+data$benefit.ratio = data$benefit_self/data$benefit_other
 
 outputs = c(
   "pop.count",
@@ -44,43 +46,44 @@ outputs = c(
   "benefit_other"
 )
 
-plotNormalHistogram(data$veg_0)
-descdist(data$veg_0)
+data$burnt = data$`veg_-1`
 
-#data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
-#betafit1 = betareg(veg_0 ~ ticks*(.), data = data %>% select_at(c("veg_0", "ticks", parameters)))
-#summary(betafit1) #cannot see this because of vector limits
+plotNormalHistogram(data$burnt)
+descdist(data$burnt)
 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `natural-ignition`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `cycle-duration`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `veg-cycle-start`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `veg-distribution`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `burnt-neighbor-limit`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `burn-cost`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `burn-veg-type-threshold`))
-# 
-# ggplot(data) +
-#   geom_density(aes(x = veg_0, color = `movement-model`))
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `natural-ignition`))
 
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `cycle-duration`))
+
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `veg-cycle-start`))
+
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `veg-distribution`))
+
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `burnt-neighbor-limit`))
 #bimodal distribution is driven by burnt neighbor limit
 
-plot.data = data %>% select_at(c("ticks", "veg_0", parameters)) %>%
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `burn-cost`))
+#decreasing burn cost shifts the distribution right
+
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `burn-veg-type-threshold`))
+#increasing veg type threshold shifts the distribution right
+
+ggplot(data) +
+  geom_density(aes(x = burnt, color = `movement-model`))
+
+
+
+plot.data = data %>% select_at(c("ticks", "burnt", parameters)) %>%
   group_by_at(c(parameters)) %>%
-  mutate(high.veg0 = mean(veg_0) + sd(veg_0), 
-         low.veg0 = mean(veg_0) - sd(veg_0)) %>%
+  mutate(high.burnt = mean(burnt) + sd(burnt), 
+         low.burnt = mean(burnt) - sd(burnt)) %>%
   filter(`burn-cost` %in% c(0, 150))
 
 bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
@@ -90,12 +93,12 @@ names(bc.labs) = c(0, 150)
 
 bprop.plot = ggplot(plot.data) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 8), mapping = 
-               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+               aes(x = ticks, y = burnt, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 4), mapping = 
-               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+               aes(x = ticks, y = burnt, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 1), mapping = 
-               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
-  geom_smooth(aes(x = ticks, y = veg_0, color = `burnt-neighbor-limit`), se = F) +
+               aes(x = ticks, y = burnt, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+  geom_smooth(aes(x = ticks, y = burnt, color = `burnt-neighbor-limit`), se = F) +
   geom_hline(yintercept = 1.0, linetype = "dotted") +
   facet_grid(`burn-cost` ~ `burn-veg-type-threshold`, labeller = labeller(
     `burn-veg-type-threshold` = bt.labs, 
@@ -111,53 +114,45 @@ ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = b
        dpi = 300, width = 8, height = 6)
 
 
-# data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
-#betafit1 = betareg(veg_0 ~ ticks*(.), data = data %>% select_at(c("veg_0", "ticks", parameters)))
-#summary(betafit1) #cannot see this because of vector limits
+beta.data = data %>% mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt))
 
-beta.data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
-
-veg_0.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
+burnt.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
 # plotNormalHistogram(veg_0.burnn1$veg_0)
 # descdist(veg_0.burnn1$veg_0)
-burnn1.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+burnn1.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
                                        `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+                                       `movement-model`), data = burnt.burnn1 %>% select_at(c("ticks", "burnt", parameters[-5])))
 
-veg_0.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
-burnn1.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+burnt.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
+burnn1.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn1 %>% select_at(c("ticks", "burnt", parameters[-5])))
 
-# AIC(burnn1.fit1)
-# AIC(burnn1.fit2)
-lmtest::lrtest(burnn1.fit1, burnn1.fit2)
+AIC(burnn1.fit1)
+AIC(burnn1.fit2)
 
-veg_0.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
+burnt.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
 # plotNormalHistogram(veg_0.burnn4$veg_0)
 # descdist(veg_0.burnn4$veg_0, discrete = F)
-burnn4.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+burnn4.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
                                        `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-veg_0.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
-burnn4.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+                                       `movement-model`), data = burnt.burnn4 %>% select_at(c("ticks", "burnt", parameters[-5])))
+burnt.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
+burnn4.fit2 = lm(burnt ~ ticks*(.), data =  burnt.burnn4 %>% select_at(c("ticks", "burnt", parameters[-5])))
 
-#AIC(burnn4.fit1)
-#AIC(burnn4.fit2)
-lmtest::lrtest(burnn4.fit1, burnn4.fit2)
+AIC(burnn4.fit1)
+AIC(burnn4.fit2)
 
-veg_0.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
-burnn8.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+burnt.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
                                        `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-veg_0.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
-burnn8.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+                                       `movement-model`), data = burnt.burnn8 %>% select_at(c("ticks", "burnt", parameters[-5])))
+burnt.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn8 %>% select_at(c("ticks", "burnt", parameters[-5])))
 
-#AIC(burnn8.fit1)
-#AIC(burnn8.fit2)
-lmtest::lrtest(burnn8.fit1, burnn8.fit2)
+AIC(burnn8.fit1)
+AIC(burnn8.fit2)
 
-
-# plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6, 
-#            model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
+plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6,
+           model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
 
 
 #### plot all burning behaviors ####
@@ -185,14 +180,14 @@ img.plot = ggplot()+
 
 bprop.plot2 = ggplot(plot.data) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 8), mapping = 
-               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+               aes(x = ticks, y = burnt, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 4), mapping = 
-               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+               aes(x = ticks, y = burnt, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
   geom_point(data = plot.data %>% filter(`burnt-neighbor-limit` == 1), mapping = 
-               aes(x = ticks, y = veg_0, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
-  geom_smooth(aes(x = ticks, y = veg_0, color = `burnt-neighbor-limit`), se = F) +
+               aes(x = ticks, y = burnt, group = ticks, color = `burnt-neighbor-limit`), alpha = 0.01, size = 0.3) +
+  geom_smooth(aes(x = ticks, y = burnt, color = `burnt-neighbor-limit`), se = F) +
   geom_hline(yintercept = 1.0, linetype = "dotted") +
-  facet_wrap(`burn-cost` ~ `burn-veg-type-threshold`, labeller = labeller(
+  facet_wrap(`burn-veg-type-threshold` ~ `burn-cost`, labeller = labeller(
     `burn-veg-type-threshold` = bt.labs, 
     `burn-cost` = bc.labs
   )) +
@@ -207,7 +202,7 @@ bprop.plot2 = ggplot(plot.data) +
 
 all.plot = ggarrange(
   ggarrange(
-    ggarrange(mbp.plot, br.plot,
+    ggarrange(mbp.plot2, br.plot2,
               common.legend = T, legend = "top", labels = "AUTO", 
               nrow = 1) + theme(legend.title = element_text(size = 7)), 
     img.plot, nrow = 1, labels = c("", "C"), widths = c(2,1)), 

@@ -49,6 +49,7 @@ prod100.plot = ggplot(veg.100.prod %>% filter(signif == T)) +
   labs(color = "model climate condition", y = "Global Moran's I") +
   scale_color_brewer(palette = "Dark2") +
   theme(legend.position = "bottom")
+plot(prod100.plot)
 
 ##### shannon diversity #####
 hist(veg.100.prod$shannon.div)

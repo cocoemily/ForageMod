@@ -45,7 +45,8 @@ data$benefit.ratio = ifelse(is.nan(data$benefit.ratio), NA, data$benefit.ratio)
 
 ## Population maintenance?
 
-First, we checked to see whether all model runs maintained a population across all 2000 ticks. 
+First, we checked to see whether all model runs maintained a population across all 2000 ticks.
+
 ```{r pop-maintenance, echo=TRUE, message=FALSE, warning=FALSE}
 all.exp = unique(data$exp)
 
@@ -59,19 +60,19 @@ length(unique(unfinished.data$exp))
 
 ```
 
-Only one of our runs resulted in population extinction. Below you can see the model parameters that result in this:
+Forty seven of our runs resulted in population extinction. Below you can see the various combinations of model parameters that result in this:
 
 ```{r pop-maintenance_2, echo=FALSE, message=FALSE, warning=FALSE}
 
-unfinished.data %>% select_at(c(parameters)) %>% first() %>% kable()
+unfinished.data %>% select_at(c(parameters)) %>% distinct() %>% kable()
 
 ```
 
-Because there was only one model run that resulted in population extinction, we do not remove it from the subsequent analyses.
+Nearly all of the model runs that could not sustain a population started in an unproductive environment and had high costs to burning behaviors. If the model started in a productive environment, then high costs to burning behaviors sometimes still resulted in population extinction.
 
 ## Correlations of outputs over time
 
-Next, we looked at the correlation between outputs across model runs. 
+Next, we looked at the correlation between outputs across model runs.
 
 ```{r output-correlations_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=4, out.height='75%'}
 
@@ -97,7 +98,7 @@ corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs
 
 ```
 
-We can see that population density is highly correlated with most of the other outputs. Specifically, there is a high and significant positive correlation between population density and mean burning probability (*mean.burn.prob*). This indicates that large populations are more likely to burn the landscape. This contextualizes the positive correlation between population density and proportion of burnt landscape (*veg_0*). We also see that population density is negatively correlated with forager movement (*mean.fm*), meaning foragers move less within large populations. Foragers also move less when they are burning the landscape more frequently. 
+We can see that population density is highly correlated with most of the other outputs. Specifically, there is a high and significant positive correlation between population density and mean burning probability (*mean.burn.prob*). This indicates that large populations are more likely to burn the landscape. This contextualizes the positive correlation between population density and proportion of burnt landscape (*veg_0*). We also see that population density is negatively correlated with forager movement (*mean.fm*), meaning foragers move less within large populations. Foragers also move less when they are burning the landscape more frequently.
 
 We also investigated how these correlations change over time by looking at the correlations between outputs at 250 ticks, 1000 ticks, and 2000 ticks. For this, we also include spatial autocorrelation values of vegetation types and burning events, as well as a diversity metric of vegetation types.
 
@@ -192,22 +193,21 @@ corrplot::corrplot(cor(data2000 %>% select_at(outputs), use = "pairwise.complete
                    type = "lower", number.cex = 0.5, diag=F)
 ```
 
-The correlations between outputs remain relatively consistent over the course of model run. The exception to this is the correlations with vegetation spatial autocorrelation (*veg_morans.i*) and burning events spatial autocorrelation (*be_morans.i*). 
+The correlations between outputs remain relatively consistent over the course of model run. The exception to this is the correlations with vegetation spatial autocorrelation (*veg_morans.i*) and burning events spatial autocorrelation (*be_morans.i*).
 
-Spatial autocorrelation of vegetation types starts out highly positively correlated with most other outputs and then decreases to negatively correlated by the end of model run. Spatial autocorrelation of vegetation types is negatively correlated with burning probability (*mean.burn.prob*) and proportion of burnt landscape (*veg_0*) by the end of model run. This indicates that as burning becomes more frequent, there is less clustering of vegetation types. We see the opposite relationship with the clustering of burning events - this positively increases as burning becomes more frequent. 
+Spatial autocorrelation of vegetation types starts out highly positively correlated with most other outputs and then decreases to negatively correlated by the end of model run. Spatial autocorrelation of vegetation types is negatively correlated with burning probability (*mean.burn.prob*) and proportion of burnt landscape (*veg_0*) by the end of model run. This indicates that as burning becomes more frequent, there is less clustering of vegetation types. We see the opposite relationship with the clustering of burning events - this positively increases as burning becomes more frequent.
 
 ## Population during model run
 
 ```{r population_1, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(data) +
-  geom_smooth(aes(y = pop.count, x = ticks, color = exp, group = exp)) +
-  geom_smooth(aes(x = ticks, y = pop.count), color = "black", se = T) +
+  geom_smooth(aes(y = pop.dens, x = ticks, color = exp, group = exp)) +
+  geom_smooth(aes(x = ticks, y = pop.dens), color = "black", se = T) +
   guides(color = "none") +
   facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both)
 ```
 
-
-We model population count across model run with a Poisson regression. We model the change in population across time by including "ticks" as a independent variable. We also investigate the interaction between time and model parameters. 
+We model population density across model run with a Poisson regression. We model the change in population across time by including "ticks" as a independent variable. We also investigate the interaction between time and model parameters.
 
 ```{r population_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%", fig.height=3}
 #hist(data$pop.count)
@@ -225,7 +225,10 @@ pop.fit3 %>% broom::tidy() %>%
 ggarrange(
   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "movement-model")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 6), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)), 
   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burnt-neighbor-limit")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
     theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
@@ -241,11 +244,9 @@ Population increases over time. The results from the regression analysis demonst
 
 ## Forager probability of burning patches
 
-We examined the effects of all model parameters on burning probability across model run using linear regressions. We model the effect of the different parameter settings on model behavior. We also model change over model run by including "ticks" as a independent variable. Finally, we investigate the interaction between time and model parameters. 
+We examined the effects of all model parameters on burning probability across model run using linear regressions. We model the effect of the different parameter settings on model behavior. We also model change over model run by including "ticks" as a independent variable. Finally, we investigate the interaction between time and model parameters.
 
 ```{r burning-probability-regression, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
-#hist(data$mean.burn.prob)
-
 hist(data$mean.burn.prob)
 
 mbp.fit1 = lm(mean.burn.prob ~ ticks + (.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
@@ -298,9 +299,9 @@ ggarrange(
 
 In general, parameters that add limits to burning behaviors (*burn-cost*, *burnt-neighbor-limit*, *burn-veg-type-threshold*) reduce the rate of increase of burning probabilities through model run. The increase of burning probabilities during model run is also faster when agents move randomly and when the environment is initially unproductive and patchy with randomly distributed resource potentials.
 
-This model behavior is confirmed by looking at the effects of model parameters on slope of the linear relationship between ticks and burning probability.  
+This model behavior is confirmed by looking at the effects of model parameters on slope of the linear relationship between ticks and burning probability.
 
-```{r rate-of-bp-increase, echo=TRUE, message=FALSE, warning=FALSE, fig.height=4, out.width='100%'}
+```{r rate-of-bp-increase, echo=TRUE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
 bp.rates = data.frame(
   exp = character(0), 
   slope = numeric(0)
@@ -332,18 +333,20 @@ rate.fit2 %>% broom::tidy() %>%
   kable()
 ```
 
-The parameters that have the strongest positive impacts on the rate of change (in all cases, rate of increase) of burning behaviors are those that reduce limits on burning. Specifically, being able to burn any patch regardless of how many neighboring patches are also burnt results in the fastest rates of increase.
+***TO REDO:*** The parameters that have the strongest positive impacts on the rate of change (in all cases, rate of increase) of burning behaviors are those that reduce limits on burning. Specifically, being able to burn any patch regardless of how many neighboring patches are also burnt results in the fastest rates of increase.
 
 ## Burnt landscape proportions
 
-Initial correlations reveal that the proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents. 
+Initial correlations reveal that the proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents.
 
 ```{r burnt-landscape-proportions_plots, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
+data$burnt = data$`veg_-1`
+
 ggarrange(
   ggplot(data) +
-    geom_point(aes(x = pop.dens, y = veg_0, color = ticks)),
+    geom_point(aes(x = pop.dens, y = burnt, color = ticks)),
   ggplot(data) +
-    geom_point(aes(x = mean.burn.prob, y = veg_0, color = ticks)), 
+    geom_point(aes(x = mean.burn.prob, y = burnt, color = ticks)),
   nrow = 1, legend = "bottom", common.legend = T
 )
 
@@ -353,43 +356,43 @@ Because of the significant impacts burnt neighbor limit has on burning probabili
 
 ```{r veg_0-regressions_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=4}
 ggplot(data) +
-  geom_density(aes(x = veg_0, color = `burnt-neighbor-limit`)) +
+  geom_density(aes(x = burnt, color = `burnt-neighbor-limit`)) +
   ggokabeito::scale_color_okabe_ito()
 ```
 
 We split the data by *burnt-neighbor-limit* values and ran separate regressions on the proportions of burnt landscape. We compared Beta regression, which are often used for modeling proportion data, and linear regressions using likelihood ratio tests. In all cases, the linear regressions performed better.
 
-```{r veg_0-regressions_2, out.width = '100%', fig.height=3, echo=TRUE, message=FALSE, warning=FALSE}
-beta.data = data %>% mutate(veg_0 = ifelse(veg_0 == 0, veg_0 + 0.00001, veg_0))
+```{r veg_0-regressions_2, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
+beta.data = data %>% mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt))
 
 ##burnt neighbor limit = 1
-veg_0.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
-burnn1.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+burnt.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
+burnn1.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
                                        `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+                                       `movement-model`), data = burnt.burnn1 %>% select_at(c("ticks", "burnt", parameters[-5])))
 
-veg_0.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
-burnn1.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn1 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+burnt.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
+burnn1.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn1 %>% select_at(c("ticks", "burnt", parameters[-5])))
 AIC(burnn1.fit1)
 AIC(burnn1.fit2)
 
 ##burnt neighbor limit = 4
-veg_0.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
-burnn4.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+burnt.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
+burnn4.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
                                        `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-veg_0.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
-burnn4.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn4 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+                                       `movement-model`), data = burnt.burnn4 %>% select_at(c("ticks", "burnt", parameters[-5])))
+burnt.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
+burnn4.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn4 %>% select_at(c("ticks", "burnt", parameters[-5])))
 AIC(burnn4.fit1)
 AIC(burnn4.fit2)
 
 ##burnt neighbor limit = 8 (no limit)
-veg_0.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
-burnn8.fit1 = betareg(veg_0 ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
+burnt.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
                                        `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
-veg_0.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
-burnn8.fit2 = lm(veg_0 ~ ticks*(.), data = veg_0.burnn8 %>% select_at(c("ticks", "veg_0", parameters[-5])))
+                                       `movement-model`), data = burnt.burnn8 %>% select_at(c("ticks", "burnt", parameters[-5])))
+burnt.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
+burnn8.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn8 %>% select_at(c("ticks", "burnt", parameters[-5])))
 AIC(burnn8.fit1)
 AIC(burnn8.fit2)
 
@@ -404,7 +407,7 @@ plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T,
 rm(list = c("beta.data", "veg_0.burnn1", "veg_0.burnn4", "veg_0.burnn8"))
 ```
 
-The results show that the proportion of landscape that is burnt is affected by all parameters; the largest effect sizes are produced by the other parameters that control burning behaviors (*burn-cost*, *burn-veg-type-threshold*, *natural-ignition*) and movement (*movement-model*). 
+The results show that the proportion of landscape that is burnt is affected by all parameters; the largest effect sizes are produced by the other parameters that control burning behaviors (*burn-cost*, *burn-veg-type-threshold*, *natural-ignition*) and movement (*movement-model*). The effects of burn cost are particularly large when more of the landscape can be burnt (BNL = 4,8).
 
 ```{r veg_0-regressions_3, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 ##natural ignition
@@ -472,11 +475,12 @@ ggarrange(
   theme(plot.margin = margin(0.1,1,0.1,0.1, "cm")) 
 
 ```
-Natural ignition of the landscape obviously results in higher proportions of burnt landscape, especially at the beginning of model run when burning probabilities are low. The ability to burn any patch type (*burn-veg-type-threshold* = 7) and lack of burn cost also results in higher proportions of burnt landscape through time. Finally, directed walks result in more of the landscape be burnt at a given moment throughout model run. 
+
+Natural ignition of the landscape obviously results in higher proportions of burnt landscape, especially at the beginning of model run when burning probabilities are low. The ability to burn any patch type (*burn-veg-type-threshold* = 7) and lack of burn cost also results in higher proportions of burnt landscape through time. Finally, directed walks result in more of the landscape be burnt at a given moment throughout model run.
 
 ## Spatial clustering of vegetation types
 
-Spatial clustering (and its converse spatial heterogeneity) of vegetation types is assessed via Moran's I values. We limit our analysis to those significant values of Moran's I to assess the degree of clustering (positive values) or dispersion (negative values). We assessed the effects of the different parameters using linear regressions. 
+Spatial clustering (and its converse spatial heterogeneity) of vegetation types is assessed via Moran's I values. We limit our analysis to those significant values of Moran's I to assess the degree of clustering (positive values) or dispersion (negative values). We assessed the effects of the different parameters using linear regressions.
 
 ```{r morans-i-regression_1, echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 veg.100.prod = readRDS("../results/outputs/veg_moransi_100-prod.rds")
@@ -551,15 +555,14 @@ plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unp
   "start = unproductive, cycle = 100", 
   "start = productive, cycle = 250", 
   "start = unproductive, cycle = 250"
-), coefs = c("ticks", "natural_ignition0.05", "veg_distribution\"random\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost50", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
+), coefs = c("ticks", "natural_ignition0.05", "veg_distribution\"random\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost50", "burn_cost100", "burn_cost150", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
 
+***TO REDO:*** Comparing across individual models for the experiments split by whether the model starts in a productive or unproductive state and split by the model climatic cycle duration, we can see that most of the parameters have similar effects. The parameters with significant differences in regression coefficients between the models are: *movement-model* and *natural-ignition*. We can see that when model run starts in a unproductive state and the climatic cycles are longer, Directed Walks allow for the model to begin with a higher value of Moran's I, with more spatial clustering of vegetation types. We can also see that natural ignition has a less negative effect on Moran's I when the model starts on a productive landscape with long climatic cycles.
 
-Comparing across individual models for the experiments split by whether the model starts in a productive or unproductive state and split by the model climatic cycle duration, we can see that most of the parameters have similar effects. The parameters with significant differences in regression coefficients between the models are: *movement-model* and *natural-ignition*. We can see that when model run starts in a unproductive state and the climatic cycles are longer, Directed Walks allow for the model to begin with a higher value of Moran's I, with more spatial clustering of vegetation types. We can also see that natural ignition has a less negative effect on Moran's I when the model starts on a productive landscape with long climatic cycles. 
-
-Because spatial autocorrelation of vegetation types is always positive in the model, the negative regression coefficients mean those parameters decrease overall clustering of vegetation types. This means that random walks by foragers (instead of directed walks) result in less clustering of vegetation types, as does natural ignition and the ability to burn any vegetation type. Conversely, when there is a cost to burning, clustering of vegetation types is increased compared to a lack of burn cost. 
+Because spatial autocorrelation of vegetation types is always positive in the model, the negative regression coefficients mean those parameters decrease overall clustering of vegetation types. This means that random walks by foragers (instead of directed walks) result in less clustering of vegetation types, as does natural ignition and the ability to burn any vegetation type. Conversely, when there is a cost to burning, clustering of vegetation types is increased compared to a lack of burn cost.
 
 ```{r morans-i-regression_3, echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
 plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unprod.fit1, model.names = c(
@@ -567,31 +570,35 @@ plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unp
   "start = unproductive, cycle = 100", 
   "start = productive, cycle = 250", 
   "start = unproductive, cycle = 250"
-), omit.coefs = c("(Intercept)","ticks", "natural_ignition0.05", "veg_distribution\"clustered\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost50", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
+), omit.coefs = c("(Intercept)","ticks", "natural_ignition0.05", "veg_distribution\"clustered\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost50", "burn_cost100", "burn_cost150", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ggarrange(
   ggeffects::ggpredict(veg.100.prod.fit1, terms = c("ticks", "movement_model")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 5), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    labs(subtitle = "cycle = 100, start = productive"), 
   ggeffects::ggpredict(veg.100.unprod.fit1, terms = c("ticks", "movement_model")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    labs(subtitle = "cycle = 100, start = unproductive"), 
   ggeffects::ggpredict(veg.250.prod.fit1, terms = c("ticks", "movement_model")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    labs(subtitle = "cycle = 250, start = productive"), 
   ggeffects::ggpredict(veg.250.unprod.fit1, terms = c("ticks", "movement_model")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    labs(subtitle = "cycle = 250, start = unproductive"), 
   common.legend = T, legend = "bottom", nrow = 1)
 
 ```
 
-These significant differences between *movement-model* and *natural-ignition* are also true over time. We can also see that the values of burn neighbor limit have different effect sizes across the different models. Specifically, we see that, when *veg-cycle-start* is productive and *cycle-duration* is 100, the clustering of vegetation types in the model will decrease more quickly if agents perform directed walks and can burn more patches. 
+***TO REDO:*** These significant differences between *movement-model* and *natural-ignition* are also true over time. We can also see that the values of burn neighbor limit have different effect sizes across the different models. Specifically, we see that, when *veg-cycle-start* is productive and *cycle-duration* is 100, the clustering of vegetation types in the model will decrease more quickly if agents perform directed walks and can burn more patches.
 
 ## Vegetation diversity
 
-Vegetation diversity was measured by Shannon's Diversity Index. This metric considers the proportional abundances of vegetation types to indicate whether one type dominates or abundances are more evenly spread across all types. A SDI value of 0 indicates a lack of diversity with abundance being concentrated in a single species. Higher SDI values indicate more diversity of vegetation types. 
+Vegetation diversity was measured by Shannon's Diversity Index. This metric considers the proportional abundances of vegetation types to indicate whether one type dominates or abundances are more evenly spread across all types. A SDI value of 0 indicates a lack of diversity with abundance being concentrated in a single species. Higher SDI values indicate more diversity of vegetation types.
 
 ```{r veg-diversity-distribution, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod) 
@@ -602,9 +609,10 @@ ggplot(veg.data) +
   geom_density(aes(x = shannon.div, color = movement_model))
 
 ```
+
 The distribution of this metric is bimodal across model runs, with a high proportion of measurements showing a complete lack of diversity. This bimodality is caused by the different movement models used: directed walks result in less diversity than random walks.
 
-We fit a GAM to vegetation type diversity for model runs with random walks. We use GAM to investigate how the effects of the parameters change through time. 
+We fit a GAM to vegetation type diversity for model runs with random walks. We use GAM to investigate how the effects of the parameters change through time.
 
 ```{r veg-diversity-regression_1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data.r = veg.data %>% filter(movement_model == "\"Random Walk\"")
@@ -644,7 +652,6 @@ qq.gam(rw.gam2)
 
 ```
 
-
 ```{r veg-diversity-regression_1_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
 plot(rw.gam2, select=1, shade=T)
@@ -654,7 +661,7 @@ abline(h=0, lty = 2)
 
 ```
 
-When there is natural ignition events in the model, we can see that vegetation diversity steadily decreases. Conversely, without natural ignition events, there is initially an increase in vegetation diversity and then a steady decreases. This is likely because diversity decreases as the proportion of burnt landscape steadily increases over model run. Having natural ignition events simply creates even more burnt landscape. 
+When there is natural ignition events in the model, we can see that vegetation diversity steadily decreases. Conversely, without natural ignition events, there is initially an increase in vegetation diversity and then a steady decreases. This is likely because diversity decreases as the proportion of burnt landscape steadily increases over model run. Having natural ignition events simply creates even more burnt landscape.
 
 ```{r veg-diversity-regression_1_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -676,24 +683,27 @@ abline(h=0, lty = 2)
 
 ```
 
-The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity - both distributions have slightly increasingly positive effects over the course of model run. 
+The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity - both distributions have slightly increasingly positive effects over the course of model run.
 
 ```{r veg-diversity-regression_1_5, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
+par(mfrow=c(2,2), cex=0.8)
 plot(rw.gam2, select=7, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=8, shade=T)
 abline(h=0, lty = 2)
-
-```
-
-Having a cost associated with burning introduces a larger effect on vegetation diversity than no cost of burning. This is likely related to the fact that a burning cost reduces the amount of burning at the beginning of model run.
-
-```{r veg-diversity-regression_1_6, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
 plot(rw.gam2, select=9, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=10, shade=T)
+abline(h=0, lty = 2)
+```
+
+***TO REDO*** Having a cost associated with burning introduces a larger effect on vegetation diversity than no cost of burning. This is likely related to the fact that a burning cost reduces the amount of burning at the beginning of model run.
+
+```{r veg-diversity-regression_1_6, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+par(mfrow=c(1,2), cex=0.8)
+plot(rw.gam2, select=11, shade=T)
+abline(h=0, lty = 2)
+plot(rw.gam2, select=12, shade=T)
 abline(h=0, lty = 2)
 ```
 
@@ -701,25 +711,25 @@ Similarly, stricter limits on what types of vegetation can be burning reduces bu
 
 ```{r veg-diversity-regression_1_7, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
-plot(rw.gam2, select=11, shade=T)
-abline(h=0, lty = 2)
-plot(rw.gam2, select=12, shade=T)
-abline(h=0, lty = 2)
 plot(rw.gam2, select=13, shade=T)
 abline(h=0, lty = 2)
-```
-
-This same pattern is seen even more distinctly with the strictest burnt neighbor limits. When agents can burn any patch (*burnt-neighbor-limit* = 8), we see a slightly negative effect on vegetation diversity by the end of model run. This demonstrates again that lots of burning reduces vegetation diversity. 
-
-```{r veg-diversity-regression_1_8, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
 plot(rw.gam2, select=14, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=15, shade=T)
 abline(h=0, lty = 2)
 ```
 
-Both values of cycle duration have similar effects. 
+This same pattern is seen even more distinctly with the strictest burnt neighbor limits. When agents can burn any patch (*burnt-neighbor-limit* = 8), we see a slightly negative effect on vegetation diversity by the end of model run. This demonstrates again that lots of burning reduces vegetation diversity.
+
+```{r veg-diversity-regression_1_8, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+par(mfrow=c(1,2), cex=0.8)
+plot(rw.gam2, select=16, shade=T)
+abline(h=0, lty = 2)
+plot(rw.gam2, select=17, shade=T)
+abline(h=0, lty = 2)
+```
+
+Both values of cycle duration have similar effects.
 
 ```{r veg-diversity-regression_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 veg.data.d = veg.data %>% filter(movement_model == "\"Directed Walk\"")
@@ -769,7 +779,7 @@ abline(h=0, lty = 2)
 
 ```
 
-For directed walks, natural ignition does not have a very large effect on vegetation diversity. The lack of natural ignition allows for more vegetation diversity at the beginning of model run but this effect declines and matches the effect with natural ignition by the end of model run. 
+For directed walks, natural ignition does not have a very large effect on vegetation diversity. The lack of natural ignition allows for more vegetation diversity at the beginning of model run but this effect declines and matches the effect with natural ignition by the end of model run.
 
 ```{r veg-diversity-regression_2_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -780,7 +790,7 @@ abline(h=0, lty = 2)
 
 ```
 
-We again see similar effects of both starting vegetation conditions on vegetation diversity across model run. 
+We again see similar effects of both starting vegetation conditions on vegetation diversity across model run.
 
 ```{r veg-diversity-regression_2_4, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -794,10 +804,14 @@ abline(h=0, lty = 2)
 The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity. Both distributions have effects that decrease from positive to negative over the course of model run. This is the opposite of how the effects of the underlying distribution change during random walks. This highlights the difference in effect of random walks and directed walks on vegetation diversity.
 
 ```{r veg-diversity-regression_2_5, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
+par(mfrow=c(2,2), cex=0.8)
 plot(dw.gam2, select=7, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=8, shade=T)
+abline(h=0, lty = 2)
+plot(dw.gam2, select=9, shade=T)
+abline(h=0, lty = 2)
+plot(dw.gam2, select=10, shade=T)
 abline(h=0, lty = 2)
 
 ```
@@ -806,9 +820,9 @@ With directed walks, having a cost for burning does not produce a different effe
 
 ```{r veg-diversity-regression_2_6, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-plot(dw.gam2, select=9, shade=T)
+plot(dw.gam2, select=11, shade=T)
 abline(h=0, lty = 2)
-plot(dw.gam2, select=10, shade=T)
+plot(dw.gam2, select=12, shade=T)
 abline(h=0, lty = 2)
 ```
 
@@ -816,21 +830,21 @@ The lack of different effects of burning limits/costs is also seen with the para
 
 ```{r veg-diversity-regression_2_7, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
-plot(dw.gam2, select=11, shade=T)
-abline(h=0, lty = 2)
-plot(dw.gam2, select=12, shade=T)
-abline(h=0, lty = 2)
 plot(dw.gam2, select=13, shade=T)
 abline(h=0, lty = 2)
-```
-
-The only limit to burning that produces a different effect is the extremely strict limit on how many burnt neighboring patches a patch can have and still be burnt. When this is true, we do not see a positive effect on vegetation diversity at the beginning of model run. 
-
-```{r veg-diversity-regression_2_8, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
 plot(dw.gam2, select=14, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=15, shade=T)
+abline(h=0, lty = 2)
+```
+
+The only limit to burning that produces a different effect is the extremely strict limit on how many burnt neighboring patches a patch can have and still be burnt. When this is true, we do not see a positive effect on vegetation diversity at the beginning of model run.
+
+```{r veg-diversity-regression_2_8, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+par(mfrow=c(1,2), cex=0.8)
+plot(dw.gam2, select=16, shade=T)
+abline(h=0, lty = 2)
+plot(dw.gam2, select=17, shade=T)
 abline(h=0, lty = 2)
 ```
 
@@ -838,7 +852,7 @@ Cycle duration appears to not have much effect on vegetation diversity with dire
 
 ### Vegetation diversity omitting burnt patches?
 
-The lack of vegetation type diversity in the model contradicts evidence from the ethnographic record that indicates Shannon's Diversity should increase with anthropogenic burning. 
+The lack of vegetation type diversity in the model contradicts evidence from the ethnographic record that indicates Shannon's Diversity should increase with anthropogenic burning.
 
 However, above we include burnt patches within the diversity calculations, which may be skewing the results because burnt patches make up the majority of the landscape as burning becomes more frequent.
 
@@ -851,9 +865,9 @@ ggplot(veg.long) +
 
 ```
 
-We recalculated SDI omitting the burnt patches to understand if the diversity of other vegetation types increases over model run. 
+We recalculated SDI omitting the burnt patches to understand if the diversity of other vegetation types increases over model run.
 
-```{r SDI-no-burnt_1, echo=FALSE,out.width='100%', fig.height=6}
+```{r SDI-no-burnt_1, echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(veg.data %>% filter(signif == T)) +
   geom_boxplot(mapping = aes(x = ticks, y = shannon.div.no0, color = climate.condition, group = ticks)) +
   geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0)) +
@@ -863,11 +877,12 @@ ggplot(veg.data %>% filter(signif == T)) +
   theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
 
 ```
-When we omit burnt patches from our diversity calculations, we can see that diversity does indeed increase over the course of model run when agents perform random walks. Clearly, directed walks still result in very reduced vegetation diversity, although there is some increasing positive variation in this by the end of model runs. 
+
+When we omit burnt patches from our diversity calculations, we can see that diversity does indeed increase over the course of model run when agents perform random walks. Clearly, directed walks still result in very reduced vegetation diversity, although there is some increasing positive variation in this by the end of model runs.
 
 We again fit a GAM to investigate how the other parameters affect the increase in diversity of vegetation types excluding burnt patches.
 
-```{r SDI-no-burnt_2, echo=FALSE,out.width='100%', fig.height=6}
+```{r SDI-no-burnt_2, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 rw.no0.gam1 = gam(shannon.div.no0 ~ 
                 s(ticks, by = natural_ignition) + 
                 s(ticks, by = veg_cycle_start) + 
@@ -901,41 +916,47 @@ plot(rw.no0.gam2, select=2, shade=T)
 abline(h=0, lty = 2)
 
 ```
-The presence of natural ignition initial has a positive impact on diversity, but this effect becomes negative by the end of model run, likely because it contributes to the high number of burnt patches. 
+
+The presence of natural ignition initial has a positive impact on diversity, but this effect becomes negative by the end of model run, likely because it contributes to the high number of burnt patches.
 
 ```{r SDI-no-burnt_2_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
+par(mfrow=c(2,2), cex=0.8)
 plot(rw.no0.gam2, select=7, shade=T)
 abline(h=0, lty = 2)
 plot(rw.no0.gam2, select=8, shade=T)
 abline(h=0, lty = 2)
-
-```
-A cost to burning reduces the probability of burning and therefore frequency of burning behaviors. For this reason, it has the opposite effect trend to natural ignition. By limiting burning at the end of model run, we see greater diversity in the other vegetation types. 
-
-```{r SDI-no-burnt_2_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
 plot(rw.no0.gam2, select=9, shade=T)
 abline(h=0, lty = 2)
 plot(rw.no0.gam2, select=10, shade=T)
 abline(h=0, lty = 2)
+
 ```
 
-The same pattern arises when the types of vegetation that agents can burn is limited. Interestingly, however, there is still a positive impact by the end of model run when agents can burn any vegetation type. This likely indicates that this parameter does not strongly affect the overall trend towards increasing diversity. 
+A cost to burning reduces the probability of burning and therefore frequency of burning behaviors. For this reason, it has the opposite effect trend to natural ignition. By limiting burning at the end of model run, we see greater diversity in the other vegetation types.
 
-```{r SDI-no-burnt_2_4, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,3), cex=0.8)
+```{r SDI-no-burnt_2_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+par(mfrow=c(1,2), cex=0.8)
 plot(rw.no0.gam2, select=11, shade=T)
 abline(h=0, lty = 2)
 plot(rw.no0.gam2, select=12, shade=T)
 abline(h=0, lty = 2)
+```
+
+The same pattern arises when the types of vegetation that agents can burn is limited. Interestingly, however, there is still a positive impact by the end of model run when agents can burn any vegetation type. This likely indicates that this parameter does not strongly affect the overall trend towards increasing diversity.
+
+```{r SDI-no-burnt_2_4, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+par(mfrow=c(1,3), cex=0.8)
 plot(rw.no0.gam2, select=13, shade=T)
+abline(h=0, lty = 2)
+plot(rw.no0.gam2, select=14, shade=T)
+abline(h=0, lty = 2)
+plot(rw.no0.gam2, select=15, shade=T)
 abline(h=0, lty = 2)
 ```
 
-When looking at burnt neighbor limits, we get an opposite effect pattern than what might be expected based on the previous results. The strictest condition (*burnt-neighbor-limit* = 1), actually has a negative effect on diversity in the middle of model run. Conversely, the conditions that allow more burning have a positive impact on diversity by the end of model run. This might be because the strictest restrictions result in much of the environment failing to receive any long term benefits from burning because burning is so limited in frequency and space. 
+When looking at burnt neighbor limits, we get an opposite effect pattern than what might be expected based on the previous results. The strictest condition (*burnt-neighbor-limit* = 1), actually has a negative effect on diversity in the middle of model run. Conversely, the conditions that allow more burning have a positive impact on diversity by the end of model run. This might be because the strictest restrictions result in much of the environment failing to receive any long term benefits from burning because burning is so limited in frequency and space.
 
-Taken together, these results indicate that a certain level of burning is required for vegetation diversity to increase. 
+Taken together, these results indicate that a certain level of burning is required for vegetation diversity to increase.
 
 ```{r SDI-no-burnt_correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,3))
@@ -1009,7 +1030,7 @@ plot(fit2, which = 2)
 export_summs(fit1, fit2, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"), digits = 6)
 ```
 
-The intercept values show that burning events are on average marginally clustered on the landscape. This spatial autocorrelation is significantly affected by time, as indicated by the significance of nearly all of the interaction terms. Clustering of burning events is also increased generally by random movement of agents and relaxed limits on what types of vegetation can be burned (*burn-veg-type-threshold*). We also see that across model run the distribution of resource potential of patches (*veg-distribution*) also impacts the spatial autocorrelation of burning events, with a random distribution of resource potential (maximum veg type) resulting in a less clustering. 
+The intercept values show that burning events are on average marginally clustered on the landscape. This spatial autocorrelation is significantly affected by time, as indicated by the significance of nearly all of the interaction terms. Clustering of burning events is also increased generally by random movement of agents and relaxed limits on what types of vegetation can be burned (*burn-veg-type-threshold*). We also see that across model run the distribution of resource potential of patches (*veg-distribution*) also impacts the spatial autocorrelation of burning events, with a random distribution of resource potential (maximum veg type) resulting in a less clustering.
 
 ```{r burning-events_2_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 plot_summs(fit1, fit2, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"), scale = T)
@@ -1038,10 +1059,11 @@ ggarrange(p1, p2, common.legend = T, legend = "bottom", labels = c("cycle = 100 
   theme(plot.margin = margin(0.1,0.1,0.1,0.1, "cm"))
 ```
 
-Looking at the spatial autocorrelation by these parameters through time, we can see that strict burning limits typically result in dispersion of burning events (Moran's I < 0). High clustering of burning events only occurs when the resource potential on the landscape is also clustered. However, as we can see in the above graph, this is also affected by burning limits. 
+Looking at the spatial autocorrelation by these parameters through time, we can see that strict burning limits typically result in dispersion of burning events (Moran's I \< 0). High clustering of burning events only occurs when the resource potential on the landscape is also clustered. However, as we can see in the above graph, this is also affected by burning limits.
 
 ## Forager mobility
-In the model, foragers adjust how many steps they take during a foraging bout if they determine they will meet their energy requirements with fewer steps. 
+
+In the model, foragers adjust how many steps they take during a foraging bout if they determine they will meet their energy requirements with fewer steps.
 
 ```{r fm-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(data %>% filter(ticks > 0)) +
@@ -1053,9 +1075,9 @@ ggplot(data %>% filter(ticks > 0)) +
 
 ```
 
-Movement in the model is, therefore, patterned primarily by the energy available in the gridded landscape, which is determined by whether the model is in a productive or unproductive climatic period and how long those climatic periods last. 
+Movement in the model is, therefore, patterned primarily by the energy available in the gridded landscape, which is determined by whether the model is in a productive or unproductive climatic period and how long those climatic periods last.
 
-While cycle duration clearly causes fluctuations in agent movement behaviors, we chose to investigate average steps per foraging bout as a linear trend, splitting the data by cycle duration. Using mixed linear models, we can see how the other parameters affect forager movement while controlling for starting vegetation state.  
+While cycle duration clearly causes fluctuations in agent movement behaviors, we chose to investigate average steps per foraging bout as a linear trend, splitting the data by cycle duration. Using mixed linear models, we can see how the other parameters affect forager movement while controlling for starting vegetation state.
 
 ```{r fm-mm-regs, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width="100%"}
 c100 = data %>% filter(`cycle-duration` == 100) %>% filter(ticks > 0)
@@ -1131,7 +1153,7 @@ ggpubr::ggarrange(
   theme(plot.margin = margin(0.5,0.1,0.1,0.1, "cm"))
 ```
 
-These models demonstrate that strict burning limits lead to higher mobility across model run. When burning is more frequent, mobility decreases quickly over model run. This is likely related to the increased vegetation diversity and higher proportions of high value vegetation types toward the end of model run. This trend is visible by looking at the correlations between diversity and vegetation proportions with forager mobility (*mean.fm*). 
+These models demonstrate that strict burning limits lead to higher mobility across model run. When burning is more frequent, mobility decreases quickly over model run. This is likely related to the increased vegetation diversity and higher proportions of high value vegetation types toward the end of model run. This trend is visible by looking at the correlations between diversity and vegetation proportions with forager mobility (*mean.fm*).
 
 ```{r mobility-veg-correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,3))
@@ -1161,11 +1183,12 @@ corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div.no0, mean.burn.p
                    type = "lower", number.cex = 0.5, diag=F)
 
 ```
+
 At the end of model run, when forager mobility is lowest, there are negative correlations with vegetation diversity and the highest value vegetation types (*veg_7*, *veg_6*).
 
 ## Forager interactions
 
-When looking at forager interactions, we have to consider them in relation to populations since more foragers on the landscape will necessarily mean more possible interactions. The model outputs interaction counts averaged across all agents and we divided this by the population count to get the average proportion of the population that an individual agent interacts with each tick. 
+When looking at forager interactions, we have to consider them in relation to populations since more foragers on the landscape will necessarily mean more possible interactions. The model outputs interaction counts averaged across all agents and we divided this by the population count to get the average proportion of the population that an individual agent interacts with each tick.
 
 First, we investigate parameter effects via linear regression.
 
@@ -1214,7 +1237,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 When we visualize these differences, we can see that random walks result in a steep drop off. This means that a linear model is probably not the best fit, which is confirmed by the QQ-plot for the random walk data.
 
-For this reason, we split the regression of the random walk data into two segments. 
+For this reason, we split the regression of the random walk data into two segments.
 
 ```{r adj-fi-reg_2, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 rw.data = data %>% filter(`movement-model` == "\"Random Walk\"") %>% filter(ticks > 0)
@@ -1256,7 +1279,7 @@ rw.fit3 %>% broom::tidy() %>% full_join((rw.fit4 %>% broom::tidy()), by = "term"
   kable()
 ```
 
-For the random walk data, we can see that initially forager interactions are affected only by *natural-ignition* and *burn-cost*. After the initial decrease in forager interactions, more of the parameters have significant effects, although the effect sizes are very low. This is consistent with the very small slope estimated for the second part of the segmented regression (see above figure as well). 
+For the random walk data, we can see that initially forager interactions are affected only by *natural-ignition* and *burn-cost*. After the initial decrease in forager interactions, more of the parameters have significant effects, although the effect sizes are very low. This is consistent with the very small slope estimated for the second part of the segmented regression (see above figure as well).
 
 ```{r parameter-effects-adj-fi, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 3}
 ggarrange(
@@ -1325,9 +1348,10 @@ ggarrange(
 ) +
   theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7))
 ```
+
 As noted above, the only parameter that seems to have varied effects on the initial forager interactions for random walks is *natural-ignition.* For this reason, we focus on comparing directed walk data and the second segment of random walk data.
 
-When the underlying distribution of resource potential is clustered, we see more forager interactions than when that distribution is random. We also see more forager interactions when burning behaviors are not limited by burnt neighboring patches. This is interesting because the other two burning parameters, *burn-veg-type-threshold* and *burn-cost*, show increased forager interactions with stricter burning limits. 
+When the underlying distribution of resource potential is clustered, we see more forager interactions than when that distribution is random. We also see more forager interactions when burning behaviors are not limited by burnt neighboring patches. This is interesting because the other two burning parameters, *burn-veg-type-threshold* and *burn-cost*, show increased forager interactions with stricter burning limits.
 
 ```{r veg-clustering_and_interactions, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height = 4}
 par(mfrow = c(1,2))
@@ -1349,10 +1373,9 @@ corrplot::corrplot(cor(data2000 %>% filter(`veg-distribution` == "\"clustered\""
                    title = "clustered distribution", mar=c(0,0,1,0))
 ```
 
-
 ## References
+
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
 pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc"))
 knitr::kable(pkgs)
 ```
-
