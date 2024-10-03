@@ -41,6 +41,8 @@ data$pop.dens = data$pop.count/(51*51)
 
 data$benefit.ratio = data$benefit_self/data$benefit_other
 data$benefit.ratio = ifelse(is.nan(data$benefit.ratio), NA, data$benefit.ratio)
+
+data$burnt = data$`veg_-1`
 ```
 
 ## Population maintenance?
@@ -60,15 +62,20 @@ length(unique(unfinished.data$exp))
 
 ```
 
-Forty seven of our runs resulted in population extinction. Below you can see the various combinations of model parameters that result in this:
+Approximately 9% (665 runs) of our modeled scenarios resulted in population extinction. Here we show how failures counts break down by the different parameters:
 
 ```{r pop-maintenance_2, echo=FALSE, message=FALSE, warning=FALSE}
-
-unfinished.data %>% select_at(c(parameters)) %>% distinct() %>% kable()
-
+lapply((unfinished.data %>% select_at(c("exp", parameters)) %>% distinct())[,parameters], table)
 ```
 
-Nearly all of the model runs that could not sustain a population started in an unproductive environment and had high costs to burning behaviors. If the model started in a productive environment, then high costs to burning behaviors sometimes still resulted in population extinction.
+Nearly all of the model runs that could not sustain a population had costs to burning behaviors that matched or exceeded the energetic benefits gained from burning. Interestingly, in all of these model runs, foragers use random walks. This suggests that a directed mobility strategy is enough to offset the impact of high costs of burning behaviors. Across the other parameters, those that end in fail are more or less equally spread.  
+
+We filter out these unsuccessful runs to avoid issues in analyzing trends over the course of model run.
+
+```{r filter-out-unsuccessful-runs, echo=TRUE, message=FALSE, warning=FALSE}
+data = data %>% filter(exp %in% finished.exp)
+```
+
 
 ## Correlations of outputs over time
 
@@ -79,7 +86,7 @@ Next, we looked at the correlation between outputs across model runs.
 outputs = c(
   #"pop.count",
   "pop.dens", #pop count/world size
-  "veg_0", 
+  "burnt", 
   "mean.burn.prob", 
   #"mean.fi", #average forager interaction count
   "adj.fi", #average interaction count/ population count
@@ -98,7 +105,7 @@ corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs
 
 ```
 
-We can see that population density is highly correlated with most of the other outputs. Specifically, there is a high and significant positive correlation between population density and mean burning probability (*mean.burn.prob*). This indicates that large populations are more likely to burn the landscape. This contextualizes the positive correlation between population density and proportion of burnt landscape (*veg_0*). We also see that population density is negatively correlated with forager movement (*mean.fm*), meaning foragers move less within large populations. Foragers also move less when they are burning the landscape more frequently.
+We can see that population density is strongly positively correlated with mean burning probability (*mean.burn.prob*). This indicates that large populations are more likely to burn the landscape. This contextualizes the positive correlation between population density and proportion of burnt landscape (*burnt*). We also see that population density is negatively correlated with forager movement (*mean.fm*), meaning foragers move less within large populations. Foragers also move less when they are burning the landscape more frequently.
 
 We also investigated how these correlations change over time by looking at the correlations between outputs at 250 ticks, 1000 ticks, and 2000 ticks. For this, we also include spatial autocorrelation values of vegetation types and burning events, as well as a diversity metric of vegetation types.
 
@@ -107,7 +114,7 @@ We also investigated how these correlations change over time by looking at the c
 outputs = c(
   #"pop.count",
   "pop.dens", #pop count/world size
-  "veg_0", 
+  "burnt", 
   "mean.burn.prob", 
   #"mean.fi", #average forager interaction count
   "adj.fi", #average interaction count/ population count
@@ -136,12 +143,12 @@ par(mar=c(0,1,0,1))
 data250 = data %>% dplyr::filter(ticks == 250) %>% 
   left_join(veg.data %>% 
               dplyr::filter(ticks == 250) %>% 
-              select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
+              dplyr::select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
               rename(veg_morans.i = morans.i), 
             by = c("exp")) %>% 
   left_join(be.data %>% 
               dplyr::filter(ticks == 250) %>% 
-              select(exp, morans.i) %>%
+              dplyr::select(exp, morans.i) %>%
               rename(be_morans.i = morans.i), 
             by = c("exp"))
 
@@ -156,12 +163,12 @@ corrplot::corrplot(cor(data250 %>% select_at(outputs), use = "pairwise.complete.
 data1000 = data %>% filter(ticks == 1000) %>% 
   left_join(veg.data %>% 
               filter(ticks == 1000) %>% 
-              select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
+              dplyr::select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
               rename(veg_morans.i = morans.i), 
             by = c("exp")) %>% 
   left_join(be.data %>% 
               filter(ticks == 1000) %>% 
-              select(exp, morans.i) %>%
+              dplyr::select(exp, morans.i) %>%
               rename(be_morans.i = morans.i), 
             by = c("exp"))
 
@@ -176,12 +183,12 @@ corrplot::corrplot(cor(data1000 %>% select_at(outputs), use = "pairwise.complete
 data2000 = data %>% filter(ticks == 2000) %>% 
   left_join(veg.data %>% 
               filter(ticks == 2000) %>% 
-              select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
+              dplyr::select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
               rename(veg_morans.i = morans.i), 
             by = c("exp")) %>% 
   left_join(be.data %>% 
               filter(ticks == 2000) %>% 
-              select(exp, morans.i) %>%
+              dplyr::select(exp, morans.i) %>%
               rename(be_morans.i = morans.i), 
             by = c("exp"))
 
@@ -195,7 +202,7 @@ corrplot::corrplot(cor(data2000 %>% select_at(outputs), use = "pairwise.complete
 
 The correlations between outputs remain relatively consistent over the course of model run. The exception to this is the correlations with vegetation spatial autocorrelation (*veg_morans.i*) and burning events spatial autocorrelation (*be_morans.i*).
 
-Spatial autocorrelation of vegetation types starts out highly positively correlated with most other outputs and then decreases to negatively correlated by the end of model run. Spatial autocorrelation of vegetation types is negatively correlated with burning probability (*mean.burn.prob*) and proportion of burnt landscape (*veg_0*) by the end of model run. This indicates that as burning becomes more frequent, there is less clustering of vegetation types. We see the opposite relationship with the clustering of burning events - this positively increases as burning becomes more frequent.
+Spatial autocorrelation of vegetation types is negatively correlated with burning probability (*mean.burn.prob*) and proportion of burnt landscape (*burnt*) by the end of model run. This indicates that as burning becomes more frequent, there is less clustering of vegetation types. We see the opposite relationship with the clustering of burning events - this becomes uncorrelated with burning probability and weakly correlated with proportion of burnt landscape by the end of model run. This indicates that as burning frequency increases, there is less clustering of where these burning events occur on the landscape, suggesting that the landscape becomes more equally used. This might be in part due to the large population sizes that evolve by the end of model run.
 
 ## Population during model run
 
@@ -325,7 +332,11 @@ anova(rate.fit1, rate.fit2)
 
 plot(rate.fit2, which = 2)
 
-plot_summs(rate.fit2, scale = T)
+rate.fit.df = rate.fit2 %>% broom::tidy() %>%
+  mutate(p.signif = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  filter(p.signif == F)
+
+plot_summs(rate.fit2, scale = T, omit.coefs = c("(Intercept)", rate.fit.df$term))
 
 rate.fit2 %>% broom::tidy() %>% 
   filter(p.value <= 0.05) %>%
@@ -488,6 +499,11 @@ veg.100.unprod = readRDS("../results/outputs/veg_moransi_100-unprod.rds")
 veg.250.prod = readRDS("../results/outputs/veg_moransi_250-prod.rds")
 veg.250.unprod = readRDS("../results/outputs/veg_moransi_250-unprod.rds")
 
+veg.100.prod = veg.100.prod %>% filter(exp %in% finished.exp)
+veg.100.unprod = veg.100.unprod %>% filter(exp %in% finished.exp)
+veg.250.prod = veg.250.prod %>% filter(exp %in% finished.exp)
+veg.250.unprod = veg.250.unprod %>% filter(exp %in% finished.exp)
+
 veg.100.prod = veg.100.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
 veg.100.unprod = veg.100.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
 veg.250.prod = veg.250.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
@@ -555,7 +571,7 @@ plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unp
   "start = unproductive, cycle = 100", 
   "start = productive, cycle = 250", 
   "start = unproductive, cycle = 250"
-), coefs = c("ticks", "natural_ignition0.05", "veg_distribution\"random\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost50", "burn_cost100", "burn_cost150", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
+), coefs = c("ticks", "natural_ignition0.05", "veg_distribution\"random\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost100", "burn_cost200", "burn_cost300", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
@@ -570,7 +586,7 @@ plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unp
   "start = unproductive, cycle = 100", 
   "start = productive, cycle = 250", 
   "start = unproductive, cycle = 250"
-), omit.coefs = c("(Intercept)","ticks", "natural_ignition0.05", "veg_distribution\"clustered\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost50", "burn_cost100", "burn_cost150", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
+), omit.coefs = c("(Intercept)","ticks", "natural_ignition0.05", "veg_distribution\"clustered\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost100", "burn_cost200", "burn_cost300", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ggarrange(
@@ -1015,6 +1031,12 @@ be.morans.250$veg_distribution = factor(be.morans.250$veg_distribution, levels =
 
 be.morans.100$movement_model = factor(be.morans.100$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
 be.morans.250$movement_model = factor(be.morans.250$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
+
+be.morans.100 = be.morans.100 %>% filter(exp %in% finished.exp)
+be.morans.250 = be.morans.250 %>% filter(exp %in% finished.exp)
+
+be.morans.100 = be.morans.100 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+be.morans.250 = be.morans.250 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
 
 #hist(be.morans.100$morans.i)
 #hist(be.morans.250$morans.i)
