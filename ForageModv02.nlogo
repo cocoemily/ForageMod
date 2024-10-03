@@ -119,8 +119,8 @@ to go
       export-data
     ]
 
-    if export-pop? = true [
-      export-population-data
+    if export-limited? = true [
+      export-limited-data
     ]
     stop
   ]
@@ -216,8 +216,8 @@ to go
       export-data
     ]
 
-    if export-pop? = true [
-      export-population-data
+    if export-limited? = true [
+      export-limited-data
     ]
     stop
   ]
@@ -487,13 +487,14 @@ to export-data
 
 end
 
-to export-population-data
+to export-limited-data ;for sensitivity analysis
 
   output-print (word "exp " stamp1 " total run time: " timer "sec" )
 
   export-plot "Population" (word file-path "population.csv")
-  export-plot "Burning Behavior" (word file-path "burning-behavior.csv") ;for sensitivity analysis
+  export-plot "Burning Behavior" (word file-path "burning-behavior.csv")
   export-plot "Forager Moves" (word file-path "forager-moves.csv")
+  export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
 
 end
 @#$#@#$#@
@@ -1011,12 +1012,12 @@ NIL
 String
 
 SWITCH
-862
+857
 15
-997
+1009
 48
-export-pop?
-export-pop?
+export-limited?
+export-limited?
 1
 1
 -1000
