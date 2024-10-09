@@ -11,7 +11,8 @@ library(mgcv)
 library(ggpubr)
 theme_set(theme_bw())
 
-data = readRDS("results/bb-data.rds")
+#data = readRDS("results/bb-data.rds")
+source("analysis_scripts/filter-out-unsuccessful-runs.R")
 
 parameters = c(
   "natural-ignition", # 0.00, 0.05
@@ -34,11 +35,13 @@ data$`movement-model` = as.factor(data$`movement-model`)
 
 data$adj.fi = data$mean.fi/data$pop.count
 data$pop.dens = data$pop.count/(51*51)
+data$burnt = data$`veg_-1`
+data$benefit.ratio = data$benefit_self/data$benefit_other
 
 outputs = c(
   "pop.count",
   "pop.dens", #pop count/world size
-  "veg_0", 
+  "burnt", 
   "mean.burn.prob", 
   #"mean.fi", #average forager interaction count
   "adj.fi", #average interaction count/ population count
@@ -48,8 +51,6 @@ outputs = c(
   "benefit_self", #
   "benefit_other"
 )
-
-data$benefit.ratio = data$benefit_self/data$benefit_other
 
 #### mobility analysis ####
 hist(data$mean.fm)
@@ -242,34 +243,53 @@ fi.fit1 = lm(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn
 fi.fit2 = lmer(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `veg-cycle-start` + `natural-ignition`) + (1 | `movement-model`) , data = data)
 anova(fi.fit2, fi.fit1)
 
+plot.data = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100) %>% filter(`veg-cycle-start` == "\"productive\"")
+plot.data$`burn-cost` =  as.factor(plot.data$`burn-cost`)
+
+move.labs = c("Directed Walk", "Random Walk")
+names(move.labs) = c("\"Directed Walk\"", "\"Random Walk\"")
+
 #### final figure ####
 all.plot = ggarrange(
-  ggplot(data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100)) +
-    geom_point(aes(x = ticks, y = mean.fm, color = `movement-model`), alpha = 0.01, size = 0.1) +
-    geom_smooth(aes(x = ticks, y = mean.fm, color = `movement-model`), method = "lm") +
-    #geom_hline(yintercept = 0, linetype = "dotted") +
-    facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
-      `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
-    )) +
-    scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+  ggplot(plot.data) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 0), mapping =
+                  aes(x = ticks, y = mean.fm, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 100), mapping =
+                  aes(x = ticks, y = mean.fm, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 200), mapping =
+                  aes(x = ticks, y = mean.fm, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 300), mapping =
+                  aes(x = ticks, y = mean.fm, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_smooth(mapping = aes(x = ticks, y = mean.fm, color = `burn-cost`), method = "lm") +
+    facet_grid(`cycle-duration` ~ `movement-model`, 
+               labeller = labeller(`movement-model` = move.labs, `cycle-duration` = cycle.labs)) +
+    scale_color_brewer(palette = "Set2",
+                       labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
     theme(strip.text = element_text(size = 6), 
           legend.title = element_blank(), 
           legend.position = "bottom", 
           axis.title = element_text(size = 7.5)) +
-    scale_y_continuous(limits = c(6.000, 10.500), labels = scales::number_format(accuracy = 0.001)) + 
+    scale_y_continuous(limits = c(8.000, 10.500), labels = scales::number_format(accuracy = 0.001)) + 
     labs(y = "average steps per foraging bout"),
-  ggplot(data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100)) +
-    geom_point(aes(x = ticks, y = adj.fi, color = `movement-model`), alpha = 0.01, size = 0.05) +
-    geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T) +
-    facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = labeller(
-      `veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs
-    )) +
-    scale_color_colorblind(labels = c("Directed Walk", "Random Walk")) +
+  ggplot(plot.data) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 0), mapping =
+                 aes(x = ticks, y = adj.fi, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 100), mapping =
+                 aes(x = ticks, y = adj.fi, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 200), mapping =
+                 aes(x = ticks, y = adj.fi, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_point(data = plot.data %>% filter(`burn-cost` == 300), mapping =
+                 aes(x = ticks, y = adj.fi, group = ticks, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+    geom_smooth(mapping = aes(x = ticks, y = adj.fi, color = `burn-cost`)) +
+    facet_grid(`cycle-duration` ~ `movement-model`, 
+               labeller = labeller(`movement-model` = move.labs, `cycle-duration` = cycle.labs)) +
+    scale_color_brewer(palette = "Set2",
+                       labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
     theme(strip.text = element_text(size = 6), 
           legend.title = element_blank(), 
           legend.position = "bottom", 
           axis.title = element_text(size = 7.5)) +
-    scale_y_continuous(limits = c(0, 0.025)) +
+    scale_y_continuous(limits = c(0, 0.020)) +
     labs(y = "interaction proportion per bout"), 
   ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
 )

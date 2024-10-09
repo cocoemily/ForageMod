@@ -38,7 +38,7 @@ fit.log = glm(signif ~ ticks*(.), data = be.morans.100 %>% select_at(c("ticks", 
 summary(fit.log)
 
 #### Global Moran's I, cycle duration = 250 ####
-ggplot(all.morans.250 %>% filter(signif == T)) +
+ggplot(be.morans.250 %>% filter(signif == T)) +
   geom_point(mapping = aes(x = ticks, y = morans.i, shape = signif)) +
-  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = as.factor(`burnt-neighbor-limit`), group = as.factor(`burnt-neighbor-limit`)), method = "lm") +
-  facet_grid(`burn-veg-type-threshold`~`movement-model` + `veg-distribution`, scales = "free")
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = as.factor(burnt_neighbor_limit), group = as.factor(burnt_neighbor_limit)), method = "lm") +
+  facet_grid(burn_veg_type_threshold~movement_model + veg_distribution, scales = "free")

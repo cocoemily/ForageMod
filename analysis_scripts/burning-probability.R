@@ -3,9 +3,11 @@ library(rcompanion)
 library(fitdistrplus)
 library(QuantPsyc)
 library(betareg)
+library(jtools)
 theme_set(theme_bw())
 
-data = readRDS("results/bb-data.rds")
+#data = readRDS("results/bb-data.rds")
+source("analysis_scripts/filter-out-unsuccessful-runs.R")
 
 parameters = c(
   "natural-ignition", # 0.00, 0.05
@@ -28,11 +30,12 @@ data$`movement-model` = as.factor(data$`movement-model`)
 
 data$adj.fi = data$mean.fi/data$pop.count
 data$pop.dens = data$pop.count/(51*51)
+data$burnt = data$`veg_-1`
 
 outputs = c(
   "pop.count",
   "pop.dens", #pop count/world size
-  "veg_0", 
+  "burnt", 
   "mean.burn.prob", 
   #"mean.fi", #average forager interaction count
   "adj.fi", #average interaction count/ population count
@@ -47,6 +50,7 @@ outputs = c(
 #   mutate(benefit_self_0 = ifelse(benefit_self == 0, 0.000001, benefit_self), 
 #          benefit_other_0 = ifelse(benefit_other == 0, 0.000001, benefit_other))
 data$benefit.ratio = data$benefit_self/data$benefit_other
+data$benefit.ratio2 = data$benefit_other/data$benefit_self
 
 
 mbp.plot = ggplot(data) +
@@ -61,7 +65,6 @@ ggsave(filename = "preliminary_figures/all_burn-prob.png", plot = mbp.plot,
 
 ##### effects of parameters on mean burn probability over time ####
 plotNormalHistogram(data$mean.burn.prob)
-descdist(data$mean.burn.prob) #uniform
 
 mbp.fit1 = lm(mean.burn.prob ~ ticks + (.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
 mbp.fit2 = lm(mean.burn.prob ~ ticks:(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
@@ -71,21 +74,27 @@ anova(mbp.fit1, mbp.fit2, mbp.fit3)
 summary(mbp.fit3)
 
 ggplot(data) +
-  geom_point(aes(x = ticks, y = mean.burn.prob)) +
+  #geom_point(aes(x = ticks, y = mean.burn.prob)) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob)) +
   facet_grid(`burn-cost` ~ `burnt-neighbor-limit` +  `burn-veg-type-threshold`)
 
 ##### benefit ratio ####
-ggplot(data %>% filter(ticks > 0)) +
-  geom_density(aes(x = benefit.ratio))
 ggplot(data) +
   geom_point(aes(x = benefit_self, y = mean.burn.prob))
+
+data$bself.prop = data$benefit_self / data$pop.count
+ggplot(data) +
+  geom_smooth(aes(x = ticks, y = bself.prop)) +
+  facet_grid(`burn-cost` ~ `burnt-neighbor-limit` +  `burn-veg-type-threshold`)
+
+summary(data$benefit.ratio2)
+
 
 br.plot = ggplot(data) +
   geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.25) +
   geom_smooth(aes(x = ticks, y = benefit.ratio)) +
   scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
-  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_hline(yintercept = 1, linetype = "dotted") +
   labs(x = "ticks", y = "ratio of self benefit to other benefit")
 #plot(br.plot)
 ggsave(filename = "preliminary_figures/all_benefit-ratio.png", plot = br.plot, 
@@ -108,7 +117,8 @@ bp.rates = bp.rates %>% left_join(data %>% select_at(c("exp", parameters)), by =
 bp.rates$slope = as.numeric(bp.rates$slope)
 
 hist(bp.rates$slope)
-descdist(bp.rates$slope)
+#descdist(bp.rates$slope)
+summary(bp.rates$slope)
 
 rate.fit1 = lm(slope ~ ., data = bp.rates %>% select_at(c("slope", parameters)))
 rate.fit2 = lm(slope ~ .:., data = bp.rates %>% select_at(c("slope", parameters)))
@@ -116,12 +126,25 @@ rate.fit3 = lm(slope ~ .*., data = bp.rates %>% select_at(c("slope", parameters)
 anova(rate.fit1, rate.fit2, rate.fit3)
 
 summary(rate.fit2)
+summ(rate.fit2)
 
+rate.fit.df = rate.fit2 %>% tidy() %>%
+  mutate(p.signif = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  filter(p.signif == F)
 
-#how to best visualize this?
-# ggplot(bp.rates) +
-#   geom_histogram(aes(x = slope, group = `burn-veg-type-threshold`, fill = `burn-veg-type-threshold`), bins = 50) +
-#   geom_vline(xintercept = 0) +
-#   facet_grid(`burn-cost` ~ `burnt-neighbor-limit`)
+plot_summs(rate.fit2, scale = T, omit.coefs = c("(Intercept)", rate.fit.df$term))
+plot_summs(rate.fit2, scale = F, omit.coefs = c("(Intercept)", rate.fit.df$term))
+
+neg.bprate = bp.rates %>% filter(slope < 0) %>% select_at(c(parameters)) %>% distinct()
+lapply(neg.bprate[,parameters], unique)
+table(neg.bprate$`burn-cost`)
+length(unique((bp.rates %>% filter(slope < 0))$exp))/length(unique(bp.rates$exp))
 
 #how to compare to benefit gained?
+bpr.benefit = bp.rates %>% right_join(data %>% dplyr::select(exp, benefit.ratio, bself.prop), by = c("exp")) %>%
+  group_by_at(c("exp", parameters)) %>%
+  summarize(slope = first(slope), 
+            mean.benefit.ratio = mean(benefit.ratio)) #need to figure out how to deal with Inf values here and NaN values
+
+summary((bpr.benefit %>% filter(benefit.ratio < 1))$slope)
+summary((bpr.benefit %>% filter(benefit.ratio > 1))$slope)

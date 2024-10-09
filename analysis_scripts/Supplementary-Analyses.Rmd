@@ -1,6 +1,9 @@
 ---
 title: "ForageModv02 Supplementary Analysis"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
 bibliography: grateful-refs.bib
 csl: pnas.csl
 ---
@@ -68,14 +71,13 @@ Approximately 9% (665 runs) of our modeled scenarios resulted in population exti
 lapply((unfinished.data %>% select_at(c("exp", parameters)) %>% distinct())[,parameters], table)
 ```
 
-Nearly all of the model runs that could not sustain a population had costs to burning behaviors that matched or exceeded the energetic benefits gained from burning. Interestingly, in all of these model runs, foragers use random walks. This suggests that a directed mobility strategy is enough to offset the impact of high costs of burning behaviors. Across the other parameters, those that end in fail are more or less equally spread.  
+Nearly all of the model runs that could not sustain a population had costs to burning behaviors that matched or exceeded the energetic benefits gained from burning. Interestingly, in all of these model runs, foragers use random walks. This suggests that a directed mobility strategy is enough to offset the impact of high costs of burning behaviors. Across the other parameters, those that end in fail are more or less equally spread.
 
 We filter out these unsuccessful runs to avoid issues in analyzing trends over the course of model run.
 
 ```{r filter-out-unsuccessful-runs, echo=TRUE, message=FALSE, warning=FALSE}
 data = data %>% filter(exp %in% finished.exp)
 ```
-
 
 ## Correlations of outputs over time
 
@@ -664,6 +666,11 @@ rw.gam2 = gam(shannon.div ~ natural_ignition + veg_cycle_start + veg_distributio
 
 anova(rw.gam1, rw.gam2, test = "Chisq")
 
+rw.fit1 = lm(shannon.div ~ ticks*(.), data = veg.data.r %>% select_at(c("ticks", "shannon.div", reg.params)))
+
+AIC(rw.gam2)
+AIC(rw.fit1)
+
 qq.gam(rw.gam2)
 
 ```
@@ -701,7 +708,7 @@ abline(h=0, lty = 2)
 
 The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity - both distributions have slightly increasingly positive effects over the course of model run.
 
-```{r veg-diversity-regression_1_5, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-diversity-regression_1_5, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
 plot(rw.gam2, select=7, shade=T)
 abline(h=0, lty = 2)
@@ -780,6 +787,11 @@ dw.gam2 = gam(shannon.div ~ natural_ignition + veg_cycle_start + veg_distributio
 
 anova(dw.gam1, dw.gam2, test = "Chisq")
 
+dw.fit1 = lm(shannon.div ~ ticks*(.), data = veg.data.d %>% select_at(c("ticks", "shannon.div", reg.params)))
+
+AIC(dw.gam2)
+AIC(dw.fit1)
+
 qq.gam(dw.gam2)
 
 ```
@@ -819,7 +831,7 @@ abline(h=0, lty = 2)
 
 The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity. Both distributions have effects that decrease from positive to negative over the course of model run. This is the opposite of how the effects of the underlying distribution change during random walks. This highlights the difference in effect of random walks and directed walks on vegetation diversity.
 
-```{r veg-diversity-regression_2_5, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-diversity-regression_2_5, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
 plot(dw.gam2, select=7, shade=T)
 abline(h=0, lty = 2)
@@ -866,144 +878,152 @@ abline(h=0, lty = 2)
 
 Cycle duration appears to not have much effect on vegetation diversity with directed walks.
 
-### Vegetation diversity omitting burnt patches?
+<!-- ### Vegetation diversity omitting burnt patches? -->
 
-The lack of vegetation type diversity in the model contradicts evidence from the ethnographic record that indicates Shannon's Diversity should increase with anthropogenic burning.
+<!-- The lack of vegetation type diversity in the model contradicts evidence from the ethnographic record that indicates Shannon's Diversity should increase with anthropogenic burning. -->
 
-However, above we include burnt patches within the diversity calculations, which may be skewing the results because burnt patches make up the majority of the landscape as burning becomes more frequent.
+<!-- However, above we include burnt patches within the diversity calculations, which may be skewing the results because burnt patches make up the majority of the landscape as burning becomes more frequent. -->
 
-```{r issues-with-SDI, eval=FALSE, include=FALSE}
-veg.long = data %>% pivot_longer(c(veg_0, veg_1, veg_2, veg_3, veg_4, veg_5, veg_6, veg_7), names_to = "veg_type", values_to = "proportion")
+<!-- ```{r issues-with-SDI, eval=FALSE, include=FALSE} -->
+<!-- veg.long = data %>% pivot_longer(c(veg_0, veg_1, veg_2, veg_3, veg_4, veg_5, veg_6, veg_7), names_to = "veg_type", values_to = "proportion") -->
 
-ggplot(veg.long) +
-  geom_point(aes(x = ticks, y = proportion, color = veg_type)) +
-  facet_grid(`veg-cycle-start` ~ `cycle-duration`, scales = "free")
+<!-- ggplot(veg.long) + -->
+<!--   geom_point(aes(x = ticks, y = proportion, color = veg_type)) + -->
+<!--   facet_grid(`veg-cycle-start` ~ `cycle-duration`, scales = "free") -->
 
-```
+<!-- ``` -->
 
-We recalculated SDI omitting the burnt patches to understand if the diversity of other vegetation types increases over model run.
+<!-- We recalculated SDI omitting the burnt patches to understand if the diversity of other vegetation types increases over model run. -->
 
-```{r SDI-no-burnt_1, echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
-ggplot(veg.data %>% filter(signif == T)) +
-  geom_boxplot(mapping = aes(x = ticks, y = shannon.div.no0, color = climate.condition, group = ticks)) +
-  geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0)) +
-  facet_grid(movement_model ~ cycle_duration + veg_cycle_start , labeller = label_both) +
-  labs(color = "climate condition", y = "SDI") +
-  scale_color_brewer(palette = "Dark2") +
-  theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
+<!-- ```{r SDI-no-burnt_1, echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- ggplot(veg.data %>% filter(signif == T)) + -->
+<!--   geom_jitter(data = veg.data %>% filter(signif == T) %>% filter(burn_cost == 0), mapping = -->
+<!--                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) + -->
+<!--   geom_jitter(data = veg.data %>% filter(signif == T) %>% filter(burn_cost == 100), mapping = -->
+<!--                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) + -->
+<!--   geom_jitter(data = veg.data %>% filter(signif == T) %>% filter(burn_cost == 200), mapping = -->
+<!--                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) + -->
+<!--   geom_jitter(data = veg.data %>% filter(signif == T) %>% filter(burn_cost == 300), mapping = -->
+<!--                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) + -->
+<!--   geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0, color = burn_cost)) + -->
+<!--   facet_grid(movement_model ~ cycle_duration + veg_cycle_start , labeller = label_both) + -->
+<!--   labs(color = "", y = "Shannon Diversity Index") + -->
+<!--   scale_color_brewer(palette = "Set2", -->
+<!--                      labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) + -->
+<!--   theme(legend.position = "bottom", strip.text = element_text(size = 6.5),) -->
 
-```
+<!-- ``` -->
 
-When we omit burnt patches from our diversity calculations, we can see that diversity does indeed increase over the course of model run when agents perform random walks. Clearly, directed walks still result in very reduced vegetation diversity, although there is some increasing positive variation in this by the end of model runs.
+<!-- When we omit burnt patches from our diversity calculations, we can see that diversity does indeed increase over the course of model run when agents perform random walks. Clearly, directed walks still result in very reduced vegetation diversity, although there is some increasing positive variation in this by the end of model runs. -->
 
-We again fit a GAM to investigate how the other parameters affect the increase in diversity of vegetation types excluding burnt patches.
+<!-- We again fit a GAM to investigate how the other parameters affect the increase in diversity of vegetation types excluding burnt patches. -->
 
-```{r SDI-no-burnt_2, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-rw.no0.gam1 = gam(shannon.div.no0 ~ 
-                s(ticks, by = natural_ignition) + 
-                s(ticks, by = veg_cycle_start) + 
-                s(ticks, by = veg_distribution) + 
-                s(ticks, by = burn_cost)  +  
-                s(ticks, by = burn_veg_type_threshold) + 
-                s(ticks, by = burnt_neighbor_limit) +
-                s(ticks, by = cycle_duration), data = veg.data.r)
+<!-- ```{r SDI-no-burnt_2, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- rw.no0.gam1 = gam(shannon.div.no0 ~  -->
+<!--                 s(ticks, by = natural_ignition) +  -->
+<!--                 s(ticks, by = veg_cycle_start) +  -->
+<!--                 s(ticks, by = veg_distribution) +  -->
+<!--                 s(ticks, by = burn_cost)  +   -->
+<!--                 s(ticks, by = burn_veg_type_threshold) +  -->
+<!--                 s(ticks, by = burnt_neighbor_limit) + -->
+<!--                 s(ticks, by = cycle_duration), data = veg.data.r) -->
 
-rw.no0.gam2 = gam(shannon.div.no0 ~ natural_ignition + veg_cycle_start + veg_distribution + burn_cost + burn_veg_type_threshold + burnt_neighbor_limit + cycle_duration +
-                s(ticks, by = natural_ignition) + 
-                s(ticks, by = veg_cycle_start) + 
-                s(ticks, by = veg_distribution) + 
-                s(ticks, by = burn_cost)  +  
-                s(ticks, by = burn_veg_type_threshold) + 
-                s(ticks, by = burnt_neighbor_limit) +
-                s(ticks, by = cycle_duration), data = veg.data.r)
+<!-- rw.no0.gam2 = gam(shannon.div.no0 ~ natural_ignition + veg_cycle_start + veg_distribution + burn_cost + burn_veg_type_threshold + burnt_neighbor_limit + cycle_duration + -->
+<!--                 s(ticks, by = natural_ignition) +  -->
+<!--                 s(ticks, by = veg_cycle_start) +  -->
+<!--                 s(ticks, by = veg_distribution) +  -->
+<!--                 s(ticks, by = burn_cost)  +   -->
+<!--                 s(ticks, by = burn_veg_type_threshold) +  -->
+<!--                 s(ticks, by = burnt_neighbor_limit) + -->
+<!--                 s(ticks, by = cycle_duration), data = veg.data.r) -->
 
-anova(rw.no0.gam1, rw.no0.gam2, test = "Chisq")
+<!-- anova(rw.no0.gam1, rw.no0.gam2, test = "Chisq") -->
 
-qq.gam(rw.no0.gam2)
-```
+<!-- qq.gam(rw.no0.gam2) -->
+<!-- ``` -->
 
-We investigate how the effect trends of the parameters that result in more or less burning on vegetation type diversity not including burnt patches.
+<!-- We investigate how the effect trends of the parameters that result in more or less burning on vegetation type diversity not including burnt patches. -->
 
-```{r SDI-no-burnt_2_1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
-plot(rw.no0.gam2, select=1, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=2, shade=T)
-abline(h=0, lty = 2)
+<!-- ```{r SDI-no-burnt_2_1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- par(mfrow=c(1,2), cex=0.8) -->
+<!-- plot(rw.no0.gam2, select=1, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=2, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
 
-```
+<!-- ``` -->
 
-The presence of natural ignition initial has a positive impact on diversity, but this effect becomes negative by the end of model run, likely because it contributes to the high number of burnt patches.
+<!-- The presence of natural ignition initial has a positive impact on diversity, but this effect becomes negative by the end of model run, likely because it contributes to the high number of burnt patches. -->
 
-```{r SDI-no-burnt_2_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(2,2), cex=0.8)
-plot(rw.no0.gam2, select=7, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=8, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=9, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=10, shade=T)
-abline(h=0, lty = 2)
+<!-- ```{r SDI-no-burnt_2_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- par(mfrow=c(2,2), cex=0.8) -->
+<!-- plot(rw.no0.gam2, select=7, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=8, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=9, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=10, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
 
-```
+<!-- ``` -->
 
-A cost to burning reduces the probability of burning and therefore frequency of burning behaviors. For this reason, it has the opposite effect trend to natural ignition. By limiting burning at the end of model run, we see greater diversity in the other vegetation types.
+<!-- A cost to burning reduces the probability of burning and therefore frequency of burning behaviors. For this reason, it has the opposite effect trend to natural ignition. By limiting burning at the end of model run, we see greater diversity in the other vegetation types. -->
 
-```{r SDI-no-burnt_2_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,2), cex=0.8)
-plot(rw.no0.gam2, select=11, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=12, shade=T)
-abline(h=0, lty = 2)
-```
+<!-- ```{r SDI-no-burnt_2_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- par(mfrow=c(1,2), cex=0.8) -->
+<!-- plot(rw.no0.gam2, select=11, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=12, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- ``` -->
 
-The same pattern arises when the types of vegetation that agents can burn is limited. Interestingly, however, there is still a positive impact by the end of model run when agents can burn any vegetation type. This likely indicates that this parameter does not strongly affect the overall trend towards increasing diversity.
+<!-- The same pattern arises when the types of vegetation that agents can burn is limited. Interestingly, however, there is still a positive impact by the end of model run when agents can burn any vegetation type. This likely indicates that this parameter does not strongly affect the overall trend towards increasing diversity. -->
 
-```{r SDI-no-burnt_2_4, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow=c(1,3), cex=0.8)
-plot(rw.no0.gam2, select=13, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=14, shade=T)
-abline(h=0, lty = 2)
-plot(rw.no0.gam2, select=15, shade=T)
-abline(h=0, lty = 2)
-```
+<!-- ```{r SDI-no-burnt_2_4, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- par(mfrow=c(1,3), cex=0.8) -->
+<!-- plot(rw.no0.gam2, select=13, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=14, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- plot(rw.no0.gam2, select=15, shade=T) -->
+<!-- abline(h=0, lty = 2) -->
+<!-- ``` -->
 
-When looking at burnt neighbor limits, we get an opposite effect pattern than what might be expected based on the previous results. The strictest condition (*burnt-neighbor-limit* = 1), actually has a negative effect on diversity in the middle of model run. Conversely, the conditions that allow more burning have a positive impact on diversity by the end of model run. This might be because the strictest restrictions result in much of the environment failing to receive any long term benefits from burning because burning is so limited in frequency and space.
+<!-- When looking at burnt neighbor limits, we get an opposite effect pattern than what might be expected based on the previous results. The strictest condition (*burnt-neighbor-limit* = 1), actually has a negative effect on diversity in the middle of model run. Conversely, the conditions that allow more burning have a positive impact on diversity by the end of model run. This might be because the strictest restrictions result in much of the environment failing to receive any long term benefits from burning because burning is so limited in frequency and space. -->
 
-Taken together, these results indicate that a certain level of burning is required for vegetation diversity to increase.
+<!-- Taken together, these results indicate that a certain level of burning is required for vegetation diversity to increase. -->
 
-```{r SDI-no-burnt_correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow = c(1,3))
-par(mar=c(0,1,0,1))
-#plot at 250
-pvalue250 = psych::corr.test(data250 %>% select(mean.burn.prob, shannon.div, shannon.div.no0))$p
-corrplot::corrplot(cor(data250 %>% select(mean.burn.prob, shannon.div, shannon.div.no0), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue250, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+<!-- ```{r SDI-no-burnt_correlations, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'} -->
+<!-- par(mfrow = c(1,3)) -->
+<!-- par(mar=c(0,1,0,1)) -->
+<!-- #plot at 250 -->
+<!-- pvalue250 = psych::corr.test(data250 %>% select(mean.burn.prob, shannon.div, shannon.div.no0))$p -->
+<!-- corrplot::corrplot(cor(data250 %>% select(mean.burn.prob, shannon.div, shannon.div.no0), use = "pairwise.complete.obs"), -->
+<!--                    method = "square", addCoef.col = "black",  -->
+<!--                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85), -->
+<!--                    p.mat = pvalue250, insig="blank", sig.level=0.1,  -->
+<!--                    type = "lower", number.cex = 0.5, diag=F) -->
 
-#plot at 1000
-pvalue1000 = psych::corr.test(data1000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0))$p
-corrplot::corrplot(cor(data1000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue1000, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+<!-- #plot at 1000 -->
+<!-- pvalue1000 = psych::corr.test(data1000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0))$p -->
+<!-- corrplot::corrplot(cor(data1000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0), use = "pairwise.complete.obs"), -->
+<!--                    method = "square", addCoef.col = "black",  -->
+<!--                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85), -->
+<!--                    p.mat = pvalue1000, insig="blank", sig.level=0.1,  -->
+<!--                    type = "lower", number.cex = 0.5, diag=F) -->
 
-#plot at 2000
-pvalue2000 = psych::corr.test(data2000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0))$p
-corrplot::corrplot(cor(data2000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue2000, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+<!-- #plot at 2000 -->
+<!-- pvalue2000 = psych::corr.test(data2000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0))$p -->
+<!-- corrplot::corrplot(cor(data2000 %>% select(mean.burn.prob, shannon.div, shannon.div.no0), use = "pairwise.complete.obs"), -->
+<!--                    method = "square", addCoef.col = "black",  -->
+<!--                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85), -->
+<!--                    p.mat = pvalue2000, insig="blank", sig.level=0.1,  -->
+<!--                    type = "lower", number.cex = 0.5, diag=F) -->
 
-```
+<!-- ``` -->
 
-This is confirmed by the increasingly positive correlation between average probability of burning, which can be taken as a proxy for burning frequency, and vegetation diversity of non-burnt patches (*shannon.div.no0*).
+<!-- This is confirmed by the increasingly positive correlation between average probability of burning, which can be taken as a proxy for burning frequency, and vegetation diversity of non-burnt patches (*shannon.div.no0*). -->
 
 ## Spatial distribution of burning events
 
@@ -1038,8 +1058,8 @@ be.morans.250 = be.morans.250 %>% filter(exp %in% finished.exp)
 be.morans.100 = be.morans.100 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
 be.morans.250 = be.morans.250 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
 
-#hist(be.morans.100$morans.i)
-#hist(be.morans.250$morans.i)
+# hist(be.morans.100$morans.i)
+# hist(be.morans.250$morans.i)
 
 fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-2], "morans.i")))
 
@@ -1052,7 +1072,7 @@ plot(fit2, which = 2)
 export_summs(fit1, fit2, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"), digits = 6)
 ```
 
-The intercept values show that burning events are on average marginally clustered on the landscape. This spatial autocorrelation is significantly affected by time, as indicated by the significance of nearly all of the interaction terms. Clustering of burning events is also increased generally by random movement of agents and relaxed limits on what types of vegetation can be burned (*burn-veg-type-threshold*). We also see that across model run the distribution of resource potential of patches (*veg-distribution*) also impacts the spatial autocorrelation of burning events, with a random distribution of resource potential (maximum veg type) resulting in a less clustering.
+The intercept values show that, at the beginning of model run, burning events are on average marginally clustered on the landscape. This spatial autocorrelation is significantly affected by time, and on average decreases as model run progresses. Increased clustering with time only occurs with specific parameter values, such as random movement of agents and relaxed limits on burning. We also see that across model run the distribution of resource potential of patches (*veg-distribution*) also impacts the spatial autocorrelation of burning events, with a random distribution of resource potential (maximum veg type) resulting in more clustering with time.
 
 ```{r burning-events_2_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 plot_summs(fit1, fit2, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"), scale = T)
@@ -1081,7 +1101,7 @@ ggarrange(p1, p2, common.legend = T, legend = "bottom", labels = c("cycle = 100 
   theme(plot.margin = margin(0.1,0.1,0.1,0.1, "cm"))
 ```
 
-Looking at the spatial autocorrelation by these parameters through time, we can see that strict burning limits typically result in dispersion of burning events (Moran's I \< 0). High clustering of burning events only occurs when the resource potential on the landscape is also clustered. However, as we can see in the above graph, this is also affected by burning limits.
+Looking at the spatial autocorrelation by these parameters through time, we can see that strict burning limits typically result in dispersion of burning events (Moran's I \< 0). High clustering of burning events only occurs when the resource potential on the landscape is also clustered. However, as we can see in the above graph, this is also affected by burning limits and movement models.
 
 ## Forager mobility
 

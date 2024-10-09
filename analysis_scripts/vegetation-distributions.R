@@ -53,14 +53,13 @@ plot(prod100.plot)
 
 ##### shannon diversity #####
 hist(veg.100.prod$shannon.div)
-descdist(veg.100.prod$shannon.div)
 
 ggplot(veg.100.prod) +
   geom_density(aes(x = shannon.div, color = movement_model))
 
 ggplot(veg.100.prod) +
-  geom_boxplot(mapping = aes(x = ticks, y = 1 - shannon.div, color = climate.condition, group = ticks)) +
-  geom_smooth(mapping = aes(x = ticks, y = 1 - shannon.div)) +
+  geom_boxplot(mapping = aes(x = ticks, y = shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div)) +
   facet_wrap(~movement_model)
 
 
@@ -78,17 +77,17 @@ unprod100.plot = ggplot(veg.100.unprod %>% filter(signif == T)) +
   labs(color = "model climate condition", y = "Global Moran's I") +
   scale_color_brewer(palette = "Dark2") +
   theme(legend.position = "bottom")
+plot(unprod100.plot)
 
 ##### shannon diversity #####
 hist(veg.100.unprod$shannon.div)
-descdist(veg.100.unprod$shannon.div)
 
 ggplot(veg.100.unprod) +
   geom_density(aes(x = shannon.div, color = movement_model))
 
 ggplot(veg.100.unprod) +
-  geom_boxplot(mapping = aes(x = ticks, y = 1 - shannon.div, color = climate.condition, group = ticks)) +
-  geom_smooth(mapping = aes(x = ticks, y = 1 - shannon.div)) +
+  geom_boxplot(mapping = aes(x = ticks, y = shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div)) +
   facet_wrap(~movement_model)
 
 ####cycle duration = 250 & productive start ####
@@ -127,6 +126,7 @@ veg.cluster.plot = ggplot(veg.data %>% filter(signif == T)) +
   labs(color = "climate condition", y = "Global Moran's I") +
   scale_color_brewer(palette = "Dark2") +
   theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
+plot(veg.cluster.plot)
 
 ggsave(filename = "preliminary_figures/veg-type-clustering.png", plot = veg.cluster.plot,
        dpi = 300, width = 8, height = 5.5)
@@ -142,10 +142,21 @@ veg.div.plot = ggplot(veg.data %>% filter(signif == T)) +
   labs(color = "climate condition", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Dark2") +
   theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
-#plot(veg.div.plot)
+plot(veg.div.plot)
+
 ggsave(filename = "preliminary_figures/veg-type-diversity.png", plot = veg.div.plot,
        dpi = 300, width = 8, height = 5.5)
 
+veg.div.plot2 = ggplot(veg.data %>% filter(signif == T) %>% 
+                         filter(cycle_duration == 100) %>% 
+                         filter(veg_cycle_start == "\"productive\"")) +
+  geom_boxplot(mapping = aes(x = ticks, y = shannon.div, color = climate.condition, group = ticks)) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div)) +
+  facet_grid(movement_model ~ burn_cost) +
+  labs(color = "climate condition", y = "Shannon Diversity Index") +
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
+plot(veg.div.plot2)
 
 ##all data together
 # long.veg = veg.data %>% pivot_longer(c(morans.i, shannon.div), names_to = "metric", values_to = "value")
@@ -160,34 +171,57 @@ ggsave(filename = "preliminary_figures/veg-type-diversity.png", plot = veg.div.p
 #   labs(color = "climate condition") +
 #   scale_color_brewer(palette = "Dark2") +
 #   theme(legend.position = "bottom")
+veg.data$morans.i = as.numeric(veg.data$morans.i)
+plot.data = veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")
+plot.data$burn_cost = as.factor(plot.data$burn_cost)
 
-all.plot =  ggarrange(
-  ggplot(veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")) +
-    geom_boxplot(mapping = aes(x = ticks, y = morans.i, color = climate.condition, group = ticks)) +
-    geom_smooth(mapping = aes(x = ticks, y = morans.i), method = "lm") +
-    facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
-                 labeller(cycle_duration = cycle.labs, 
-                          veg_cycle_start = start.labs, 
-                          movement_model = move.labs)) +
-    labs(color = "climate condition", y = "Global Moran's I") +
-    scale_color_brewer(palette = "Dark2") +
-    theme(legend.position = "bottom", 
-          strip.text = element_text(size = 6), 
-          axis.title = element_text(size = 7.5)), 
-  ggplot(veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\""))  +
-  geom_boxplot(mapping = aes(x = ticks, y = shannon.div, color = climate.condition, group = ticks)) +
-  geom_smooth(mapping = aes(x = ticks, y = shannon.div)) +
+p1 = ggplot(plot.data) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = burn_cost)) +
   facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
                labeller(cycle_duration = cycle.labs, 
                         veg_cycle_start = start.labs, 
                         movement_model = move.labs)) +
-  labs(color = "climate condition", y = "Shannon Diversity Index") +
-  scale_color_brewer(palette = "Dark2") +
+  labs(color = "", y = "Global Moran's I") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
-        axis.title = element_text(size = 7.5)), 
-  ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
-) +
+        axis.title = element_text(size = 7.5))
+plot(p1)
+
+p2 = ggplot(plot.data) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+                aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+                aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+                aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+                aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div, color = burn_cost)) +
+  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
+               labeller(cycle_duration = cycle.labs, 
+                        veg_cycle_start = start.labs, 
+                        movement_model = move.labs)) +
+  labs(color = "", y = "Shannon Diversity Index") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
+  theme(legend.position = "bottom", 
+        strip.text = element_text(size = 6), 
+        axis.title = element_text(size = 7.5))
+plot(p2)
+
+
+all.plot =  ggarrange(p1, p2, ncol = 1, nrow = 2, 
+                      common.legend = T, legend = "bottom", labels = "AUTO") +
   theme(axis.title = element_text(size = 7))
 
 ggsave(filename = "figures/veg-type-clustering+diversity.png", plot = all.plot,

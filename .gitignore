@@ -4,8 +4,10 @@ ForageModv01.nlogo
 *.DS_Store
 
 preliminary-results/
-sensitivity-analysis/*.csv
-sensitivity-analysis/*.rds
+sensitivity-analysis_parameters/*.csv
+sensitivity-analysis_parameters/*.rds
+sensitivity-analysis_time/*.csv
+sensitivity-analysis_time/*.rds
 results/*.csv
 results/*.rds
 results/outputs/*.rds
