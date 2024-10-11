@@ -1335,6 +1335,6 @@ corrplot::corrplot(cor(data2000 %>% filter(`veg-distribution` == "\"clustered\""
 ## References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
-pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc"))
+pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc", "marginaleffects"))
 knitr::kable(pkgs)
 ```
