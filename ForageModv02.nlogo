@@ -1740,11 +1740,11 @@ file-close</postRun>
       <value value="1500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis_time" repetitions="10" runMetricsEveryStep="false">
+  <experiment name="sensitivity-analysis_time" repetitions="50" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <postRun>export-limited-data</postRun>
-    <exitCondition>mean [ burn-prob ] of foragers = 1</exitCondition>
+    <exitCondition>mean [ burn-prob ] of foragers &gt;= 1</exitCondition>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
