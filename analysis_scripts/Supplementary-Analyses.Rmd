@@ -1009,7 +1009,7 @@ fit2$coefficients[1:2]
 The intercept values show that, on average, burning events are on average marginally clustered on the landscape. This spatial autocorrelation is then significantly affected by time and, on average, decreases as model run progresses. 
 
 ```{r burning-events_2_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-plot_summs(fit1, fit2, scale = T, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"), scale = T)
+plot_summs(fit1, fit2, scale = T, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"))
 ```
 
 When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events. These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
