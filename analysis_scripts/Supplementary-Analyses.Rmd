@@ -215,42 +215,42 @@ ggplot(data) +
   facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both)
 ```
 
-We model population density across model run with a Poisson regression. We model the change in population across time by including "ticks" as a independent variable. We also investigate the interaction between time and model parameters.
+<!-- We model population density across model run with a Poisson regression. We model the change in population across time by including "ticks" as a independent variable. We also investigate the interaction between time and model parameters. -->
 
-```{r population_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%", fig.height=3}
-#hist(data$pop.count)
-#hist(data$pop.dens)
+<!-- ```{r population_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%", fig.height=3} -->
+<!-- #hist(data$pop.count) -->
+<!-- #hist(data$pop.dens) -->
 
-pop.fit1 = glm(pop.dens ~ ticks, data = data, family = "poisson")
-pop.fit2 = glm(pop.dens ~ ticks + (`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + `veg-cycle-start` + `movement-model` + `cycle-duration`), data = data, family = "poisson")
-pop.fit3 = glm(pop.dens ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + `veg-cycle-start` + `movement-model` + `cycle-duration`), data = data, family = "poisson")
-anova(pop.fit1, pop.fit2, pop.fit3, test = "Chisq")
+<!-- pop.fit1 = glm(pop.dens ~ ticks, data = data, family = "poisson") -->
+<!-- pop.fit2 = glm(pop.dens ~ ticks + (`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + `veg-cycle-start` + `movement-model` + `cycle-duration`), data = data, family = "poisson") -->
+<!-- pop.fit3 = glm(pop.dens ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + `veg-cycle-start` + `movement-model` + `cycle-duration`), data = data, family = "poisson") -->
+<!-- anova(pop.fit1, pop.fit2, pop.fit3, test = "Chisq") -->
 
 
-plot_summs(pop.fit3, scale = T)
-# pop.fit3 %>% broom::tidy() %>%
-#   mutate(p.value = scales::pvalue(p.value)) %>%
-#   kable()
+<!-- plot_summs(pop.fit3, scale = T) -->
+<!-- # pop.fit3 %>% broom::tidy() %>% -->
+<!-- #   mutate(p.value = scales::pvalue(p.value)) %>% -->
+<!-- #   kable() -->
 
-ggarrange(
-  ggeffects::ggpredict(pop.fit3, terms = c("ticks", "movement-model")) %>%
-    plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), 
-          legend.text = element_text(size = 6), 
-          title = element_text(size = 8), 
-          axis.title = element_text(size = 6)), 
-  ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burnt-neighbor-limit")) %>%
-    plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
-  ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burn-veg-type-threshold")) %>%
-    plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
-  nrow = 1, legend = "bottom"
-)
+<!-- ggarrange( -->
+<!--   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "movement-model")) %>% -->
+<!--     plot(show_data = FALSE, show_ci = FALSE) + -->
+<!--     theme(legend.title = element_text(size = 6),  -->
+<!--           legend.text = element_text(size = 6),  -->
+<!--           title = element_text(size = 8),  -->
+<!--           axis.title = element_text(size = 6)),  -->
+<!--   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burnt-neighbor-limit")) %>% -->
+<!--     plot(show_data = FALSE, show_ci = FALSE) + -->
+<!--     theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)),  -->
+<!--   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burn-veg-type-threshold")) %>% -->
+<!--     plot(show_data = FALSE, show_ci = FALSE) + -->
+<!--     theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)),  -->
+<!--   nrow = 1, legend = "bottom" -->
+<!-- ) -->
 
-```
+<!-- ``` -->
 
-*TODO*: Population increases over time. The results from the regression analysis demonstrate that population is significantly affected by access to energy. This means that parameters that allow for more energy in the environment, such as relaxed limits to burning (higher *burnt-neighbor-limit*, higher *burn-veg-type-threshold*), or for foragers to access more energy, such as a directed walk (*movement-model*), result in increased population.
+Population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive. However, the overall trend of population increase is evident across all modeled scenarios.
 
 ## Forager probability of burning patches
 
