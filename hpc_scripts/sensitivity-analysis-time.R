@@ -3,8 +3,8 @@ library(here)
 
 theme_set(theme_bw())
 
-file.list = list.files("sensitivity-analysis_parameters", pattern = "\\.csv$", full.names = T)
-exp.list = list.files("sensitivity-analysis_parameters", pattern = "\\.csv$", full.names = F)
+file.list = list.files("sensitivity-analysis_time", pattern = "\\.csv$", full.names = T)
+exp.list = list.files("sensitivity-analysis_time", pattern = "\\.csv$", full.names = F)
 experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by = 3)]
 experiments = unique(experiments)
 outputs = c(
@@ -83,4 +83,4 @@ for (x in experiments) {
 
 final.data = bind_rows(data)
 
-saveRDS(final.data, file = "sensitivity-analysis_parameters/SA-data_parameters.rds")
+saveRDS(final.data, file = "sensitivity-analysis_time/SA-data_time.rds")
