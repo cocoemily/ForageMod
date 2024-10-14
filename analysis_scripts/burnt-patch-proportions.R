@@ -99,7 +99,8 @@ bprop.plot = ggplot(plot.data) +
                aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
   geom_point(data = plot.data %>% filter(`burn-cost` == 300), mapping =
                aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
-  geom_smooth(aes(x = ticks, y = burnt), se = F) +
+  geom_smooth(aes(x = ticks, y = burnt, color = `burn-cost`), se = F) +
+  geom_smooth(aes(x = ticks, y = burnt), se = F, color = "black") +
   geom_hline(yintercept = 1.0, linetype = "dotted") +
   facet_grid(`burnt-neighbor-limit` ~ `burn-cost`, labeller = 
                labeller(`burnt-neighbor-limit` = bn.labs, 
@@ -108,7 +109,7 @@ bprop.plot = ggplot(plot.data) +
   scale_color_brewer(palette = "Set2",
                      labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
   theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(size = 9), 
-        strip.text = element_text(size = 7), axis.text = element_text(size = 8))
+        strip.text = element_text(size = 6), axis.text = element_text(size = 8))
 ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot, 
        dpi = 300, width = 8, height = 5)
 
