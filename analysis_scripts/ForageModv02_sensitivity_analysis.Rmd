@@ -101,7 +101,7 @@ the parameters listed below at a low, medium, and high value.
 
 ### What parameters result in population dying off?
 ```{r read-parameter-data}
-data = readRDS("SA-data_parameters.rds")
+data = readRDS("../sensitivity-analysis_time/SA-data_parameters.rds")
 
 parameters = c(
   "natural_ignition", 
