@@ -3,23 +3,19 @@ title: "ForageModv02 sensitivity analysis"
 bibliography: grateful-refs.bib
 csl: pnas.csl
 output:
-  pdf_document: default
+  pdf_document:
+    toc: true
+    toc_depth: 2
   html_document: default
 ---
 
-For the sensitivity analysis, we examined how forager burning
-probabilities and forager movement was affected by those parameters not
-studied in the paper. Specifically, we looked at varying the available
-energy in the environment (*veg-type-modifier*) and the thresholds/costs
-of non-disturbance forager behaviors. To do so, we allowed for
-essentially unlimited burning behaviors by holding *burn-cost*,
-*burnt-neighbor-limit*, and *burn-veg-type-threshold* constant. We also
-tested with one type of environmental scenario - starting in a
-productive environment and cycling the environment every 100 ticks - and
-one type of movement model - random walking. We tested the effects of
-the parameters listed below at a low, medium, and high value.
+We assessed two aspects of the model to determine the best set of variables to use. First, we looked at how long to run each model for. Second, we look the effects of parameters that were not under investigation to determine the best values.
 
-```{r load-data, echo=FALSE, message=FALSE, warning=FALSE}
+## Time
+We explored how long to run the model for by testing how long it took the model to reach 100% burning probability for forager agents. We tested this at different values for the parameters that control burning costs and movement models, while holding all other parameters constant. We limited the model to 5000 ticks.
+
+### How long to run the model?
+```{r load-time-data, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr)
 library(formatR)
 library(broom)
@@ -36,7 +32,77 @@ library(ggsignif)
 theme_set(theme_bw())
 opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
-data = readRDS("SA-data.rds")
+data = readRDS("../sensitivity-analysis_time/SA-data_time.rds")
+
+parameters = c(
+  "natural_ignition", 
+  "cycle_duration", 
+  "veg_cycle_start", 
+  "veg_distribution",
+  "forager_moves", 
+  "movement_model", 
+  "veg_type_modifier", 
+  "burnt_neighbor_limit", 
+  "burn_veg_type_threshold", 
+  "forager_energy_requirement",  
+  "burn_cost",
+  "movement_cost",
+  "reproduction_threshold", 
+  "reproduction_cost"
+)
+
+clean.data = data %>%
+  rename(natural_ignition = `natural-ignition`, 
+         cycle_duration = `cycle-duration`, 
+         veg_cycle_start = `veg-cycle-start`, 
+         veg_distribution = `veg-distribution`,
+         forager_moves = `forager-moves`, 
+         movement_model = `movement-model`,
+         veg_type_modifier = `veg-type-modifier`,
+         burnt_neighbor_limit = `burnt-neighbor-limit`,  
+         burn_veg_type_threshold = `burn-veg-type-threshold`,
+         forager_energy_requirement = `forager-energy-requirement`, 
+         burn_cost = `burn-cost`, 
+         movement_cost = `movement-cost`, 
+         reproduction_threshold = `reproduction-threshold`, 
+         reproduction_cost = `reproduction-cost`) %>%
+  mutate_at(c(parameters), as.factor)
+
+data = clean.data
+rm(list = c("clean.data"))
+```
+
+```{r end-ticks}
+max.ticks = data %>% group_by_at(c("exp", parameters)) %>%
+  summarize(max.tick = max(ticks))  %>%
+  left_join(data %>% select_at(c("exp", "ticks", "pop.count", "mean.burn.prob")), 
+            by = c('exp' = 'exp', 'max.tick' = 'ticks')) %>% 
+  filter(pop.count > 1)
+
+summary(max.ticks$max.tick)
+
+ggplot(max.ticks %>% filter(burnt_neighbor_limit %in% c(1, 8))) +
+  geom_histogram(aes(x = max.tick)) +
+  geom_vline(aes(xintercept = 2000), color = "blue") +
+  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, labeller = label_both) +
+  theme(strip.text = element_text(size = 6), axis.text = element_text(size = 6))
+
+```
+We can see that at the lowest restrictions and costs to burning behaviors, the model reaches 100% average probability of burning across all agents by approximately 2000 model ticks or 2000 foraging bouts (upper right facet). Imposing limits on burning increases the time to achieving a population with an average burning behavior probability of 100%. However, to limit the possibility of evolving populations with burning probabilities above 100%, we decided to limit our model runs to 2000 ticks for testing the effects of other parameters. 
+
+## Parameters
+We examined how forager burning probabilities and forager movement was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs
+of non-disturbance forager behaviors. To do so, we allowed for
+essentially unlimited burning behaviors by holding *burn-cost*,
+*burnt-neighbor-limit*, and *burn-veg-type-threshold* constant. We also
+tested with one type of environmental scenario - starting in a
+productive environment and cycling the environment every 100 ticks - and
+one type of movement model - random walking. We tested the effects of
+the parameters listed below at a low, medium, and high value.
+
+### What parameters result in population dying off?
+```{r read-parameter-data}
+data = readRDS("SA-data_parameters.rds")
 
 parameters = c(
   "natural_ignition", 
@@ -77,9 +143,10 @@ rm(list = c("clean.data"))
 
 reg.parameters = parameters[c(1, 5, 7, 10, 12:14)]
 lapply(data[,c(reg.parameters)], unique)
+
 ```
 
-## What parameters result in population dying off?
+
 
 ```{r pop-death, fig.height=6, fig.width=10, message=FALSE, warning=FALSE, out.width='100%'}
 all.exp = unique(data$exp)
@@ -470,6 +537,8 @@ ggarrange(
 ```
 
 *TODO*
+
+
 
 ## Conclusion
 
