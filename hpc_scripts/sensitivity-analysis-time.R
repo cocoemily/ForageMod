@@ -26,7 +26,15 @@ for (x in experiments) {
   bb.df = bb[,1:2]
   colnames(bb.df) = c("ticks", "mean.burn.prob")
   
-  all.data = bb.df
+  pop = read_csv(exp.files[[which(str_detect(exp.files, outputs[4]))]], skip = 16)
+  pop.df = pop[,1:2]
+  colnames(pop.df) = c("ticks", "pop.count")
+  
+  all.data = pop.df %>% 
+    left_join(
+      bb.df, 
+      by = c("ticks")
+    )
   
   if(nrow(all.data) > 1) {
     if(model.parameters$`veg-cycle-start` == "productive") {
