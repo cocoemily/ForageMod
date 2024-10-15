@@ -500,7 +500,7 @@ ggarrange(
           legend.text = element_text(size = 6),
           axis.text = element_text(size = 6)),
   ggplot(veg_long) +
-    geom_smooth(aes(x = ticks,  y = proportion, color = veg.type), method = "lm") +
+    geom_smooth(aes(x = ticks,  y = proportion, color = veg.type)) +
     facet_wrap(~forager_moves, nrow=1, labeller = label_both) +
     theme(legend.title = element_text(size = 6),
           legend.text = element_text(size = 6),
@@ -534,9 +534,11 @@ ggarrange(
 
 ```
 
-*TODO*
+Across the parameters tested here, the relationships between the proportions of different vegetation types on the landscape remain relatively the same. The main effect is on *veg_0* which represents proportion of the landscape with foraged patches. This changes slightly as forager ability to access different parts of the landscape is altered by movement costs and maximum number of moves per foraging bout. 
 
+Otherwise, the main trend is low levels of vegetation types greater than 1 (which is the starting value for all patches) and a slow decline in the proportion of vegetation type 1 as more of the landscape gets burnt each time step and turns over into higher vegetation types. 
 
+Given these results, any of the values used would produce a similar pattern of vegetation types. This supports our use of the middle values tested.
 
 ## Conclusion
 
