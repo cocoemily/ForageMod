@@ -563,6 +563,6 @@ supplementary material.
 ### References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
-pkgs <- grateful::cite_packages(output = "table", out.dir = ".")
+pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc", "marginaleffects"))
 knitr::kable(pkgs)
 ```
