@@ -1069,33 +1069,33 @@ qqline(resid(mm.fit1.3))
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "veg-distribution")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "cycle-duration")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   legend = "bottom", nrow = 1
 )
 
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "burnt-neighbor-limit")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "burn-veg-type-threshold")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "burn-cost")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   common.legend = T, legend = "bottom", nrow = 1
 )
 
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "movement-model")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "natural-ignition")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_size(size = 6)), 
+    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   legend = "bottom", nrow = 1
 )
 
