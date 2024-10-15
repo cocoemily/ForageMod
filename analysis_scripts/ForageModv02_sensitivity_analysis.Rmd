@@ -3,7 +3,7 @@ title: "ForageModv02 sensitivity analysis"
 output:
   html_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
 bibliography: grateful-refs.bib
 csl: pnas.csl
 ---
@@ -162,7 +162,7 @@ length(unique(unfinished.data$exp)) / length(unique(data$exp))
 Over half of the model runs performed in the sensitivity analysis do not
 sustain a population to the end of model run (ticks = 500).
 
-```{r pop-death_2, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop-death_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 max.ticks = unfinished.data %>% group_by_at(c("exp", parameters)) %>%
   summarize(max.tick = max(ticks))
 
@@ -199,9 +199,9 @@ also can lead to populations dying off before the end of model run. For
 the final experiments, we chose parameters that allow for populations to
 frequently be sustained until the end of model run.
 
-## When population is maintained, how do the parameters affect this?
+### When population is maintained, how do the parameters affect this?
 
-```{r pop_density, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop_density, echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 finished.data$pop.dens = finished.data$pop.count/(51*51)
 
 er.labs = c("energy requirement: 1000", "energy requirement: 1500", "energy requirement: 2000")
@@ -226,7 +226,7 @@ computing requirements for the model. For this reason, we intentionally
 chose some values for the final experiments that keep the population
 smaller.
 
-## How do the parameters affect burning probabilities?
+### How do the parameters affect burning probabilities?
 
 ```{r burning-probabilities_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -272,7 +272,7 @@ tests, we look at the differences separated out by foraging costs
 (*forager-energy-requirement*) and energy required for reproduction
 (*reproduction-threshold*).
 
-```{r burning-probabilities_2, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probabilities_2, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 
 end.data = data %>% filter(ticks == 500)
 
@@ -303,7 +303,7 @@ reason, we preferred middle values of *forager-energy-requirement*,
 *reproduction-threshold*, and *veg-type-modifier* for the final
 experiments.
 
-```{r burning-probabilities_3, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probabilities_3, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
           x = "forager_moves", y = "mean.burn.prob", 
           color = "forager_moves",
@@ -327,7 +327,7 @@ significant differences in final burning probability between the middle
 and high value of *forager-moves* across all energy
 requirements/thresholds.
 
-```{r burning-probabilities_3_5, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probabilities_3_5, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
           x = "movement_cost", y = "mean.burn.prob", 
           color = "movement_cost",
@@ -352,7 +352,7 @@ only when foraging energy requirements are low, allowing for larger
 populations, that we see significant differences produced by different
 movement costs.
 
-```{r burning-probabilities_4, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probabilities_4, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
           x = "reproduction_cost", y = "mean.burn.prob", 
           color = "reproduction_cost",
@@ -372,7 +372,7 @@ ggboxplot(end.data,
 Changes in reproduction costs produce some significant differences, but
 these are not consistent across energy requirements/thresholds.
 
-```{r burning-probabilities_5, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burning-probabilities_5, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
   ggboxplot(end.data, 
             x = "forager_energy_requirement", y = "mean.burn.prob", 
@@ -417,7 +417,7 @@ will always be the same: 100% burning probability. This means that
 choosing the parameters for the final experiments could take into
 consideration other factors beside their effect on burning probability.
 
-## How do the parameters affect forager movement?
+### How do the parameters affect forager movement?
 
 ```{r forager_moves_1, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -486,11 +486,11 @@ the other parameters are minimized with lower forager movement. However,
 since forager movement needs to be high enough to maintain the
 population, we chose the middle value for the final experiments.
 
-## How do the parameters affect proportion of vegetation types across the landscape?
-```{r veg_props, echo=FALSE, fig.height=10, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+### How do the parameters affect proportion of vegetation types across the landscape?
+```{r veg_props, echo=FALSE, fig.height=12, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 finished.data$burnt = finished.data$`veg_-1`
 
-veg_long = finished.data %>% pivot_longer(cols = c(7:14, 37), names_to = "veg.type", values_to = "proportion")
+veg_long = finished.data %>% pivot_longer(cols = c(7:14, 38), names_to = "veg.type", values_to = "proportion")
 
 ggarrange(
   ggplot(veg_long) +
@@ -559,7 +559,7 @@ interest - burning probability and forager movement. The effects of the
 other model parameters are discussed in the manuscript and the
 supplementary material.
 
-### References
+## References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
 pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc", "marginaleffects"))
