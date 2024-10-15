@@ -1218,10 +1218,6 @@ ggarrange(
 ```
 These two regressions demonstrate that restrictions/costs to burning behaviors impact forager interactions, but that these effects are much more prominent and diverging for directed walks. This again indicates that the amount of burning has a significant impact on the evolution of human behaviors in the model. 
 
-```{r veg-clustering_and_interactions, eval=FALSE, fig.height=, message=FALSE, warning=FALSE, include=FALSE, out.width='100%'}
-
-```
-
 ## References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
