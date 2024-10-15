@@ -1146,13 +1146,13 @@ names(cycle.labs) = c(250, 100)
 dist.labs = c("random environmental potential", "clustered environmental potential")
 names(dist.labs) = c("\"random\"", "\"clustered\"")
 bc.labs = c("burn cost = 0", "burn cost = 100", "burn cost = 200", "burn cost = 300")
-names(bc.labs) = c(0, 100, 200, 300, )
+names(bc.labs) = c(0, 100, 200, 300)
 
 ggplot(data %>% filter(ticks > 0)) +
   geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T) +
   facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = labeller(`veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs, `burn-cost` = bc.labs)) +
   scale_color_colorblind() +
-  theme(legend.position = "bottom", stri)
+  theme(legend.position = "bottom", strip.text = element_text(size = 6))
 
 ```
 

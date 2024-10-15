@@ -1,12 +1,11 @@
 ---
 title: "ForageModv02 sensitivity analysis"
-bibliography: grateful-refs.bib
-csl: pnas.csl
 output:
-  pdf_document:
+  html_document:
     toc: true
     toc_depth: 2
-  html_document: default
+bibliography: grateful-refs.bib
+csl: pnas.csl
 ---
 
 We assessed two aspects of the model to determine the best set of variables to use. First, we looked at how long to run each model for. Second, we look the effects of parameters that were not under investigation to determine the best values.
