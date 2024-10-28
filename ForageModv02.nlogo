@@ -1745,7 +1745,6 @@ file-close</postRun>
     <setup>setup</setup>
     <go>go</go>
     <postRun>export-limited-data</postRun>
-    <exitCondition>mean [ burn-prob ] of foragers &gt;= 1</exitCondition>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
@@ -1756,7 +1755,7 @@ file-close</postRun>
       <value value="&quot;sensitivity-analysis_time&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="tick-limit">
-      <value value="5000"/>
+      <value value="6000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
       <value value="0"/>
