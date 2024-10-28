@@ -1601,7 +1601,7 @@ file-close</postRun>
     <enumeratedValueSet variable="export?">
       <value value="true"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="export-pop?">
+    <enumeratedValueSet variable="export-limited?">
       <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="directory-name">
