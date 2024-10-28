@@ -68,6 +68,7 @@ to setup
  ;Set up all patches unburned, unforaged, at lowest productivity
   ask patches [
     set veg-type 1
+    ;set veg-type max-veg-type ;for visualization only
     set pcolor scale-color green veg-type 10 1
     set foraged? false
     set burnt? false
@@ -206,7 +207,7 @@ to go
     ]
     if energy >= reproduction-threshold [ reproduce ] ;if agent exceeds double energy needs, reproduce (see 'Reproduction routine')
     set age age + 1 ;age
-    if age = 100 [ die ]  ;optional lifespan limit
+    ;if age = 100 [ die ]  ;optional lifespan limit
   ]
 
   if count foragers = 0 [ ;if all the agents are dead, stop the model
@@ -838,7 +839,7 @@ CHOOSER
 veg-cycle-start
 veg-cycle-start
 "productive" "unproductive"
-1
+0
 
 PLOT
 634
@@ -887,7 +888,7 @@ INPUTBOX
 543
 70
 tick-limit
-200.0
+500.0
 1
 0
 Number
