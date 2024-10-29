@@ -83,7 +83,7 @@ for (x in experiments) {
   rm(list = c("pop.df", "vt.df", "bb.df", "bd.df", "fi.df", "fm.df",
               "pop", "vt", "bb", "bd", "fi", "fm"))
   
-  if(model.parameters$`veg-cycle-start` == "productive") {
+  if(model.parameters$`veg-cycle-start` == "\"productive\"") {
     cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
                  (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
     all.data$climate.condition = c("productive", cc.seq[1:(nrow(all.data) - 1)])
