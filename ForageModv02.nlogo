@@ -1608,7 +1608,7 @@ file-close</postRun>
       <value value="&quot;results&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="tick-limit">
-      <value value="2000"/>
+      <value value="3500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
       <value value="0"/>
