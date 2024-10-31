@@ -49,10 +49,13 @@ morans.data = list()
 for(e in unique(grid.data.100$exp)) {
   run.grid = grid.data.100 %>% filter(exp == e)
   
-  for(t in c(250, 500, 1000, 1500, 2000)) {
+  for(t in c(250, 500, 1000, 1500, 2000, 2500, 3000, 3500)) {
     #for(t in unique(run.grid$ticks)) {
     grid = run.grid %>% filter(ticks == t)
     if(nrow(grid) > 0) {
+      if(nrow(grid) == 51*51*2) { #dealing with the case where model ends at a recording tick
+        grid = grid[1:2601,]
+      }
       coordinates(grid) = ~y+x
       gridded(grid) = TRUE
       grid = as(grid, "SpatialPolygonsDataFrame")

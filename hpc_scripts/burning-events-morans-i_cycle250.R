@@ -50,7 +50,7 @@ for(e in unique(grid.data.250$exp)) {
   print(e)
   run.grid = grid.data.250 %>% filter(exp == e)
   
-  for(t in c(250, 500, 1000, 1500, 2000)) {
+  for(t in c(250, 500, 1000, 1500, 2000, 2500, 3000, 3500)) {
     grid = run.grid %>% filter(ticks == t)
     if(nrow(grid) > 0) {
       if(nrow(grid) == 51*51*2) { #dealing with the case where model ends at a recording tick
