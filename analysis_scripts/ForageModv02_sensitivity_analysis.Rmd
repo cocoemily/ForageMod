@@ -11,9 +11,8 @@ csl: pnas.csl
 We assessed two aspects of the model to determine the best set of variables to use. First, we looked at how long to run each model for. Second, we look the effects of parameters that were not under investigation to determine the best values.
 
 ## Time
-We explored how long to run the model for by testing how long it took the model to reach 100% burning probability for forager agents. We tested this at different values for the parameters that control burning costs and movement models, while holding all other parameters constant. We limited the model to 5000 ticks.
+We explored how long to run the model for by testing how long it took the model to reach 100% burning probability for forager agents and how long it took the model to reach population equilibrium. We tested this at different values for the parameters that control burning costs and movement models, while holding all other parameters constant. We limited the model to 6000 ticks.
 
-### How long to run the model?
 ```{r load-time-data, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr)
 library(formatR)
@@ -28,7 +27,7 @@ library(mgcv)
 library(ggpubr)
 library(ggsignif)
 theme_set(theme_bw())
-opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+#opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 
 data = readRDS("../sensitivity-analysis_time/SA-data_time.rds")
 
@@ -68,10 +67,15 @@ clean.data = data %>%
 
 data = clean.data
 rm(list = c("clean.data"))
+
+reg.parameters = parameters[c(1, 5, 7, 10, 12:14)]
+lapply(data[, c(reg.parameters)], unique)
 ```
 
-```{r end-ticks}
+### How long to run the model?
+```{r end-ticks, echo=FALSE, message=FALSE, warning=FALSE}
 max.ticks = data %>% group_by_at(c("exp", parameters)) %>%
+  filter(mean.burn.prob <= 1) %>%
   summarize(max.tick = max(ticks))  %>%
   left_join(data %>% select_at(c("exp", "ticks", "pop.count", "mean.burn.prob")), 
             by = c('exp' = 'exp', 'max.tick' = 'ticks')) %>% 
@@ -82,24 +86,41 @@ summary(max.ticks$max.tick)
 ggplot(max.ticks %>% filter(burnt_neighbor_limit %in% c(1, 8))) +
   geom_histogram(aes(x = max.tick)) +
   geom_vline(aes(xintercept = 2000), color = "blue") +
+  geom_vline(aes(xintercept = 3000), color = "red") +
   facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, labeller = label_both) +
   theme(strip.text = element_text(size = 6), axis.text = element_text(size = 6))
 
 ```
-We can see that at the lowest restrictions and costs to burning behaviors, the model reaches 100% average probability of burning across all agents by approximately 2000 model ticks or 2000 foraging bouts (upper right facet). Imposing limits on burning increases the time to achieving a population with an average burning behavior probability of 100%. However, to limit the possibility of evolving populations with burning probabilities above 100%, we decided to limit our model runs to 2000 ticks for testing the effects of other parameters. 
+We can see that at the lowest restrictions and costs to burning behaviors, the model reaches 100% average probability of burning across all agents by approximately 2000 model ticks or 2000 foraging bouts (upper right facet). Imposing limits on burning increases the time to achieving a population with an average burning behavior probability of 100%.  
+
+```{r population-over-time, echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+data$pop.density = data$pop.count/(51*51)
+
+hist(data$pop.density)
+
+ggplot(data) +
+  geom_smooth(aes(x = ticks, y = pop.density, color = exp)) +
+  geom_smooth(aes(x = ticks, y = pop.density), color = "black") +
+  geom_vline(aes(xintercept = 2000), color = "blue") +
+  geom_vline(aes(xintercept = 3000), color = "red") + 
+  geom_vline(aes(xintercept = 3500), color = "purple") + 
+  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, labeller = label_both) +
+  theme(strip.text = element_text(size = 6), axis.text = element_text(size = 6)) +
+  theme(legend.position = "none")
+
+```
+
+When looking at population growth over time, we see that unlimited burning allows populations to reach equilibrium quickly. More limited burning see slower population growth at the beginning of model run, allowing the population to grow more steadily. We can also see in this graph that different burning parameters create different population thresholds. This indicates that carrying capacity of the model is dictated by how many patches can be burned in a single time step. 
+
+To capture information about the carrying capacity of the environment, we decided to run the model for 3500 ticks. Although this will likely result in populations that evolve burning probabilities greater than 100%, it will allow us to examine what behavioral and environmental factors influence or are influenced by population stasis. 
 
 ## Parameters
 We examined how forager burning probabilities and forager movement was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs
 of non-disturbance forager behaviors. To do so, we allowed for
 essentially unlimited burning behaviors by holding *burn-cost*,
-*burnt-neighbor-limit*, and *burn-veg-type-threshold* constant. We also
-tested with one type of environmental scenario - starting in a
-productive environment and cycling the environment every 100 ticks - and
-one type of movement model - random walking. We tested the effects of
-the parameters listed below at a low, medium, and high value.
+*burnt-neighbor-limit*, and *burn-veg-type-threshold* constant. We also tested with one type of environmental scenario - starting in a productive environment and cycling the environment every 100 ticks - and one type of movement model - random walking. We tested the effects of the parameters listed below at a low, medium, and high value.
 
-### What parameters result in population dying off?
-```{r read-parameter-data}
+```{r read-parameter-data, echo=FALSE, message=FALSE, warning=FALSE}
 data = readRDS("../sensitivity-analysis_time/SA-data_parameters.rds")
 
 parameters = c(
@@ -140,12 +161,11 @@ data = clean.data
 rm(list = c("clean.data"))
 
 reg.parameters = parameters[c(1, 5, 7, 10, 12:14)]
-lapply(data[,c(reg.parameters)], unique)
+lapply(data[, c(reg.parameters)], unique)
 
 ```
 
-
-
+### What parameters result in population dying off?
 ```{r pop-death, fig.height=6, fig.width=10, message=FALSE, warning=FALSE, out.width='100%'}
 all.exp = unique(data$exp)
 
@@ -159,8 +179,7 @@ length(unique(unfinished.data$exp)) / length(unique(data$exp))
 
 ```
 
-Over half of the model runs performed in the sensitivity analysis do not
-sustain a population to the end of model run (ticks = 500).
+Over half of the model runs performed in the sensitivity analysis do not sustain a population to the end of model run (ticks = 500).
 
 ```{r pop-death_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 max.ticks = unfinished.data %>% group_by_at(c("exp", parameters)) %>%
@@ -189,15 +208,7 @@ ggplot(max.ticks) +
   theme(strip.text = element_text(size = 5), legend.position = "bottom")
 ```
 
-The above count graph shows those model runs that do not sustain a
-population until the end of model run. We can clearly see that limited
-forager mobility (*forager-moves* = 5) and high movement cost
-(*movement-cost* = 150), low resource availability (*veg-type-modifier*
-= 100), and high cost of foraging (*forager-energy-requirement* = 2000)
-result in population extinction. High reproduction costs and thresholds
-also can lead to populations dying off before the end of model run. For
-the final experiments, we chose parameters that allow for populations to
-frequently be sustained until the end of model run.
+The above count graph shows those model runs that do not sustain a population until the end of model run. We can clearly see that limited forager mobility (*forager-moves* = 5) and high movement cost (*movement-cost* = 150), low resource availability (*veg-type-modifier* = 100), and high cost of foraging (*forager-energy-requirement* = 2000) result in population extinction. High reproduction costs and thresholds also can lead to populations dying off before the end of model run. For the final experiments, we chose parameters that allow for populations to frequently be sustained until the end of model run.
 
 ### When population is maintained, how do the parameters affect this?
 
@@ -218,13 +229,7 @@ ggplot(finished.data) +
   theme(strip.text = element_text(size = 5), legend.text = element_text(size = 5), legend.position = "bottom", axis.text.x = element_text(size = 5))
 ```
 
-Access to energy is a critical determinant of population survival and
-population size. High amounts of energy in the environment
-(*veg_type_modifier* = 300) and low forager/reproduction costs (top left
-graphs) result in very large populations, which in turn have high
-computing requirements for the model. For this reason, we intentionally
-chose some values for the final experiments that keep the population
-smaller.
+Access to energy is a critical determinant of population survival and population size. High amounts of energy in the environment (*veg_type_modifier* = 300) and low forager/reproduction costs (top left graphs) result in very large populations, which in turn have high computing requirements for the model. For this reason, we intentionally chose some values for the final experiments that keep the population smaller.
 
 ### How do the parameters affect burning probabilities?
 
@@ -264,13 +269,7 @@ ggarrange(
 )
 ```
 
-Across all parameters, burning probability increases. We look at the
-final average burning probability to compare parameter effects.
-Specifically, we test for significant differences in resulting burning
-probabilities using Mann-Whitney (two-sample Wilcoxon) tests. For all
-tests, we look at the differences separated out by foraging costs
-(*forager-energy-requirement*) and energy required for reproduction
-(*reproduction-threshold*).
+Across all parameters, burning probability increases. We look at the final average burning probability to compare parameter effects. Specifically, we test for significant differences in resulting burning probabilities using Mann-Whitney (two-sample Wilcoxon) tests. For all tests, we look at the differences separated out by foraging costs (*forager-energy-requirement*) and energy required for reproduction (*reproduction-threshold*).
 
 ```{r burning-probabilities_2, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -292,16 +291,7 @@ ggboxplot(end.data,
 
 ```
 
-First, what is obvious is that with high enough forager energy
-requirements, there need to be enough resources available
-(*veg-type-modifier*) in the environment for populations to survive.
-With low forager energy requirements, the differences introduced by
-changes in *veg-type-modifier* are larger. When forager energy
-requirements are higher, these differences, while still significant, are
-not as large, particularly at lower reproduction thresholds. For this
-reason, we preferred middle values of *forager-energy-requirement*,
-*reproduction-threshold*, and *veg-type-modifier* for the final
-experiments.
+First, what is obvious is that with high enough forager energy requirements, there need to be enough resources available (*veg-type-modifier*) in the environment for populations to survive. With low forager energy requirements, the differences introduced by changes in *veg-type-modifier* are larger. When forager energy requirements are higher, these differences, while still significant, are not as large, particularly at lower reproduction thresholds. For this reason, we preferred middle values of *forager-energy-requirement*, *reproduction-threshold*, and *veg-type-modifier* for the final experiments.
 
 ```{r burning-probabilities_3, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
@@ -321,11 +311,7 @@ ggboxplot(end.data,
 ```
 
 An alternative population maintenance strategy to enough energy
-availability in the environment is that agents must be able to move more
-to access more resources (*forager-moves*). Again, here we see smaller
-significant differences in final burning probability between the middle
-and high value of *forager-moves* across all energy
-requirements/thresholds.
+availability in the environment is that agents must be able to move more to access more resources (*forager-moves*). Again, here we see smaller significant differences in final burning probability between the middle and high value of *forager-moves* across all energy requirements/thresholds.
 
 ```{r burning-probabilities_3_5, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
@@ -344,13 +330,7 @@ ggboxplot(end.data,
 
 ```
 
-The cost of movement (*movement-cost*) will play a role in how many
-patches a forager can access and/or burn during a foraging bout. We can
-see that the middle and high values for *movement-cost* allow for
-similar evolution of burning behaviors by the end of model run. It is
-only when foraging energy requirements are low, allowing for larger
-populations, that we see significant differences produced by different
-movement costs.
+The cost of movement (*movement-cost*) will play a role in how many patches a forager can access and/or burn during a foraging bout. We can see that the middle and high values for *movement-cost* allow for similar evolution of burning behaviors by the end of model run. It is only when foraging energy requirements are low, allowing for larger populations, that we see significant differences produced by different movement costs.
 
 ```{r burning-probabilities_4, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
@@ -369,8 +349,7 @@ ggboxplot(end.data,
 
 ```
 
-Changes in reproduction costs produce some significant differences, but
-these are not consistent across energy requirements/thresholds.
+Changes in reproduction costs produce some significant differences, but these are not consistent across energy requirements/thresholds.
 
 ```{r burning-probabilities_5, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -405,17 +384,10 @@ ggarrange(
 
 ```
 
-Finally, when comparing across different values for forager energy
-requirements or reproduction threshold, we see significant differences.
-Final burning probability increases with higher energy requirements and
-decreases with higher reproduction thresholds.
+Finally, when comparing across different values for forager energy requirements or reproduction threshold, we see significant differences. Final burning probability increases with higher energy requirements and decreases with higher reproduction thresholds.
 
 While altering these parameters do change the rate of increase of
-burning probabilities in the model, all parameter settings result in
-increasing burning probabilities, meaning that final result of the model
-will always be the same: 100% burning probability. This means that
-choosing the parameters for the final experiments could take into
-consideration other factors beside their effect on burning probability.
+burning probabilities in the model, all parameter settings result in increasing burning probabilities, meaning that final result of the model will always be the same: 100% burning probability. This means that choosing the parameters for the final experiments could take into consideration other factors beside their effect on burning probability.
 
 ### How do the parameters affect forager movement?
 
@@ -475,16 +447,7 @@ ggarrange(
 )
 ```
 
-It is clear that the reproduction parameters do not have a large effect
-on forager movement compared to the parameters that control resource
-availability (*veg-type-modifier*) and foraging costs
-(*forager-energy-requirement*). Aside from showing what we already know
-(that foragers must be able to perform a high enough number of steps per
-foraging bouts when foraging costs are higher and resource availability
-is limited), the above results demonstrate that differences caused by
-the other parameters are minimized with lower forager movement. However,
-since forager movement needs to be high enough to maintain the
-population, we chose the middle value for the final experiments.
+It is clear that the reproduction parameters do not have a large effect on forager movement compared to the parameters that control resource availability (*veg-type-modifier*) and foraging costs (*forager-energy-requirement*). Aside from showing what we already know (that foragers must be able to perform a high enough number of steps per foraging bouts when foraging costs are higher and resource availability is limited), the above results demonstrate that differences caused by the other parameters are minimized with lower forager movement. However, since forager movement needs to be high enough to maintain the population, we chose the middle value for the final experiments.
 
 ### How do the parameters affect proportion of vegetation types across the landscape?
 ```{r veg_props, echo=FALSE, fig.height=12, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
@@ -542,9 +505,7 @@ Given these results, any of the values used would produce a similar pattern of v
 
 ## Conclusion
 
-For all of the reasons outlined in the above sensitivity analysis, we
-use the middle values of each of the parameters tested here for the
-final experiments. These are:
+For all of the reasons outlined in the above sensitivity analysis, we use the middle values of each of the parameters tested here for the final experiments. These are:
 
 -   *forager-moves* = 10
 -   *movement-cost* = 100
@@ -553,13 +514,8 @@ final experiments. These are:
 -   *reproduction-threshold* = 5000
 -   *reproduction-cost* = 1000
 
-These values allow the model to maintain a reasonable population that
-does not significantly hinder model performance (i.e., does not
-drastically increase time complexity or memory requirements).
-Additionally, these parameters do meaningfully affect our variables of
-interest - burning probability and forager movement. The effects of the
-other model parameters are discussed in the manuscript and the
-supplementary material.
+These values allow the model to maintain a reasonable population that does not significantly hinder model performance (i.e., does not drastically increase run time or memory requirements).
+Additionally, these parameters do meaningfully affect our variables of interest - burning probability and forager movement. The effects of the other model parameters are discussed in the manuscript and the supplementary material.
 
 ## References
 
