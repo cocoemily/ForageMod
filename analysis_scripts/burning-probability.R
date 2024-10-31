@@ -52,16 +52,29 @@ outputs = c(
 data$benefit.ratio = data$benefit_self/data$benefit_other
 data$benefit.ratio2 = data$benefit_other/data$benefit_self
 
+bc.labs = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")
+names(bc.labs) = c(0, 100, 200, 300)
+bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+names(bt.labs) = c(4, 7)
+bn.labs = c("burn with 8 burnt neighbors", 
+            "burn with 4 burnt neighbors", 
+            "burn with 1 burnt neighbor")
+names(bn.labs) = c(8, 4, 1)
 
 mbp.plot = ggplot(data) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = `burn-cost`), alpha = 0.25) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "red") +
-  scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  facet_grid( ~ `burn-cost`, labeller = 
+               labeller(`burn-cost` = bc.labs, `burn-veg-type-threshold` = bt.labs, 
+                        `burnt-neighbor-limit` = bn.labs)) +
   labs(y = "mean probability of burning", x = "ticks", color = "cost of burning") +
-  theme(legend.position = "bottom")
-#plot(mbp.plot)
+  theme(legend.position = "none", axis.title = element_text(size = 8))
+plot(mbp.plot)
 ggsave(filename = "preliminary_figures/all_burn-prob.png", plot = mbp.plot, 
-       dpi = 300, width = 6, height = 4)
+       dpi = 300, width = 8, height = 4)
 
 ##### effects of parameters on mean burn probability over time ####
 plotNormalHistogram(data$mean.burn.prob)

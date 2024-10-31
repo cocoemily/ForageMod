@@ -38,19 +38,6 @@ data$pop.dens = data$pop.count/(51*51)
 data$burnt = data$`veg_-1`
 data$benefit.ratio = data$benefit_self/data$benefit_other
 
-outputs = c(
-  "pop.count",
-  "pop.dens", #pop count/world size
-  "burnt", 
-  "mean.burn.prob", 
-  #"mean.fi", #average forager interaction count
-  "adj.fi", #average interaction count/ population count
-  "mean.fm",  #average forager movements per capita
-  "veg.morans.i", 
-  "veg.simpsons.div", 
-  "benefit_self", #
-  "benefit_other"
-)
 
 #### mobility analysis ####
 hist(data$mean.fm)
@@ -182,6 +169,12 @@ ggeffects::ggpredict(mm.fit2.4, terms = c("ticks", "burn-veg-type-threshold")) %
 # plot(gamm.fit1.3, scale = 0)
 
 #### interaction analysis ####
+summary(data$mean.fi)
+cor(data$mean.fi, data$pop.count)
+
+summary(data$adj.fi)
+cor(data$adj.fi, data$pop.dens)
+
 ggplot(data %>% filter(ticks > 0)) +
   geom_density(aes(x = log(adj.fi)))
 summary(data$adj.fi)
@@ -243,13 +236,14 @@ fi.fit1 = lm(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn
 fi.fit2 = lmer(adj.fi ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `veg-cycle-start` + `natural-ignition`) + (1 | `movement-model`) , data = data)
 anova(fi.fit2, fi.fit1)
 
+####plotting####
 plot.data = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100) %>% filter(`veg-cycle-start` == "\"productive\"")
 plot.data$`burn-cost` =  as.factor(plot.data$`burn-cost`)
 
 move.labs = c("Directed Walk", "Random Walk")
 names(move.labs) = c("\"Directed Walk\"", "\"Random Walk\"")
 
-#### final figure ####
+##### final figure #####
 all.plot = ggarrange(
   ggplot(plot.data) +
     geom_point(data = plot.data %>% filter(`burn-cost` == 0), mapping =
@@ -294,5 +288,140 @@ all.plot = ggarrange(
   ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
 )
 
+#####smoothed step plots#####
+burn.labs = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")
+names(burn.labs) = c(0, 100, 200, 300)
+
+plot.data$climate.condition = factor(plot.data$climate.condition, levels = c("productive", "unproductive"))
+
+ggplot(plot.data) +
+  geom_smooth(data = plot.data, 
+              mapping = aes(x = ticks, y = mean.fm), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 0 & ticks <= 100), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 100 & ticks <= 200), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 200 & ticks <= 300), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 300 & ticks <= 400), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 400 & ticks <= 500), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 500 & ticks <= 600), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 600 & ticks <= 700), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 700 & ticks <= 800), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 800 & ticks <= 900), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 900 & ticks <= 1000), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1000 & ticks <= 1100), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1100 & ticks <= 1200), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1200 & ticks <= 1300), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1300 & ticks <= 1400), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1400 & ticks <= 1500), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1500 & ticks <= 1600), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1600 & ticks <= 1700), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1700 & ticks <= 1800), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1800 & ticks <= 1900), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data %>% filter(ticks > 1900 & ticks <= 2000), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  facet_grid(`movement-model` ~ `burn-cost`, 
+             labeller = labeller(`movement-model` = move.labs, 
+                                 `burn-cost` = burn.labs)) +
+  scale_color_colorblind(labels = c("productive", "unproductive")) +
+  theme(strip.text = element_text(size = 6), 
+        legend.title = element_blank(), 
+        legend.position = "bottom", 
+        axis.title = element_text(size = 7.5),
+        axis.text = element_text(size = 7)) +
+  guides(fill = "none") + labs(y = "average forager movements")
+
+
+plot.data2 = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 250) %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`movement-model` == "\"Directed Walk\"")
+plot.data$`burn-cost` =  as.factor(plot.data$`burn-cost`)
+
+mobility.plot = ggplot(plot.data2) +
+  geom_smooth(data = plot.data2, 
+              mapping = aes(x = ticks, y = mean.fm, color = `burn-cost`), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 0 & ticks <= 250), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 250 & ticks <= 500), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 500 & ticks <= 750), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 750 & ticks <= 1000), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 1000 & ticks <= 1250), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 1250 & ticks <= 1500), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 1500 & ticks <= 1750), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data2 %>% filter(ticks > 1750 & ticks <= 2000), 
+              mapping = aes(x = ticks, y = mean.fm, color = climate.condition), method = "lm") +
+  facet_grid(`movement-model` ~ `burn-cost`, 
+             labeller = labeller(`movement-model` = move.labs, 
+                                 `burn-cost` = burn.labs)) +
+  scale_color_brewer(palette = "Set2", 
+                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)", 
+                                "productive", "unproductive")) +
+  theme(strip.text = element_text(size = 6), 
+        legend.title = element_blank(), 
+        legend.position = "bottom", 
+        axis.title = element_text(size = 7.5),
+        axis.text = element_text(size = 7)) +
+  guides(fill = "none") + labs(y = "average forager movements")
+
+plot.data3 = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 250) %>% filter(`veg-cycle-start` == "\"productive\"")
+plot.data3$`burn-cost` =  as.factor(plot.data3$`burn-cost`)
+
+interaction.plot = ggplot(plot.data3) +
+  geom_smooth(data = plot.data3, 
+              mapping = aes(x = ticks, y = adj.fi, color = `burn-cost`), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 0 & ticks <= 250), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 250 & ticks <= 500), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 500 & ticks <= 750), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 750 & ticks <= 1000), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1000 & ticks <= 1250), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1250 & ticks <= 1500), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1500 & ticks <= 1750), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1750 & ticks <= 2000), 
+              mapping = aes(x = ticks, y = adj.fi, color = climate.condition), method = "lm") +
+  facet_grid(`movement-model` ~ `burn-cost`, 
+             labeller = labeller(`movement-model` = move.labs, 
+                                 `burn-cost` = burn.labs)) +
+  scale_color_brewer(palette = "Set2", 
+                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)", 
+                                "productive", "unproductive")) +
+  theme(strip.text = element_text(size = 6), 
+        legend.title = element_blank(), 
+        legend.position = "bottom", 
+        axis.title = element_text(size = 7.5),
+        axis.text = element_text(size = 7)) +
+  guides(fill = "none") + labs(y = "average interaction proportion")
+
+all.plot = ggarrange(
+  mobility.plot, interaction.plot, 
+  ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
+)
 ggsave(filename = "figures/average-mobility+adjusted-interaction.png", plot = all.plot,
        dpi = 300, width = 8, height = 5)

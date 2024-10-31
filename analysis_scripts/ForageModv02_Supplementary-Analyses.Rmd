@@ -48,70 +48,15 @@ data$benefit.ratio = ifelse(is.nan(data$benefit.ratio), NA, data$benefit.ratio)
 data$burnt = data$`veg_-1`
 ```
 
-## Population maintenance?
-
-First, we checked to see whether all model runs maintained a population across all 2000 ticks.
-
-```{r pop-maintenance, echo=TRUE, message=FALSE, warning=FALSE}
-all.exp = unique(data$exp)
-
-end.tick = unique(data$`tick-limit`)
-fd = data %>% filter(ticks == end.tick)
-finished.exp = unique(fd$exp)
-
-finished.data = data %>% filter(exp %in% finished.exp)
-unfinished.data = data %>% filter(!(exp %in% finished.exp))
-length(unique(unfinished.data$exp))
-
-```
-
-Approximately 9% (665 runs) of our modeled scenarios resulted in population extinction. Here we show how failures counts break down by the different parameters:
-
-```{r pop-maintenance_2, echo=FALSE, message=FALSE, warning=FALSE}
-lapply((unfinished.data %>% select_at(c("exp", parameters)) %>% distinct())[,parameters], table)
-```
-
-Nearly all of the model runs that could not sustain a population had costs to burning behaviors that matched or exceeded the energetic benefits gained from burning. Interestingly, in all of these model runs, foragers use random walks. This suggests that a directed mobility strategy is enough to offset the impact of high costs of burning behaviors. Across the other parameters, those that end in fail are more or less equally spread.
-
-We filter out these unsuccessful runs to avoid issues in analyzing trends over the course of model run.
-
-```{r filter-out-unsuccessful-runs, echo=TRUE, message=FALSE, warning=FALSE}
-data = data %>% filter(exp %in% finished.exp)
-```
-
-## Correlations of outputs over time
-
-Next, we looked at the correlation between outputs across model runs.
-
-```{r output-correlations_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=4, out.height='75%'}
-
-outputs = c(
-  #"pop.count",
-  "pop.dens", #pop count/world size
-  "burnt", 
-  "mean.burn.prob", 
-  #"mean.fi", #average forager interaction count
-  "adj.fi", #average interaction count/ population count
-  "mean.fm",  #average forager movements per capita
-  "benefit_self", #
-  "benefit_other"
-  #"benefit.ratio"
-)
-
-pvalue = psych::corr.test(data %>% select_at(outputs))$p
-corrplot::corrplot(cor(data %>% select_at(outputs), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
-
-```
-
-We can see that population density is strongly positively correlated with mean burning probability (*mean.burn.prob*). This indicates that large populations are more likely to burn the landscape. This contextualizes the positive correlation between population density and proportion of burnt landscape (*burnt*). We also see that population density is negatively correlated with forager movement (*mean.fm*), meaning foragers move less within large populations. Foragers also move less when they are burning the landscape more frequently.
-
-We also investigated how these correlations change over time by looking at the correlations between outputs at 250 ticks, 1000 ticks, and 2000 ticks. For this, we also include spatial autocorrelation values of vegetation types and burning events, as well as a diversity metric of vegetation types.
-
-```{r output-correlations_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r setup-correlation-dataframes, message=FALSE, warning=FALSE, include=FALSE}
+veg.100.prod = readRDS("../results/outputs/veg_moransi_100-prod.rds")
+veg.100.unprod = readRDS("../results/outputs/veg_moransi_100-unprod.rds")
+veg.250.prod = readRDS("../results/outputs/veg_moransi_250-prod.rds")
+veg.250.unprod = readRDS("../results/outputs/veg_moransi_250-unprod.rds")
+veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod)
+be.100 = readRDS("../results/outputs/be_morans.i_cycle.100.rds")
+be.250 = readRDS("../results/outputs/be_morans.i_cycle.250.rds")
+be.data = bind_rows(be.100, be.250)
 
 outputs = c(
   #"pop.count",
@@ -127,15 +72,6 @@ outputs = c(
   "shannon.div", 
   "be_morans.i"
 )
-
-veg.100.prod = readRDS("../results/outputs/veg_moransi_100-prod.rds")
-veg.100.unprod = readRDS("../results/outputs/veg_moransi_100-unprod.rds")
-veg.250.prod = readRDS("../results/outputs/veg_moransi_250-prod.rds")
-veg.250.unprod = readRDS("../results/outputs/veg_moransi_250-unprod.rds")
-veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod)
-be.100 = readRDS("../results/outputs/be_morans.i_cycle.100.rds")
-be.250 = readRDS("../results/outputs/be_morans.i_cycle.250.rds")
-be.data = bind_rows(be.100, be.250)
 
 
 par(mfrow = c(1,3))
@@ -154,11 +90,11 @@ data250 = data %>% dplyr::filter(ticks == 250) %>%
             by = c("exp"))
 
 pvalue250 = psych::corr.test(data250 %>% select_at(outputs))$p
-corrplot::corrplot(cor(data250 %>% select_at(outputs), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue250, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+# corrplot::corrplot(cor(data250 %>% select_at(outputs), use = "pairwise.complete.obs"),
+#                    method = "square", addCoef.col = "black", 
+#                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+#                    p.mat = pvalue250, insig="blank", sig.level=0.1, 
+#                    type = "lower", number.cex = 0.5, diag=F)
 
 #plot at 1000
 data1000 = data %>% filter(ticks == 1000) %>% 
@@ -174,11 +110,11 @@ data1000 = data %>% filter(ticks == 1000) %>%
             by = c("exp"))
 
 pvalue1000 = psych::corr.test(data1000 %>% select_at(outputs))$p
-corrplot::corrplot(cor(data1000 %>% select_at(outputs), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue1000, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+# corrplot::corrplot(cor(data1000 %>% select_at(outputs), use = "pairwise.complete.obs"),
+#                    method = "square", addCoef.col = "black", 
+#                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+#                    p.mat = pvalue1000, insig="blank", sig.level=0.1, 
+#                    type = "lower", number.cex = 0.5, diag=F)
 
 #plot at 2000
 data2000 = data %>% filter(ticks == 2000) %>% 
@@ -194,16 +130,45 @@ data2000 = data %>% filter(ticks == 2000) %>%
             by = c("exp"))
 
 pvalue2000 = psych::corr.test(data2000 %>% select_at(outputs))$p
-corrplot::corrplot(cor(data2000 %>% select_at(outputs), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue2000, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+# corrplot::corrplot(cor(data2000 %>% select_at(outputs), use = "pairwise.complete.obs"),
+#                    method = "square", addCoef.col = "black", 
+#                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+#                    p.mat = pvalue3500, insig="blank", sig.level=0.1, 
+#                    type = "lower", number.cex = 0.5, diag=F)
+
 ```
 
-The direction of correlations between outputs remain relatively consistent over the course of model run, either becoming more positive or more negative.
 
-These correlations over time begin to reveal some of the model behavior, demonstrating that spatial clustering of vegetation types decreases with increased burning, but is positively correlated with forager mobility and interactions.
+## Population maintenance?
+
+First, we checked to see whether all model runs maintained a population across all 2000 ticks.
+
+```{r pop-maintenance, echo=TRUE, message=FALSE, warning=FALSE}
+all.exp = unique(data$exp)
+
+end.tick = unique(data$`tick-limit`)
+fd = data %>% filter(ticks == end.tick)
+finished.exp = unique(fd$exp)
+
+finished.data = data %>% filter(exp %in% finished.exp)
+unfinished.data = data %>% filter(!(exp %in% finished.exp))
+length(unique(unfinished.data$exp))
+
+```
+
+Approximately 7% (530 runs) of our modeled scenarios resulted in population extinction. Here we show how failures counts break down by the different parameters:
+
+```{r pop-maintenance_2, echo=FALSE, message=FALSE, warning=FALSE}
+lapply((unfinished.data %>% select_at(c("exp", parameters)) %>% distinct())[,parameters], table)
+```
+
+Nearly all of the model runs that could not sustain a population had costs to burning behaviors that matched or exceeded the energetic benefits gained from burning. Interestingly, in all of these model runs, foragers use random walks. This suggests that a directed mobility strategy is enough to offset the impact of high costs of burning behaviors. Across the other parameters, those that end in fail are more or less equally spread.
+
+We filter out these unsuccessful runs to avoid issues in analyzing trends over the course of model run.
+
+```{r filter-out-unsuccessful-runs, echo=TRUE, message=FALSE, warning=FALSE}
+data = data %>% filter(exp %in% finished.exp)
+```
 
 ## Population during model run
 
@@ -215,42 +180,108 @@ ggplot(data) +
   facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both)
 ```
 
-<!-- We model population density across model run with a Poisson regression. We model the change in population across time by including "ticks" as a independent variable. We also investigate the interaction between time and model parameters. -->
-
-<!-- ```{r population_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%", fig.height=3} -->
-<!-- #hist(data$pop.count) -->
-<!-- #hist(data$pop.dens) -->
-
-<!-- pop.fit1 = glm(pop.dens ~ ticks, data = data, family = "poisson") -->
-<!-- pop.fit2 = glm(pop.dens ~ ticks + (`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + `veg-cycle-start` + `movement-model` + `cycle-duration`), data = data, family = "poisson") -->
-<!-- pop.fit3 = glm(pop.dens ~ ticks*(`veg-distribution` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `natural-ignition` + `veg-cycle-start` + `movement-model` + `cycle-duration`), data = data, family = "poisson") -->
-<!-- anova(pop.fit1, pop.fit2, pop.fit3, test = "Chisq") -->
-
-
-<!-- plot_summs(pop.fit3, scale = T) -->
-<!-- # pop.fit3 %>% broom::tidy() %>% -->
-<!-- #   mutate(p.value = scales::pvalue(p.value)) %>% -->
-<!-- #   kable() -->
-
-<!-- ggarrange( -->
-<!--   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "movement-model")) %>% -->
-<!--     plot(show_data = FALSE, show_ci = FALSE) + -->
-<!--     theme(legend.title = element_text(size = 6),  -->
-<!--           legend.text = element_text(size = 6),  -->
-<!--           title = element_text(size = 8),  -->
-<!--           axis.title = element_text(size = 6)),  -->
-<!--   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burnt-neighbor-limit")) %>% -->
-<!--     plot(show_data = FALSE, show_ci = FALSE) + -->
-<!--     theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)),  -->
-<!--   ggeffects::ggpredict(pop.fit3, terms = c("ticks", "burn-veg-type-threshold")) %>% -->
-<!--     plot(show_data = FALSE, show_ci = FALSE) + -->
-<!--     theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)),  -->
-<!--   nrow = 1, legend = "bottom" -->
-<!-- ) -->
-
-<!-- ``` -->
 
 Population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive. However, the overall trend of population increase is evident across all modeled scenarios.
+
+We looked at linear rates of changes within each climate period of the model to get a more detailed understanding of population change during model run. 
+
+```{r population-change-over-time, message=FALSE, warning=FALSE, include=FALSE}
+rates <- readRDS("../results/outputs/output-evolution-comparison.rds")
+
+rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
+rates[,4:20] <- lapply(rates[,4:20], as.numeric)
+
+tick.seq1 = seq(from = 0, to = 3500, by = 100)
+tick.levels = c()
+for(i in 1:(length(tick.seq1) - 1)){
+  tick.levels = c(tick.levels, paste0(tick.seq1[i] + 1, "-", tick.seq1[i+1]))
+}
+tick.seq2 = seq(from = 0, to = 3500, by = 250)
+for(i in 1:(length(tick.seq2) - 1)){
+  tick.levels = c(tick.levels, paste0(tick.seq2[i] + 1, "-", tick.seq2[i+1]))
+}
+rates$tick.range = factor(rates$tick.range, levels = tick.levels)
+```
+
+
+```{r population-change-over-time, echo=TRUE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = pop.dens.slope, color = climate.condition)) +
+  facet_wrap(~ `cycle-duration`, scales = "free") +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2")
+
+```
+We find that with short climate cycles, unproductive periods see essentially no change in population, with slopes being essentially zero. With longer climatic cycles, there is slight positive population change during unproductive periods. 
+
+Conversely, there is pretty consistent population growth during productive periods of the model. The results show, however, that population grows more quickly during productive periods at the beginning of model run, with rates of change decreasing toward zero by the end of the model. This indicates that there is a carrying capacity in the model limiting population density. 
+
+We can investigate this by looking at how many patches on the landscape are available to be foraged during a given time interval and how this is related to the change in population density over that same interval.
+
+```{r pop-dens-forageable_1, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, color = climate.condition)) +
+  geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), method = "lm") +
+  geom_vline(aes(xintercept = 0), color = "black") +
+  geom_hline(aes(yintercept = 1), color = "black") +
+  stat_cor(mapping = aes(x = pop.dens.slope, y = average.prop.unforageable), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2") +
+  theme(axis.text = element_text(size = 6), legend.position = "bottom")
+
+```
+We can see that, with short environmental intervals, population density is highly correlated with the proportion of patches that cannot be foraged. Interestingly, we see opposite correlations for productive vs unproductive climatic windows. During productive periods, there will be population growth with more forageable land (low proportions of unforageable patches). Conversely, during unproductive periods, there is population growth with less foreagble land. 
+
+```{r pop-dens-forageable_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "250")) +
+  geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, color = climate.condition)) +
+  geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), method = "lm") +
+  geom_vline(aes(xintercept = 0), color = "black") +
+  geom_hline(aes(yintercept = 1), color = "black") +
+  stat_cor(mapping = aes(x = pop.dens.slope, y = average.prop.unforageable), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2")
+
+```
+Interestingly, when climatic periods are longer, the significant and strong relationship between change in population density and proportions of unforageable patches is reduced or disappears in productive periods. This suggests that with longer climatic cycling, a different aspect of the environment is controlling population density.
+
+```{r pop-density-correlations_1, echo=TRUE, message=FALSE, warning=FALSE}
+outputs = c(
+  "pop.dens", #pop count/world size
+  "pop.dens.slope",
+  #"burnt", 
+  "veg_7", 
+  "veg_6", 
+  "veg_5"
+)
+
+data.mid = data %>% dplyr::filter(`cycle-duration`== 250) %>% 
+  dplyr::filter(`veg-cycle-start` == "\"productive\"") %>%
+  dplyr::filter(ticks > 1000 & ticks <= 1250) %>% 
+  group_by(exp) %>%
+  summarize(pop.dens = mean(pop.dens), 
+            burnt = mean(burnt),
+            veg_7 = mean(veg_7), 
+            veg_6 = mean(veg_6), 
+            veg_5 = mean(veg_5)) %>%
+  left_join(rates %>% 
+              dplyr::filter(tick.range == "1001-1250") %>% 
+              dplyr::filter(`veg-cycle-start` == "\"productive\"") %>% 
+              dplyr::select(exp, pop.dens.slope), 
+            by = c("exp"))
+
+pvalue.mid = psych::corr.test(data.mid %>% select_at(outputs))$p
+corrplot::corrplot(cor(data.mid %>% select_at(outputs), use = "pairwise.complete.obs"),
+                   method = "square", addCoef.col = "black", 
+                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                   p.mat = pvalue.mid, insig="blank", sig.level=0.1, 
+                   type = "lower", number.cex = 0.5, diag=F)
+
+```
+When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types (that is patches that produce more resources). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
+
 
 ## Forager probability of burning patches
 
@@ -1036,7 +1067,7 @@ Plotting the trends of burning event spatial autocorrelation through time by the
 
 ## Forager mobility
 
-In the model, foragers adjust how many steps they take during a foraging bout if they determine they will meet their energy requirements with fewer steps. Movement in the model is, therefore, patterned primarily by the energy available in the gridded landscape, which is determined by whether the model is in a productive or unproductive climatic period and how long those climatic periods last.
+In the model, foragers can adjust how many steps they take during a foraging bout if they determine they will meet their energy requirements with fewer steps. Movement in the model is, therefore, patterned primarily by the energy available in the gridded landscape, which is determined by whether the model is in a productive or unproductive climatic period and how long those climatic periods last.
 
 ```{r fm-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(data %>% filter(ticks > 0)) +
@@ -1050,7 +1081,29 @@ ggplot(data %>% filter(ticks > 0)) +
 
 We can see from the above plot that there is a decrease in movement during productive periods and an increase in movement during unproductive periods of the model. This is more smoothed when cycle duration is shorter. 
 
-While cycle duration clearly causes fluctuations in agent movement behaviors, we chose to investigate average steps per foraging bout as a linear trend. Using mixed linear models, we can see how the other parameters affect forager movement while controlling for starting vegetation state to deal with the model end effects seen above.
+```{r fm-viz_2, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = steps.slope, color = climate.condition)) +
+  facet_grid(`movement-model`~ `cycle-duration`, scales = "free", labeller = label_both) +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "bottom")
+
+```
+When we break this down by climatic interval, we can see that most of the change to mobility occurs during productive intervals. Interestingly, across these productive intervals, it primarily at the beginning of model run when mobility decreases across the interval. By the end of model run, there is actually an increase in mobility across the climatic interval.
+
+```{r fm-viz_3, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = start.steps, color = climate.condition)) +
+  facet_grid(`movement-model`~ `cycle-duration`, scales = "free", labeller = label_both) +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "bottom")
+
+```
+
+The overall decrease in mobility across model run is therefore primarily caused by steep dips in mobility at the beginning of each productive interval. 
+
+To understand how model parameters affected forager mobility, we first chose to investigate average steps per foraging bout as a linear trend to understand overall evolution during model run. Using mixed linear models, we can see how the other parameters affect forager movement while controlling for starting vegetation state to deal with the model end effects seen above.
 
 ```{r fm-mm-regs, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width="100%"}
 mm.fit1.1 = lmer(mean.fm ~ ticks + (1 | `veg-cycle-start`), data = data)
@@ -1101,7 +1154,7 @@ ggpubr::ggarrange(
 
 ```
 
-The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility. Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the impact that low cost niche construction strategies can have on forager behaviors.
+The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility. Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the differential impact that low cost niche construction strategies can have on forager behaviors.
 
 These mobility patterns due to different limits on burning behaviors occur because burning controls the energy available in the environment such that less burning means less overall energy, so agents need to move further to meet their energy needs.
 
@@ -1109,24 +1162,24 @@ These mobility patterns due to different limits on burning behaviors occur becau
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
-pvalue250 = psych::corr.test(data250 %>% select(mean.fm, shannon.div, mean.burn.prob, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data250 %>% select(mean.fm, shannon.div, mean.burn.prob, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
+pvalue250 = psych::corr.test(data250 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data250 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
                    method = "square", addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
                    p.mat = pvalue250, insig="blank", sig.level=0.1, 
                    type = "lower", number.cex = 0.5, diag=F)
 
 #plot at 1000
-pvalue1000 = psych::corr.test(data1000 %>% select(mean.fm, shannon.div, mean.burn.prob, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data1000 %>% select(mean.fm, shannon.div, mean.burn.prob, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
+pvalue1000 = psych::corr.test(data1000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data1000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
                    method = "square", addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
                    p.mat = pvalue1000, insig="blank", sig.level=0.1, 
                    type = "lower", number.cex = 0.5, diag=F)
 
 #plot at 2000
-pvalue2000 = psych::corr.test(data2000 %>% select(mean.fm, shannon.div, mean.burn.prob, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div, mean.burn.prob, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
+pvalue2000 = psych::corr.test(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
                    method = "square", addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
                    p.mat = pvalue2000, insig="blank", sig.level=0.1, 
@@ -1134,14 +1187,33 @@ corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div, mean.burn.prob,
 
 ```
 
-We can see this pattern exemplified when looking at correlations between forager movement (*mean.fm*), burning probabilities (*mean.burn.prob*), and the highest vegetation types (*veg_7*, *veg_6*, *veg_5*), that is those that provide the most resources. At the end of model run, when forager movement has decrease, we see negative correlations with the high vegetation types, indicating that low forager mobility is significantly correlated with higher proportions of these vegetation types.
+We can see this pattern exemplified when looking at correlations between forager movement (*mean.fm*) and the highest vegetation types (*veg_7*, *veg_6*, *veg_5*), that is those that provide the most resources. We generally see negative correlations with the high vegetation types, indicating that low forager mobility is significantly correlated with higher proportions of these vegetation types. 
+
+We can also see that low forager mobility is highly correlated with dispersion of vegetation types, as is evidenced by the positive correlation between *mean.fm* and *veg_morans.i*. This indicates that local heterogeneity of the landscape dictates how far the foragers need to move. 
+
+Because mobility is the behavior that agents can control in the model, we looked at how changes in this behavior affected population evolution. 
+
+```{r mobility-pop-correlations_1, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>%
+         filter(`movement-model` == "\"Directed Walk\"")) +
+  geom_point(aes(y = end.pop.density, x = start.steps, color = climate.condition)) +
+  geom_smooth(aes(y = end.pop.density, x = start.steps), method = "lm") +
+  stat_cor(mapping = aes(y = end.pop.density, x = start.steps), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free_y") +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "bottom")
+
+```
+
+Because there is relatively little change in forager steps within climatic intervals, we looked at the relationship between the starting number of steps during a climatic interval and the resulting population density at the end of that interval. Throughout model run, these outputs are highly negatively correlated. This suggests that lower amounts of mobility lead to higher population densities because each foraging group requires less room to meet their foraging needs. 
 
 ## Forager interactions
 
 When looking at forager interactions, we have to consider them in relation to populations since more foragers on the landscape will necessarily mean more possible interactions. The model outputs interaction counts averaged across all agents and we divided this by the population count to get the average proportion of the population that an individual agent interacts with each tick.
 
 ```{r adj-fi-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-start.labs = c("start with unproductive vegetation", "start with productive vegetation")
+start.labs = c("unproductive start", "productive start")
 names(start.labs) = c("\"unproductive\"", "\"productive\"")
 cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
 names(cycle.labs) = c(250, 100)
@@ -1219,6 +1291,67 @@ ggarrange(
 
 ```
 These two regressions demonstrate that restrictions/costs to burning behaviors impact forager interactions, but that these effects are much more prominent and diverging for directed walks. This again indicates that the amount of burning has a significant impact on the evolution of human behaviors in the model. 
+
+```{r interaction-change-over-time, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "250")) +
+  geom_boxplot(aes(x = tick.range, y = interactions.slope, color = climate.condition)) +
+  facet_grid( `movement-model` ~ `burn-cost`, scales = "free", labeller = label_both) +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2") +
+  theme(axis.text.x = element_text(angle = 45), legend.position = 'bottom')
+
+```
+As is expected, when we look at how forager interactions changes over across climate intervals, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is only with directed walks. 
+
+Therefore, we investigate how interaction rates over time are related to mobility and population density only with directed walks. 
+```{r interactions-mobility, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100") %>% filter(`movement-model` == "\"Directed Walk\"")) +
+  geom_point(aes(y = start.steps, x = start.interactions, color = climate.condition)) +
+  geom_smooth(aes(y = start.steps, x = start.interactions), method = "lm") +
+  stat_cor(mapping = aes(y = start.steps, x = start.interactions), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free_x") +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "bottom")
+
+```
+Interactions are highly positively correlated with mobility throughout model run, meaning that more mobility allows for more interactions with directed walks. 
+
+Interestingly, the strength of these correlations is impacted by burning costs. 
+```{r interactions-mobility_2, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100") %>% 
+         filter(`movement-model` == "\"Directed Walk\"") %>%
+         filter(tick.range == "1001-1100")) +
+  geom_point(aes(y = start.steps, x = start.interactions, color = climate.condition)) +
+  geom_smooth(aes(y = start.steps, x = start.interactions), method = "lm") +
+  stat_cor(mapping = aes(y = start.steps, x = start.interactions), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ `burn-cost`, scales = "free_x", labeller = label_both) +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "none")
+
+```
+
+For example, if we take a productive climate interval at the middle of model run, we see a much tighter correlation with high cost of burning, so when burning is less frequent. 
+
+```{r interactions-population, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100") %>% 
+         filter(`movement-model` == "\"Directed Walk\"") %>%
+         filter(tick.range == "1001-1100")) +
+  geom_point(aes(y = start.pop.density, x = start.interactions, color = climate.condition)) +
+  geom_smooth(aes(y = start.pop.density, x = start.interactions), method = "lm") +
+  stat_cor(mapping = aes(y = start.pop.density, x = start.interactions), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ `burn-cost`, scales = "free_x", labeller = label_both) +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "none")
+```
+The same is true for negative correlations between interactions and population density. 
+
+These results suggest that when burning is more frequent, forager interaction rates are determined by a different mechanism. BUT WHAT?
 
 ## References
 
