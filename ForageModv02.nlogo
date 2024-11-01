@@ -8,7 +8,7 @@ extensions [
 ]
 
 breed [ foragers forager ]
-foragers-own [ moves move-tracker energy burn-prob age offspring interactions]
+foragers-own [ moves move-tracker energy burn-prob age offspring interactions previous-interaction-list same-interactions]
 ;;patch regeneration not instantiated
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
@@ -88,6 +88,8 @@ to setup
       set age random 50
       set offspring 0
       set interactions 0
+      set same-interactions 0
+      set previous-interaction-list []
       set move-tracker 0
       set moves 0
     ]
@@ -197,7 +199,22 @@ to go
   ]
 
   ask foragers [
+    ;compare new interactions to previous-interaction-list
+    let same-interactions-count 0
+    let current-interactions-list sort [other-end] of my-links
+
+    if length current-interactions-list > 0 [
+      foreach current-interactions-list [ x ->
+        if member? x previous-interaction-list [
+          set same-interactions-count same-interactions-count + 1
+        ]
+      ]
+    ]
+
+    ;update tracking variables
+    set same-interactions same-interactions-count
     set interactions count my-links
+    set previous-interaction-list current-interactions-list
   ]
 
   ;Agents check whether they are dead or reproducing, and age one time step
@@ -480,6 +497,7 @@ to export-data
   file-close
 
   export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
+  export-plot "Available Forage Per Capita" (word file-path "resources-per-capita.csv")
   export-plot "Burning Behavior" (word file-path "burning-behavior.csv")
   export-plot "Population" (word file-path "population.csv")
   export-plot "Self vs Other Benefit" (word file-path "benefit-distribution.csv")
@@ -500,9 +518,9 @@ to export-limited-data ;for sensitivity analysis
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-206
+205
 123
-622
+621
 540
 -1
 -1
@@ -965,9 +983,8 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -7858858 true "" "ifelse count foragers > 0 [ plot mean [ interactions ] of foragers ] [ plot 0 ]"
-"pen-1" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ interactions ] of foragers + standard-deviation [ interactions ] of foragers  ] [ plot 0 ]"
-"pen-2" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ interactions ] of foragers - standard-deviation [ interactions ] of foragers  ] [ plot 0 ]"
+"all_interactions" 1.0 0 -7858858 true "" "ifelse count foragers > 0 [ plot mean [ interactions ] of foragers ] [ plot 0 ]"
+"same_interactions" 1.0 0 -1664597 true "" "ifelse count foragers > 2 [ plot mean [ same-interactions ] of foragers] [ plot 0 ]"
 
 BUTTON
 644
@@ -1464,7 +1481,7 @@ file-close</postRun>
     <enumeratedValueSet variable="export?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="export-pop?">
+    <enumeratedValueSet variable="export-limited?">
       <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="directory-name">
@@ -1519,82 +1536,6 @@ file-close</postRun>
       <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sensitivity-analysis_TEST" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup
-reset-timer
-profiler:reset
-profiler:start</setup>
-    <go>go</go>
-    <postRun>profiler:stop
-let _fname (word "profiler/report_" stamp1 ".txt")
-carefully [file-delete _fname] []
-file-open _fname
-file-print profiler:report
-file-print (word "total time: " timer) 
-file-close</postRun>
-    <enumeratedValueSet variable="export?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="export-pop?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="directory-name">
-      <value value="&quot;sensitivity-analysis&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="tick-limit">
-      <value value="1000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="natural-ignition">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-distribution">
-      <value value="&quot;random&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-cycle-start">
-      <value value="&quot;productive&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="cycle-duration">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="foragers-burn?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forager-moves">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="movement-model">
-      <value value="&quot;Random Walk&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="veg-type-modifier">
-      <value value="200"/>
-      <value value="300"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burnt-neighbor-limit">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burn-veg-type-threshold">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forager-energy-requirement">
-      <value value="1500"/>
-      <value value="2000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="burn-cost">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="movement-cost">
-      <value value="100"/>
-      <value value="200"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="reproduction-threshold">
-      <value value="3000"/>
-      <value value="5000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="reproduction-cost">
-      <value value="500"/>
-      <value value="1000"/>
-    </enumeratedValueSet>
-  </experiment>
   <experiment name="burning-behaviors" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
@@ -1611,7 +1552,6 @@ file-close</postRun>
       <value value="3500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="natural-ignition">
-      <value value="0"/>
       <value value="0.05"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="veg-distribution">
