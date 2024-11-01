@@ -68,6 +68,7 @@ clean.data = data %>%
 data = clean.data
 rm(list = c("clean.data"))
 
+#TODO update this to include natural ignition
 reg.parameters = parameters[c(1, 5, 7, 10, 12:14)]
 lapply(data[, c(reg.parameters)], unique)
 ```
@@ -181,12 +182,19 @@ length(unique(unfinished.data$exp)) / length(unique(data$exp))
 
 Over half of the model runs performed in the sensitivity analysis do not sustain a population to the end of model run (ticks = 500).
 
-```{r pop-death_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop-death_1-5, echo=TRUE, message=FALSE, warning=FALSE}
 max.ticks = unfinished.data %>% group_by_at(c("exp", parameters)) %>%
   summarize(max.tick = max(ticks))
 
-# lapply(max.ticks[,c(reg.parameters)], summary)
+#lapply(max.ticks[,c(reg.parameters)], summary)
 
+plot_summs(glm(max.tick ~ ., data = max.ticks[,c("max.tick", reg.parameters)], family = "poisson"), scale = T)
+
+```
+
+By running a Poisson regression on the maximum number of ticks the model reaches when the populations die off, we can see that survival is primarily controlled by forager energy requirements, forager movement/movement costs, and resource availability (*veg_type_modifier*). 
+
+```{r pop-death_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 rt.labs = c("repro threshold: 4000", "repro threshold: 5000", "repro threshold: 6000")
 names(rt.labs) = c(4000, 5000, 6000)
 rc.labs = c("repro cost: 500", "repro cost: 1000", "repro cost: 1500")
@@ -351,6 +359,22 @@ ggboxplot(end.data,
 
 Changes in reproduction costs produce some significant differences, but these are not consistent across energy requirements/thresholds.
 
+```{r burning-probabilities_4_5, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+ggboxplot(end.data, 
+          x = "natural_ignition", y = "mean.burn.prob", 
+          color = "natural_ignition",
+          facet.by = c("reproduction_threshold", "forager_energy_requirement"),
+          short.panel.lab = FALSE) +
+  stat_compare_means(comparisons = list(c("0", "0.5")), 
+                     label = "p.signif", vjust = 0.6, hide.ns = T, 
+                     method = "wilcox.test") +
+  theme(strip.text = element_text(size = 6), 
+        legend.title = element_text(size = 6), 
+        legend.position = "none")
+
+```
+We see reduced burning probabilities with natural ignition because foragers are able to reap benefits of natural processes and avoid the need to quickly develop a strategy to force the environment to produce more energy. However, high rates of natural ignition still lead to increased burning behaviors, suggesting that this parameter does not impact forager behavior. For this reason, we include a small amount of natural ignition in the model to approximate natural disturbances, but we do not test multiple values.
+
 ```{r burning-probabilities_5, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
   ggboxplot(end.data, 
@@ -442,7 +466,18 @@ ggarrange(
           strip.text = element_text(size = 6), 
           axis.text = element_text(size = 6), 
           legend.text = element_text(size = 5)) +
-    guides(color = guide_legend(override.aes = list(size = 1))),  
+    guides(color = guide_legend(override.aes = list(size = 1))),
+  
+  ggplot(finished.data) + 
+    geom_smooth(aes(x = ticks, y = mean.fm, color = natural_ignition), method = "lm") +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15)) +
+    theme(legend.title = element_text(size = 6), 
+          legend.position = "bottom", 
+          strip.text = element_text(size = 6), 
+          axis.text = element_text(size = 6), 
+          legend.text = element_text(size = 5)) +
+    guides(color = guide_legend(override.aes = list(size = 1))),
   ncol = 2, nrow = 3
 )
 ```
@@ -492,6 +527,12 @@ ggarrange(
     theme(legend.title = element_text(size = 6),
           legend.text = element_text(size = 6),
           axis.text = element_text(size = 6)),
+  ggplot(veg_long) +
+    geom_smooth(aes(x = ticks, y = proportion, color = veg.type)) +
+    facet_wrap(~natural_ignition, nrow=1, labeller = label_both) +
+    theme(legend.title = element_text(size = 6),
+          legend.text = element_text(size = 6),
+          axis.text = element_text(size = 6)),
   nrow = 6, ncol = 1, common.legend = T, legend = "bottom"
 )
 
@@ -507,6 +548,7 @@ Given these results, any of the values used would produce a similar pattern of v
 
 For all of the reasons outlined in the above sensitivity analysis, we use the middle values of each of the parameters tested here for the final experiments. These are:
 
+-   *natural-ignition* = 0.05
 -   *forager-moves* = 10
 -   *movement-cost* = 100
 -   *veg-type-modifier* = 200
