@@ -14,7 +14,8 @@ outputs = c(
   "benefit-distribution", 
   "forager-interactions",
   "forager-moves",
-  "population"
+  "population", 
+  "resources-per-capita"
 )
 
 data = list()
@@ -56,17 +57,24 @@ for (x in experiments) {
   colnames(pop.df) = c("ticks", "pop.count")
   
   fi = read_csv(exp.files[[which(str_detect(exp.files, outputs[4]))]], skip = 18)
-  fi.df = fi[,c(1:2, 6, 10)]
-  colnames(fi.df) = c("ticks", "mean.fi", "high.fi", "low.fi")
+  fi.df = fi[,c(1:2, 6)]
+  colnames(fi.df) = c("ticks", "mean.fi", "mean.same.fi")
   
   fm = read_csv(exp.files[[which(str_detect(exp.files, outputs[5]))]], skip = 18)
   fm.df = fm[,c(1:2, 6, 10)]
   colnames(fm.df) = c("ticks", "mean.fm", "high.fm", "low.fm")
+  
+  pc = read_csv(exp.files[[which(str_detect(exp.files, outputs[7]))]], skip = 16)
+  pc.df = pc[,1:2]
+  colnames(pc.df) = c("ticks", "forage.per.capita")
  
   all.data = pop.df %>% left_join(
     vt.df %>% pivot_wider(names_from = veg.type, names_glue = "veg_{veg.type}", values_from = count),
     by = c("ticks")
   ) %>% left_join(
+    pc.df, 
+    by = c("ticks")
+  )%>% left_join(
     bb.df, 
     by = c("ticks")
   ) %>% left_join(
@@ -80,16 +88,18 @@ for (x in experiments) {
     by = c("ticks")
   ) 
   
-  rm(list = c("pop.df", "vt.df", "bb.df", "bd.df", "fi.df", "fm.df",
-              "pop", "vt", "bb", "bd", "fi", "fm"))
+  rm(list = c("pop.df", "vt.df", "bb.df", "bd.df", "fi.df", "fm.df", "pc.df",
+              "pop", "vt", "bb", "bd", "fi", "fm", "pc"))
   
   if(model.parameters$`veg-cycle-start` == "\"productive\"") {
     cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
                  (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
+    cc.seq = c(cc.seq, rep("productive", each = 100))
     all.data$climate.condition = c("productive", cc.seq[1:(nrow(all.data) - 1)])
   } else { #(model.parameters$`veg-cycle-start` == "unproductive") 
     cc.seq = rep(rep(c("unproductive", "productive"), each = model.parameters$`cycle-duration`), 
                  (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
+    cc.seq = c(cc.seq, rep("unproductive", each = 100))
     all.data$climate.condition = c("unproductive", cc.seq[1:(nrow(all.data) - 1)])
   }
   
