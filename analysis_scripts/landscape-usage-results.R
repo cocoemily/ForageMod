@@ -9,7 +9,6 @@ library(ggpubr)
 theme_set(theme_bw())
 
 parameters = c(
-  "natural_ignition", # 0.00, 0.05
   "cycle_duration",  # 100, 250
   "veg_cycle_start", # productive, unproductive
   "veg_distribution", # random, clustered

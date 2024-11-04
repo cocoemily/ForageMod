@@ -16,7 +16,6 @@ theme_set(theme_bw())
 source("analysis_scripts/filter-out-unsuccessful-runs.R")
 
 parameters = c(
-  "natural-ignition", # 0.00, 0.05
   "cycle-duration",  # 100, 250
   "veg-cycle-start", # productive, unproductive
   "veg-distribution", # random, clustered
@@ -25,7 +24,6 @@ parameters = c(
   "burn-veg-type-threshold", # 4, 7
   "movement-model" #Random, Directed
 )
-data$`natural-ignition` = as.factor(data$`natural-ignition`)
 data$`cycle-duration` = as.factor(data$`cycle-duration`)
 data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
 data$`veg-distribution` = as.factor(data$`veg-distribution`)
@@ -38,7 +36,8 @@ data$adj.fi = data$mean.fi/data$pop.count
 data$pop.dens = data$pop.count/(51*51)
 data$burnt = data$`veg_-1`
 data$benefit.ratio = data$benefit_self/data$benefit_other
-data$prop.self.benefit = data$benefit_self/data$pop.count
+data$prop.self.benefit = data$benefit_self / (data$pop.count * data$mean.fm)
+data$prop.other.benefit = data$benefit_other / (data$pop.count * data$mean.fm)
 data$unforageable = data$veg_0 + data$burnt
 
 rates = data.frame(
@@ -59,9 +58,12 @@ rates = data.frame(
   interactions.slope = numeric(0), 
   average.prop.unforageable = numeric(0), 
   sd.prop.unforageable = numeric(0), 
-  start.propbene = numeric(0), 
-  end.propbene = numeric(0), 
-  propbene.slope = numeric(0)
+  start.bself = numeric(0), 
+  end.bself = numeric(0), 
+  bself.slope = numeric(0), 
+  start.bother = numeric(0), 
+  end.bother = numeric(0), 
+  bother.slope = numeric(0)
 )
 
 experiments = unique(data$exp)
@@ -76,11 +78,13 @@ for(x in experiments) {
   
   for(i in 1:(length(tick.seq) - 1)) {
     lmdata = expdata %>% filter(ticks > tick.seq[i] & ticks <= tick.seq[i + 1])
+    if(tick.seq[i] == 0) {lmdata = expdata %>% filter(ticks > (tick.seq[i] + 1) & ticks <= tick.seq[i + 1])}
     bp.fit = lm(mean.burn.prob ~ ticks, data = lmdata)
     pd.fit = lm(pop.dens ~ ticks, data = lmdata)
     mv.fit = lm(mean.fm ~ ticks, data = lmdata)
     int.fit = lm(adj.fi ~ ticks, data = lmdata)
-    br.fit = lm(prop.self.benefit ~ ticks, data = lmdata)
+    br1.fit = lm(prop.self.benefit ~ ticks, data = lmdata)
+    br2.fit = lm(prop.other.benefit ~ ticks, data = lmdata)
     rates[nrow(rates) + 1, ] <- c(x, paste0(tick.seq[i] + 1, "-", tick.seq[i+1]), 
                                   first(lmdata$climate.condition),
                                   summary(bp.fit)$coefficients[1,1] + (tick.seq[i] * summary(bp.fit)$coefficients[2,1]), #calculate starting burning probability at beginning of tick range
@@ -97,9 +101,12 @@ for(x in experiments) {
                                   summary(int.fit)$coefficients[2,1], #forage interactions slope
                                   mean(lmdata$unforageable), 
                                   sd(lmdata$unforageable), 
-                                  summary(br.fit)$coefficients[1,1] + (tick.seq[i] * summary(br.fit)$coefficients[2,1]), #calculate starting benefit ratio at beginning of tick range
-                                  summary(br.fit)$coefficients[1,1] + (tick.seq[i + 1] * summary(br.fit)$coefficients[2,1]), #calculate final benefit ratio at end of tick range
-                                  summary(br.fit)$coefficients[2,1] #benefit ratio slope
+                                  summary(br1.fit)$coefficients[1,1] + (tick.seq[i] * summary(br1.fit)$coefficients[2,1]), #calculate starting self benefit at beginning of tick range
+                                  summary(br1.fit)$coefficients[1,1] + (tick.seq[i + 1] * summary(br1.fit)$coefficients[2,1]), #calculate final self benefit at end of tick range
+                                  summary(br1.fit)$coefficients[2,1], #self benefit slope 
+                                  summary(br2.fit)$coefficients[1,1] + (tick.seq[i] * summary(br1.fit)$coefficients[2,1]), #calculate starting other benefit at beginning of tick range
+                                  summary(br2.fit)$coefficients[1,1] + (tick.seq[i + 1] * summary(br1.fit)$coefficients[2,1]), #calculate final other benefit at end of tick range
+                                  summary(br2.fit)$coefficients[2,1] #other benefit slope
     )
   }
 }
@@ -119,6 +126,66 @@ for(i in 1:(length(tick.seq2) - 1)){
   tick.levels = c(tick.levels, paste0(tick.seq2[i] + 1, "-", tick.seq2[i+1]))
 }
 rates$tick.range = factor(rates$tick.range, levels = tick.levels)
+
+#### burning probabilities ####
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = burn.prob.slope, color = climate.condition)) +
+  facet_wrap(~ `cycle-duration`, scales = "free") +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = burn.prob.slope, y = start.propbene, color = climate.condition)) +
+  geom_smooth(aes(x = burn.prob.slope, y = start.propbene), method = "lm") +
+  geom_vline(aes(xintercept = 0), color = "black") +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  stat_cor(mapping = aes(x = burn.prob.slope, y = start.propbene), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2") 
+
+
+#### disturbance benefit ####
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = propbene.slope, color = climate.condition)) +
+  facet_wrap(~ `cycle-duration`, scales = "free") +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = start.propbene, color = climate.condition)) +
+  facet_wrap(~ `cycle-duration`, scales = "free") +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2")
+
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = start.pop.density, y = start.propbene, color = climate.condition)) +
+  geom_smooth(aes(x = start.pop.density, y = start.propbene), method = "lm") +
+  stat_cor(mapping = aes(x = start.pop.density, y = start.propbene), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2") 
+
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = average.prop.unforageable, y = start.propbene, color = climate.condition)) +
+  geom_smooth(aes(x = average.prop.unforageable, y = start.propbene), method = "lm") +
+  stat_cor(mapping = aes(x = average.prop.unforageable, y = start.propbene), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2") 
+
+fit1 = lmer(end.propbene ~ start.steps + average.prop.unforageable + start.pop.density +  (1 | tick.range), 
+            data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "productive"))
+fit2 = lmer(end.propbene ~ start.steps + average.prop.unforageable + start.pop.density + start.steps + (1 | tick.range), 
+            data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "unproductive"))
+
+plot_summs(fit1, fit2, scale = T, model.names = c("productive intervals", "unproductive intervals"))
+
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = average.prop.unforageable, color = climate.condition)) +
+  facet_wrap(~ `cycle-duration`, scales = "free") +
+  geom_hline(aes(yintercept = 0), color = "black") +
+  scale_color_brewer(palette = "Set2")
 
 #### population change ####
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
@@ -283,4 +350,3 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
   scale_color_brewer(palette = "Set2")
 
 #TODO forager interactions are related to what when burning is frequent?
-

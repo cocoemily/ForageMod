@@ -10,7 +10,6 @@ theme_set(theme_bw())
 source("analysis_scripts/filter-out-unsuccessful-runs.R")
 
 parameters = c(
-  "natural-ignition", # 0.00, 0.05
   "cycle-duration",  # 100, 250
   "veg-cycle-start", # productive, unproductive
   "veg-distribution", # random, clustered
@@ -19,7 +18,6 @@ parameters = c(
   "burn-veg-type-threshold", # 4, 7
   "movement-model" #Random, Directed
 )
-data$`natural-ignition` = as.factor(data$`natural-ignition`)
 data$`cycle-duration` = as.factor(data$`cycle-duration`)
 data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
 data$`veg-distribution` = as.factor(data$`veg-distribution`)
@@ -46,11 +44,9 @@ outputs = c(
   "benefit_other"
 )
 
-# data = data %>%
-#   mutate(benefit_self_0 = ifelse(benefit_self == 0, 0.000001, benefit_self), 
-#          benefit_other_0 = ifelse(benefit_other == 0, 0.000001, benefit_other))
 data$benefit.ratio = data$benefit_self/data$benefit_other
 data$benefit.ratio2 = data$benefit_other/data$benefit_self
+
 
 bc.labs = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")
 names(bc.labs) = c(0, 100, 200, 300)
@@ -86,33 +82,60 @@ mbp.fit3 = lm(mean.burn.prob ~ ticks*(.), data = data %>% dplyr::select_at(c("me
 anova(mbp.fit1, mbp.fit2, mbp.fit3)
 summary(mbp.fit3)
 
-ggplot(data) +
-  #geom_point(aes(x = ticks, y = mean.burn.prob)) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob)) +
-  facet_grid(`burn-cost` ~ `burnt-neighbor-limit` +  `burn-veg-type-threshold`)
+###### high burning costs #####
+high.burn = data %>% filter(`burn-cost` == 300)
+
 
 ##### benefit ratio ####
 ggplot(data) +
   geom_point(aes(x = benefit_self, y = mean.burn.prob))
 
-data$bself.prop = data$benefit_self / data$pop.count
-ggplot(data) +
-  geom_smooth(aes(x = ticks, y = bself.prop)) +
-  facet_grid(`burn-cost` ~ `burnt-neighbor-limit` +  `burn-veg-type-threshold`)
-
-summary(data$benefit.ratio2)
+summary((data$veg_0 + data$burnt))
 
 
-br.plot = ggplot(data) +
-  geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.25) +
-  geom_smooth(aes(x = ticks, y = benefit.ratio)) +
-  scale_color_manual(values = c("grey0", "grey30", "grey60", "grey80")) +
-  geom_hline(yintercept = 1, linetype = "dotted") +
-  labs(x = "ticks", y = "ratio of self benefit to other benefit")
+data$bself.prop = data$benefit_self / (data$pop.count * data$mean.fm)
+summary(data$bself.prop)
+#proportion of average total foraging events that result in a benefit to self
+#lapply(data %>% filter(is.nan(bself.prop)) %>% select_at(c(parameters)), unique)
+summary((data %>% filter(is.nan(bself.prop)))$ticks)
+
+data$bother.prop = data$benefit_other / (data$pop.count * data$mean.fm)
+#proportion of average total foraging events that result in a benefit to self
+
+
+cd.labs = c("cycle = 100 ticks", "cycle = 250 ticks")
+names(cd.labs) = c(100, 250)
+vs.labs = c("productive start", "unproductive start")
+names(vs.labs) = c("\"productive\"", "\"unproductive\"")
+
+br.plot = ggplot(data %>% filter(ticks > 0)) +
+  geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
+  geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
+                labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs, `veg-cycle-start` = vs.labs)) +
+  labs(y = "proportion of burning benefits for self", x = "ticks", color = "cost of burning") +
+  theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
 #plot(br.plot)
-ggsave(filename = "preliminary_figures/all_benefit-ratio.png", plot = br.plot, 
-       dpi = 300, width = 6, height = 4)
+ggsave(filename = "preliminary_figures/all_self-benefit-proportion.png", plot = br.plot, 
+       dpi = 300, width = 8, height = 6)
 
+hist((data %>% filter(ticks > 0))$bself.prop)
+fit1.bself = glm(bself.prop ~ ticks*(.), data = data %>% select_at(c("ticks", parameters, "bself.prop"), family = "poisson"))
+plot_summs(fit1.bself, scale = T)
+
+ggplot(data %>% filter(ticks > 0)) +
+  geom_smooth(aes(x = ticks, y = bother.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
+  geom_smooth(aes(x = ticks, y = bother.prop), se = F, color = "black") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
+               labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs)) +
+  labs(y = "proportion of burning benefits for others", x = "ticks", color = "cost of burning") +
+  theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
 
 ##### Rate of Increase in Burning Probability ####
 #first, determine slope of line for each experiment

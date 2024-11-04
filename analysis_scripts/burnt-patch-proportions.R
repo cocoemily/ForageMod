@@ -11,7 +11,6 @@ theme_set(theme_bw())
 source("analysis_scripts/filter-out-unsuccessful-runs.R")
 
 parameters = c(
-  "natural-ignition", # 0.00, 0.05
   "cycle-duration",  # 100, 250
   "veg-cycle-start", # productive, unproductive
   "veg-distribution", # random, clustered
@@ -20,7 +19,6 @@ parameters = c(
   "burn-veg-type-threshold", # 4, 7
   "movement-model" #Random, Directed
 )
-data$`natural-ignition` = as.factor(data$`natural-ignition`)
 data$`cycle-duration` = as.factor(data$`cycle-duration`)
 data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
 data$`veg-distribution` = as.factor(data$`veg-distribution`)
@@ -31,22 +29,11 @@ data$`movement-model` = as.factor(data$`movement-model`)
 
 data$adj.fi = data$mean.fi/data$pop.count
 data$pop.dens = data$pop.count/(51*51)
-data$benefit.ratio = data$benefit_self/data$benefit_other
+#data$benefit.ratio = data$benefit_self/data$benefit_other
+data$bself.prop = data$benefit_self / (data$pop.count * data$mean.fm)
+data$bother.prop = data$benefit_other / (data$pop.count * data$mean.fm)
 data$burnt = data$`veg_-1`
 
-outputs = c(
-  "pop.count",
-  "pop.dens", #pop count/world size
-  "burnt", 
-  "mean.burn.prob", 
-  #"mean.fi", #average forager interaction count
-  "adj.fi", #average interaction count/ population count
-  "mean.fm",  #average forager movements per capita
-  "veg.morans.i", 
-  "veg.simpsons.div", 
-  "benefit_self", #
-  "benefit_other"
-)
 
 plotNormalHistogram(data$burnt)
 
@@ -81,13 +68,13 @@ ggplot(data) +
 plot.data = data %>% select_at(c("ticks", "burnt", parameters)) %>%
   filter(`burnt-neighbor-limit` %in% c(8,1))
 
-bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+bt.labs = c("can disturb veg types 1-4", "can disturb veg types 1-7")
 names(bt.labs) = c(4, 7)
-bc.labs = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")
+bc.labs = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")
 names(bc.labs) = c(0, 100, 200, 300)
-bn.labs = c("burn with 8 burnt neighbors", 
-            "burn with 4 burnt neighbors", 
-            "burn with 1 burnt neighbor")
+bn.labs = c("disturb with 8 disturbed neighbors", 
+            "disturb with 4 disturbed neighbors", 
+            "disturb with 1 disturbed neighbor")
 names(bn.labs) = c(8, 4, 1)
 
 bprop.plot = ggplot(plot.data) +
@@ -105,55 +92,13 @@ bprop.plot = ggplot(plot.data) +
   facet_grid(`burnt-neighbor-limit` ~ `burn-cost`, labeller = 
                labeller(`burnt-neighbor-limit` = bn.labs, 
                         `burn-cost` = bc.labs)) +
-  labs(y = "proportion of patches that are burnt") +
+  labs(y = "proportion of patches that are disturbed") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
   theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(size = 9), 
-        strip.text = element_text(size = 6), axis.text = element_text(size = 8))
+        strip.text = element_text(size = 6), axis.text = element_text(size = 8), axis.title = element_text(size = 8.5))
 ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot, 
        dpi = 300, width = 8, height = 5)
-
-
-beta.data = data %>% mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt)) %>%
-  mutate(burnt = ifelse(burnt == 1, burnt - 0.00001, burnt))
-
-burnt.burnn1 = beta.data %>% filter(`burnt-neighbor-limit` == 1)
-# plotNormalHistogram(veg_0.burnn1$veg_0)
-# descdist(veg_0.burnn1$veg_0)
-burnn1.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
-                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = burnt.burnn1 %>% select_at(c("ticks", "burnt", parameters[-5])))
-
-burnt.burnn1 = data %>% filter(`burnt-neighbor-limit` == 1)
-burnn1.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn1 %>% select_at(c("ticks", "burnt", parameters[-5])))
-
-AIC(burnn1.fit1)
-AIC(burnn1.fit2)
-
-burnt.burnn4 = beta.data %>% filter(`burnt-neighbor-limit` == 4)
-# plotNormalHistogram(veg_0.burnn4$veg_0)
-# descdist(veg_0.burnn4$veg_0, discrete = F)
-burnn4.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
-                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = burnt.burnn4 %>% select_at(c("ticks", "burnt", parameters[-5])))
-burnt.burnn4 = data %>% filter(`burnt-neighbor-limit` == 4)
-burnn4.fit2 = lm(burnt ~ ticks*(.), data =  burnt.burnn4 %>% select_at(c("ticks", "burnt", parameters[-5])))
-
-AIC(burnn4.fit1)
-AIC(burnn4.fit2)
-
-burnt.burnn8 = beta.data %>% filter(`burnt-neighbor-limit` == 8)
-burnn8.fit1 = betareg(burnt ~ ticks*(ticks + `natural-ignition` + `cycle-duration` + 
-                                       `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` + 
-                                       `movement-model`), data = burnt.burnn8 %>% select_at(c("ticks", "burnt", parameters[-5])))
-burnt.burnn8 = data %>% filter(`burnt-neighbor-limit` == 8)
-burnn8.fit2 = lm(burnt ~ ticks*(.), data = burnt.burnn8 %>% select_at(c("ticks", "burnt", parameters[-5])))
-
-AIC(burnn8.fit1)
-AIC(burnn8.fit2)
-
-plot_summs(burnn1.fit2, burnn4.fit2, burnn8.fit2, scale = T, digits = 6,
-           model.names = c("BNL = 1", "BNL = 4", "BNL = 8"))
 
 
 #### plot all burning behaviors ####
@@ -161,18 +106,18 @@ mbp.plot2 = ggplot(data) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  labs(y = "mean probability of burning", x = "ticks", color = "cost of burning") +
+  labs(y = "mean probability of disturbance", x = "ticks", color = "cost of burning") +
   theme(legend.position = "none", axis.title = element_text(size = 8))
 
-br.plot2 = ggplot(data) +
-  geom_smooth(aes(x = ticks, y = benefit.ratio, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
-  geom_smooth(aes(x = ticks, y = benefit.ratio), se = F, color = "black") +
+br.plot2 = ggplot(data %>% filter(`cycle-duration` == 100) %>% filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+  geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
-  geom_hline(yintercept = 1, linetype = "dotted") +
-  labs(x = "ticks", y = "ratio of self benefit to other benefit") +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  labs(x = "ticks", y = "proportion of disturbance benefits for self") +
   theme(legend.position = "none", axis.title = element_text(size = 8))
 
 img = png::readPNG("preliminary_figures/ForageModv02_view.png")
@@ -188,8 +133,8 @@ all.plot = ggarrange(
     ggarrange(mbp.plot2, br.plot2, labels = "AUTO", 
               nrow = 1) + theme(legend.title = element_text(size = 7)), 
     img.plot, nrow = 1, labels = c("", "C"), widths = c(2,1)), 
-  bprop.plot, nrow = 2, labels = c("", "D")
+  bprop.plot, nrow = 2, labels = c("", "D"), widths = c(1, 1.5)
 )
 
-ggsave(filename = "figures/burning-behaviors-plot.png", plot = all.plot,
+ggsave(filename = "figures/disturbance-behaviors-plot.png", plot = all.plot,
        dpi = 300, width = 8, height = 7)
