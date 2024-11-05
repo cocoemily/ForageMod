@@ -484,7 +484,7 @@ ggarrange(
 It is clear that the reproduction parameters do not have a large effect on forager movement compared to the parameters that control resource availability (*veg-type-modifier*) and foraging costs (*forager-energy-requirement*). Aside from showing what we already know (that foragers must be able to perform a high enough number of steps per foraging bouts when foraging costs are higher and resource availability is limited), the above results demonstrate that differences caused by the other parameters are minimized with lower forager movement. However, since forager movement needs to be high enough to maintain the population, we chose the middle value for the final experiments.
 
 ### How do the parameters affect proportion of vegetation types across the landscape?
-```{r veg_props, echo=FALSE, fig.height=12, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg_props, echo=FALSE, fig.height=14, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 finished.data$burnt = finished.data$`veg_-1`
 
 veg_long = finished.data %>% pivot_longer(cols = c(7:14, 38), names_to = "veg.type", values_to = "proportion")
@@ -532,7 +532,7 @@ ggarrange(
     theme(legend.title = element_text(size = 6),
           legend.text = element_text(size = 6),
           axis.text = element_text(size = 6)),
-  nrow = 6, ncol = 1, common.legend = T, legend = "bottom"
+  nrow = 7, ncol = 1, common.legend = T, legend = "bottom"
 )
 
 ```
