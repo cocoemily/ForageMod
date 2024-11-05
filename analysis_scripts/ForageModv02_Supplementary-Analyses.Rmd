@@ -194,7 +194,7 @@ We looked at linear rates of changes within each climate period of the model to 
 rates <- readRDS("../results/outputs/output-evolution-comparison.rds")
 
 rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
-rates[,4:23] <- lapply(rates[,4:23], as.numeric)
+rates[,4:28] <- lapply(rates[,4:28], as.numeric)
 
 tick.seq1 = seq(from = 0, to = 3500, by = 100)
 tick.levels = c()
