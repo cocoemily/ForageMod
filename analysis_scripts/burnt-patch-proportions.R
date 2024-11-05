@@ -95,8 +95,8 @@ bprop.plot = ggplot(plot.data) +
   labs(y = "proportion of patches that are disturbed") +
   scale_color_brewer(palette = "Set2",
                      labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
-  theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(size = 9), 
-        strip.text = element_text(size = 6), axis.text = element_text(size = 8), axis.title = element_text(size = 8.5))
+  theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(size = 8), 
+        strip.text = element_text(size = 6), axis.text = element_text(size = 8), axis.title = element_text(size = 8))
 ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot, 
        dpi = 300, width = 8, height = 5)
 
@@ -133,7 +133,7 @@ all.plot = ggarrange(
     ggarrange(mbp.plot2, br.plot2, labels = "AUTO", 
               nrow = 1) + theme(legend.title = element_text(size = 7)), 
     img.plot, nrow = 1, labels = c("", "C"), widths = c(2,1)), 
-  bprop.plot, nrow = 2, labels = c("", "D"), widths = c(1, 1.5)
+  bprop.plot, nrow = 2, labels = c("", "D"), widths = c(1, 1.75)
 )
 
 ggsave(filename = "figures/disturbance-behaviors-plot.png", plot = all.plot,
