@@ -134,6 +134,17 @@ data3500 = data %>% filter(ticks == 3500) %>%
 #                    p.mat = pvalue3500, insig="blank", sig.level=0.1, 
 #                    type = "lower", number.cex = 0.5, diag=F)
 
+start.labs = c("unproductive start", "productive start")
+names(start.labs) = c("\"unproductive\"", "\"productive\"")
+cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
+names(cycle.labs) = c(250, 100)
+dist.labs = c("random environmental potential", "clustered environmental potential")
+names(dist.labs) = c("\"random\"", "\"clustered\"")
+bc.labs = c("burn cost = 0", "burn cost = 100", "burn cost = 200", "burn cost = 300")
+names(bc.labs) = c(0, 100, 200, 300)
+bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+names(bt.labs) = c(4, 7)
+
 ```
 
 
@@ -366,7 +377,7 @@ ggplot(data %>% filter(ticks > 0)) +
                      labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
-                labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs, `veg-cycle-start` = vs.labs)) +
+                labeller(`burn-cost` = bc.labs, `cycle-duration` = cycle.labs, `veg-cycle-start` = start.labs)) +
   labs(y = "proportion of burning benefits for self", x = "ticks", color = "cost of burning") +
   theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
 
@@ -968,9 +979,6 @@ plot_summs(fit1, fit2, scale = T, model.names = c("cycle = 100 ticks", "cycle = 
 When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events. These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
 
 ```{r burning-events_2_2, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
-names(bt.labs) = c(4, 7)
-
 p1 = ggplot(be.morans.100 %>% filter(signif == T)) +
   geom_point(mapping = aes(x = ticks, y = morans.i)) +
   geom_smooth(mapping = aes(x = ticks, y = morans.i, color = as.factor(burnt_neighbor_limit), group = as.factor(burnt_neighbor_limit)), method = "lm") +
@@ -1140,15 +1148,6 @@ Because there is relatively little change in forager steps within climatic inter
 When looking at forager interactions, we have to consider them in relation to populations since more foragers on the landscape will necessarily mean more possible interactions. The model outputs interaction counts averaged across all agents and we divided this by the population count to get the average proportion of the population that an individual agent interacts with each tick.
 
 ```{r adj-fi-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-start.labs = c("unproductive start", "productive start")
-names(start.labs) = c("\"unproductive\"", "\"productive\"")
-cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
-names(cycle.labs) = c(250, 100)
-dist.labs = c("random environmental potential", "clustered environmental potential")
-names(dist.labs) = c("\"random\"", "\"clustered\"")
-bc.labs = c("burn cost = 0", "burn cost = 100", "burn cost = 200", "burn cost = 300")
-names(bc.labs) = c(0, 100, 200, 300)
-
 ggplot(data %>% filter(ticks > 0)) +
   geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T) +
   facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = labeller(`veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs, `burn-cost` = bc.labs)) +
