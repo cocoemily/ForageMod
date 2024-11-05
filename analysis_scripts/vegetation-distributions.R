@@ -190,7 +190,7 @@ p1 = ggplot(plot.data) +
                         movement_model = move.labs)) +
   labs(color = "", y = "Global Moran's I") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 7.5))
@@ -212,11 +212,33 @@ p2 = ggplot(plot.data) +
                         movement_model = move.labs)) +
   labs(color = "", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")) +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 7.5))
 plot(p2)
+
+p3 = ggplot(plot.data) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0, color = burn_cost)) +
+  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
+               labeller(cycle_duration = cycle.labs, 
+                        veg_cycle_start = start.labs, 
+                        movement_model = move.labs)) +
+  labs(color = "", y = "Shannon Diversity Index") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
+  theme(legend.position = "bottom", 
+        strip.text = element_text(size = 6), 
+        axis.title = element_text(size = 7.5))
+plot(p3)
 
 
 all.plot =  ggarrange(p1, p2, ncol = 1, nrow = 2, 

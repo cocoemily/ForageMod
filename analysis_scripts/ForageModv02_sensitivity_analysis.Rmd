@@ -68,7 +68,6 @@ clean.data = data %>%
 data = clean.data
 rm(list = c("clean.data"))
 
-#TODO update this to include natural ignition
 reg.parameters = parameters[c(1, 5, 7, 10, 12:14)]
 lapply(data[, c(reg.parameters)], unique)
 ```
