@@ -179,7 +179,7 @@ Population increases over time. There are fluctuations in population based on th
 
 We looked at linear rates of changes within each climate period of the model to get a more detailed understanding of population change during model run. 
 
-```{r population-change-over-time, message=FALSE, warning=FALSE, include=FALSE}
+```{r population-change-over-time_1, message=FALSE, warning=FALSE, include=FALSE}
 rates <- readRDS("../results/outputs/output-evolution-comparison.rds")
 
 rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
@@ -198,7 +198,7 @@ rates$tick.range = factor(rates$tick.range, levels = tick.levels)
 ```
 
 
-```{r population-change-over-time, echo=TRUE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r population-change-over-time_2, echo=TRUE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = pop.dens.slope, color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free") +
