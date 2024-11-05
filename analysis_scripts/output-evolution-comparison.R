@@ -39,6 +39,7 @@ data$benefit.ratio = data$benefit_self/data$benefit_other
 data$prop.self.benefit = data$benefit_self / (data$pop.count * data$mean.fm)
 data$prop.other.benefit = data$benefit_other / (data$pop.count * data$mean.fm)
 data$unforageable = data$veg_0 + data$burnt
+data$same.fi.prop = data$mean.same.fi / data$mean.fi
 
 rates = data.frame(
   exp = character(0), 
@@ -56,8 +57,13 @@ rates = data.frame(
   start.interactions = numeric(0), 
   end.interactions = numeric(0), 
   interactions.slope = numeric(0), 
+  start.sinteractions = numeric(0), 
+  end.sinteractions = numeric(0), 
+  sinteractions.slope = numeric(0),
   average.prop.unforageable = numeric(0), 
   sd.prop.unforageable = numeric(0), 
+  average.foragepc = numeric(0), 
+  sd.foragepc = numeric(0), 
   start.bself = numeric(0), 
   end.bself = numeric(0), 
   bself.slope = numeric(0), 
@@ -83,6 +89,7 @@ for(x in experiments) {
     pd.fit = lm(pop.dens ~ ticks, data = lmdata)
     mv.fit = lm(mean.fm ~ ticks, data = lmdata)
     int.fit = lm(adj.fi ~ ticks, data = lmdata)
+    sint.fit = lm(same.fi.prop ~ ticks, data = lmdata)
     br1.fit = lm(prop.self.benefit ~ ticks, data = lmdata)
     br2.fit = lm(prop.other.benefit ~ ticks, data = lmdata)
     rates[nrow(rates) + 1, ] <- c(x, paste0(tick.seq[i] + 1, "-", tick.seq[i+1]), 
@@ -99,8 +106,13 @@ for(x in experiments) {
                                   summary(int.fit)$coefficients[1,1] + (tick.seq[i] * summary(int.fit)$coefficients[2,1]), #calculate starting forage interactions at beginning of tick range
                                   summary(int.fit)$coefficients[1,1] + (tick.seq[i + 1] * summary(int.fit)$coefficients[2,1]), #calculate final forage interactions at end of tick range
                                   summary(int.fit)$coefficients[2,1], #forage interactions slope
+                                  summary(sint.fit)$coefficients[1,1] + (tick.seq[i] * summary(sint.fit)$coefficients[2,1]), #calculate starting same interactions at beginning of tick range
+                                  summary(sint.fit)$coefficients[1,1] + (tick.seq[i + 1] * summary(sint.fit)$coefficients[2,1]), #calculate final same interactions at end of tick range
+                                  summary(sint.fit)$coefficients[2,1], #same interactions slope
                                   mean(lmdata$unforageable), 
                                   sd(lmdata$unforageable), 
+                                  mean(lmdata$forage.per.capita), 
+                                  sd(lmdata$forage.per.capita), 
                                   summary(br1.fit)$coefficients[1,1] + (tick.seq[i] * summary(br1.fit)$coefficients[2,1]), #calculate starting self benefit at beginning of tick range
                                   summary(br1.fit)$coefficients[1,1] + (tick.seq[i + 1] * summary(br1.fit)$coefficients[2,1]), #calculate final self benefit at end of tick range
                                   summary(br1.fit)$coefficients[2,1], #self benefit slope 
@@ -364,5 +376,3 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
            method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
   facet_wrap(~ tick.range, scales = "free_x") +
   scale_color_brewer(palette = "Set2")
-
-#TODO forager interactions are related to what when burning is frequent?

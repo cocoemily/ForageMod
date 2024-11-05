@@ -37,6 +37,7 @@ data$adj.fi = data$mean.fi/data$pop.count
 data$pop.dens = data$pop.count/(51*51)
 data$burnt = data$`veg_-1`
 
+data$same.fi.prop = data$mean.same.fi / data$mean.fi
 
 #### mobility analysis ####
 hist(data$mean.fm)
@@ -269,7 +270,6 @@ ggsave(filename = "figures/average-mobility+adjusted-interaction.png", plot = al
 
 #### social network maintenance ####
 hist(data$mean.same.fi)
-data$same.fi.prop = data$mean.same.fi / data$mean.fi
 hist(data$same.fi.prop)
 
 ggplot(data) +
@@ -328,3 +328,5 @@ sfi.plot = ggplot(plot.data3) +
         axis.text = element_text(size = 7)) +
   guides(fill = "none") + labs(y = "average same interaction proportion")
 plot(sfi.plot)
+
+

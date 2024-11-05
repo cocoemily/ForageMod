@@ -39,6 +39,8 @@ data$`veg-distribution` = factor(data$`veg-distribution`, levels = c("\"random\"
 data$`movement-model` = factor(data$`movement-model`, levels = c("\"Random Walk\"", "\"Directed Walk\""))
 
 data$adj.fi = data$mean.fi/data$pop.count
+data$same.fi.prop = data$mean.same.fi / data$mean.fi
+
 data$pop.dens = data$pop.count/(51*51)
 
 data$bself.prop = data$benefit_self / (data$pop.count * data$mean.fm)
@@ -70,7 +72,6 @@ outputs = c(
   "be_morans.i"
 )
 
-#TODO edit this
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
@@ -166,12 +167,13 @@ data = data %>% filter(exp %in% finished.exp)
 
 ```{r population_1, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(data) +
-  geom_smooth(aes(y = pop.dens, x = ticks, color = exp, group = exp)) +
+  geom_smooth(aes(y = pop.dens, x = ticks, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
   geom_smooth(aes(x = ticks, y = pop.dens), color = "black", se = T) +
-  guides(color = "none") +
-  facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both)
+  facet_grid(`cycle-duration`~ `veg-cycle-start`, labeller = label_both) +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
+  theme(legend.position = "bottom")
 ```
-
 
 Population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive. However, the overall trend of population increase is evident across all modeled scenarios.
 
@@ -211,33 +213,36 @@ Conversely, there is pretty consistent population growth during productive perio
 
 We can investigate this by looking at how many patches on the landscape are available to be foraged during a given time interval and how this is related to the change in population density over that same interval.
 
-```{r pop-dens-forageable_1, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop-dens-forageable_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
   geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, color = climate.condition)) +
   geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), method = "lm") +
   geom_vline(aes(xintercept = 0), color = "black") +
   geom_hline(aes(yintercept = 1), color = "black") +
   stat_cor(mapping = aes(x = pop.dens.slope, y = average.prop.unforageable), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") +
-  theme(axis.text = element_text(size = 6), legend.position = "bottom")
+  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+        strip.text = element_text(size = 7))
 
 ```
 We can see that, with short environmental intervals, change in population density over a climatic interval is highly correlated with the proportion of patches that cannot be foraged.
 
 We see opposite correlations for productive vs unproductive climatic windows. During productive periods, there will be population growth (positive slopes) with more forageable land (low proportions of unforageable patches). Conversely, during unproductive periods, there is population growth with less foreagble land and population decline (negative slopes) with more unforageable patches, although overall there is more population decline during these unproductive periods.  
 
-```{r pop-dens-forageable_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop-dens-forageable_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "250")) +
   geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, color = climate.condition)) +
   geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), method = "lm") +
   geom_vline(aes(xintercept = 0), color = "black") +
   geom_hline(aes(yintercept = 1), color = "black") +
   stat_cor(mapping = aes(x = pop.dens.slope, y = average.prop.unforageable), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 3.5) +
   facet_wrap(~ tick.range, scales = "free") +
-  scale_color_brewer(palette = "Set2")
+  scale_color_brewer(palette = "Set2") +
+  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+        strip.text = element_text(size = 7))
 
 ```
 Interestingly, when climatic periods are longer, the significant and strong relationship between change in population density and proportions of unforageable patches is reduced or disappears in productive periods until the end of model run. This suggests that with longer climatic cycling, a different aspect of the environment is controlling population density initially.
@@ -393,29 +398,33 @@ plot_summs(fit1, fit2, scale = T, model.names = c("productive intervals", "unpro
 
 This self benefit is significantly affected by forager mobility, population density, proportion of unforageable land, as these will all limit what patches agents have access to for foraging. This also explains why we see high self benefit in unproductive period, when the amount of unforeagble land is typically lower. 
 
-```{r bp-and-other-outputs_3, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_3, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
   geom_point(aes(x = end.burn.prob, y = end.bself, color = climate.condition)) +
   geom_smooth(aes(x = end.burn.prob, y = end.bself), method = "lm") +
   stat_cor(mapping = aes(x = end.burn.prob, y = end.bself), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+        strip.text = element_text(size = 7))
 
 ```
 
 When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run. 
 
-```{r bp-and-other-outputs_4, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_4, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
   geom_point(aes(x = end.burn.prob, y = end.bother, color = climate.condition)) +
   geom_smooth(aes(x = end.burn.prob, y = end.bother), method = "lm") +
   stat_cor(mapping = aes(x = end.burn.prob, y = end.bother), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2")  +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+        strip.text = element_text(size = 7))
 
 ```
 
@@ -1109,16 +1118,18 @@ We can also see that low forager mobility is highly correlated with dispersion o
 
 Because mobility is the behavior that agents can control in the model, we looked at how changes in this behavior affected population evolution. 
 
-```{r mobility-pop-correlations_1, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r mobility-pop-correlations_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>%
          filter(`movement-model` == "\"Directed Walk\"")) +
   geom_point(aes(y = end.pop.density, x = start.steps, color = climate.condition)) +
   geom_smooth(aes(y = end.pop.density, x = start.steps), method = "lm") +
   stat_cor(mapping = aes(y = end.pop.density, x = start.steps), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
   facet_wrap(~ tick.range, scales = "free_y") +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+        strip.text = element_text(size = 7))
 
 ```
 
@@ -1214,25 +1225,27 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle
   theme(axis.text.x = element_text(angle = 45), legend.position = 'bottom')
 
 ```
-As is expected, when we look at how forager interactions changes over across climate intervals, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks. 
+As is expected, when we look at how forager interactions changes over across climate intervals, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks and when burning costs are lower. 
 
 Therefore, we investigate how interaction rates over time are related to mobility and population density only with directed walks. 
-```{r interactions-mobility, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+```{r interactions-mobility, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100") %>% filter(`movement-model` == "\"Directed Walk\"")) +
   geom_point(aes(y = start.steps, x = start.interactions, color = climate.condition)) +
   geom_smooth(aes(y = start.steps, x = start.interactions), method = "lm") +
   stat_cor(mapping = aes(y = start.steps, x = start.interactions), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
   facet_wrap(~ tick.range, scales = "free_x") +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+        strip.text = element_text(size = 7))
 
 ```
 Interactions are highly positively correlated with mobility throughout model run, meaning that more mobility allows for more interactions with directed walks. 
 
-Interestingly, the strength of these correlations is impacted by burning costs. 
-```{r interactions-mobility_2, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+The strength of these correlations is impacted by burning costs. 
+```{r interactions-mobility_2, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100") %>% 
          filter(`movement-model` == "\"Directed Walk\"") %>%
@@ -1240,16 +1253,16 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
   geom_point(aes(y = start.steps, x = start.interactions, color = climate.condition)) +
   geom_smooth(aes(y = start.steps, x = start.interactions), method = "lm") +
   stat_cor(mapping = aes(y = start.steps, x = start.interactions), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 4) +
   facet_wrap(~ `burn-cost`, scales = "free_x", labeller = label_both) +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "none")
+  theme(axis.text = element_text(size = 6), legend.position = "bottom")
 
 ```
 
-For example, if we take a productive climate interval in the middle of model run, we see a much tighter correlation with high cost of burning, so when burning is less frequent. 
+For example, if we take a productive climate interval in the middle of model run, we see significant and stronger correlations only when burning costs are low, so when burning is more frequent. 
 
-```{r interactions-population, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
+```{r interactions-population, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100") %>% 
          filter(`movement-model` == "\"Directed Walk\"") %>%
@@ -1257,19 +1270,71 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
   geom_point(aes(y = start.pop.density, x = start.interactions, color = climate.condition)) +
   geom_smooth(aes(y = start.pop.density, x = start.interactions), method = "lm") +
   stat_cor(mapping = aes(y = start.pop.density, x = start.interactions), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 4) +
   facet_wrap(~ `burn-cost`, scales = "free_x", labeller = label_both) +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "none")
+  theme(axis.text = element_text(size = 6), legend.position = "bottom")
 ```
-The same is true for negative correlations between interactions and population density. 
+The same is true for negative correlations between interactions and population density, although here the strongest relationship is when there is no burning cost. 
 
-These results suggest that when burning is more frequent, forager interaction rates are determined by a different mechanism. BUT WHAT?
+These results are because there is minimal change in forager mobility and therefore interactions at the highest burning costs. 
 
 ### Maintaining connections with the same foragers
 In addition to understanding overall forager interaction rates, we also loosely investigated the formation of social networks. To do so, we tracked how many of a forager's interactions during a given foraging bout overlapped with the interactions of the previous bout. Doing this provides insight into whether foragers are consistently interacting with new people or if there is incipient formation of social groups. If social groups were "forming", we would expect to see increased proportions of interactions being comprised of the same foragers. 
 
+```{r same-network_1, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE}
+plot.data3 = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 250) %>% filter(`veg-cycle-start` == "\"productive\"")
+plot.data3$`burn-cost` =  as.factor(plot.data3$`burn-cost`)
 
+ggplot(plot.data3) +
+  # geom_smooth(data = plot.data3, 
+  #             mapping = aes(x = ticks, y = same.fi.prop, color = `burn-cost`)) +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 0 & ticks <= 250), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 250 & ticks <= 500), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 500 & ticks <= 750), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 750 & ticks <= 1000), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1000 & ticks <= 1250), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1250 & ticks <= 1500), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1500 & ticks <= 1750), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 1750 & ticks <= 2000), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 2000 & ticks <= 2250), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 2250 & ticks <= 2500), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 2500 & ticks <= 2750), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 2750 & ticks <= 3000), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 3000 & ticks <= 3250), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_smooth(data = plot.data3 %>% filter(ticks > 3250 & ticks <= 3500), 
+              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+  geom_vline(aes(xintercept = 2500), color = "black") +
+  facet_grid(`movement-model` ~ `burn-cost`, 
+             labeller = label_both, scales = "free") +
+  scale_color_colorblind() +
+  theme(strip.text = element_text(size = 6), 
+        legend.title = element_blank(), 
+        legend.position = "bottom", 
+        axis.title = element_text(size = 7.5),
+        axis.text = element_text(size = 7)) +
+  guides(fill = "none") + labs(y = "average same interaction proportion")
+
+```
+
+When we plot the change in average proportion of interactions that are the same as the previous tick across model run by burn cost and movement model, we see that random walks result in overall higher proportions of agents interacting with the same people compared to directed walks. This is driven primarily by high rates of similar interactions in unproductive periods, particularly when burning costs are high. 
+
+Conversely, with directed walks, we see an initial dip in the proportion of interactions that are with the same people as the population is establishing itself. This makes sense because the population is relatively unstable at this time, so there will be more new people on the landscape. 
+
+If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher the population reaches equilibrium and carrying capacity. Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of burning and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
 
 ## References
 
