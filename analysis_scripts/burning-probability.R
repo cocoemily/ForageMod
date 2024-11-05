@@ -85,6 +85,27 @@ summary(mbp.fit3)
 ###### high burning costs #####
 high.burn = data %>% filter(`burn-cost` == 300)
 
+ggplot(high.burn) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
+  geom_hline(yintercept = 0, linetype = "dotted")
+
+hist((high.burn %>% filter(ticks == 2000))$mean.burn.prob)
+
+ggplot(high.burn %>% filter(ticks == 2000)) +
+  geom_density(aes(x = mean.burn.prob)) +
+  facet_wrap(~ `movement-model`, labeller = label_both)
+
+ggplot(high.burn %>% filter(ticks == 2000)) +
+  geom_density(aes(x = pop.dens)) +
+  facet_wrap(~ `movement-model`, labeller = label_both)
+  
+
+# ggplot(high.burn) +
+#   geom_smooth(aes(x = ticks, y = veg_7), color = "darkgreen") +
+#   geom_smooth(aes(x = ticks, y = veg_6), color = "forestgreen") +
+#   geom_smooth(aes(x = ticks, y = veg_5), color = "green") +
+#   facet_wrap(~ `movement-model`, labeller = label_both)
 
 ##### benefit ratio ####
 ggplot(data) +

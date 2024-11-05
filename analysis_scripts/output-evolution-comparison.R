@@ -71,9 +71,9 @@ for(x in experiments) {
   expdata = data %>% filter(exp == x) 
   tick.seq = NULL
   if(first(expdata$`cycle-duration`) == 250) {
-    tick.seq = seq(from = 0, to = 2000, by = 250)
+    tick.seq = seq(from = 0, to = 3500, by = 250)
   } else {
-    tick.seq = seq(from = 0, to = 2000, by = 100)
+    tick.seq = seq(from = 0, to = 3500, by = 100)
   }
   
   for(i in 1:(length(tick.seq) - 1)) {
@@ -114,14 +114,14 @@ write_rds(rates, file = "results/outputs/output-evolution-comparison.rds")
 
 rates <- readRDS("results/outputs/output-evolution-comparison.rds")
 rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
-rates[,4:20] <- lapply(rates[,4:20], as.numeric)
+rates[,4:23] <- lapply(rates[,4:23], as.numeric)
 
-tick.seq1 = seq(from = 0, to = 2000, by = 100)
+tick.seq1 = seq(from = 0, to = 3500, by = 100)
 tick.levels = c()
 for(i in 1:(length(tick.seq1) - 1)){
   tick.levels = c(tick.levels, paste0(tick.seq1[i] + 1, "-", tick.seq1[i+1]))
 }
-tick.seq2 = seq(from = 0, to = 2000, by = 250)
+tick.seq2 = seq(from = 0, to = 3500, by = 250)
 for(i in 1:(length(tick.seq2) - 1)){
   tick.levels = c(tick.levels, paste0(tick.seq2[i] + 1, "-", tick.seq2[i+1]))
 }
@@ -135,57 +135,73 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   scale_color_brewer(palette = "Set2")
 
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
-  geom_point(aes(x = burn.prob.slope, y = start.propbene, color = climate.condition)) +
-  geom_smooth(aes(x = burn.prob.slope, y = start.propbene), method = "lm") +
+  geom_point(aes(x = burn.prob.slope, y = start.bself, color = climate.condition)) +
+  geom_smooth(aes(x = burn.prob.slope, y = start.bself), method = "lm") +
   geom_vline(aes(xintercept = 0), color = "black") +
   geom_hline(aes(yintercept = 0), color = "black") +
-  stat_cor(mapping = aes(x = burn.prob.slope, y = start.propbene), 
+  stat_cor(mapping = aes(x = burn.prob.slope, y = start.bself), 
            method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") 
 
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = end.burn.prob, y = end.bself, color = climate.condition)) +
+  geom_smooth(aes(x = end.burn.prob, y = end.bself), method = "lm") +
+  stat_cor(mapping = aes(x = end.burn.prob, y = end.bself), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2") 
+
+ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = end.burn.prob, y = end.bother, color = climate.condition)) +
+  geom_smooth(aes(x = end.burn.prob, y = end.bother), method = "lm") +
+  stat_cor(mapping = aes(x = end.burn.prob, y = end.bother), 
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
+  facet_wrap(~ tick.range, scales = "free") +
+  scale_color_brewer(palette = "Set2") 
 
 #### disturbance benefit ####
+
+summary(rates$bself.slope)
+summary(rates$start.bself)
+summary(rates$end.bself)
+
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = propbene.slope, color = climate.condition)) +
+  geom_boxplot(aes(x = tick.range, y = bself.slope, color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free") +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2")
 
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = start.propbene, color = climate.condition)) +
+  geom_boxplot(aes(x = tick.range, y = start.bself, color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free") +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2")
 
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
-  geom_point(aes(x = start.pop.density, y = start.propbene, color = climate.condition)) +
-  geom_smooth(aes(x = start.pop.density, y = start.propbene), method = "lm") +
-  stat_cor(mapping = aes(x = start.pop.density, y = start.propbene), 
+  geom_point(aes(x = start.pop.density, y = start.bself, color = climate.condition)) +
+  geom_smooth(aes(x = start.pop.density, y = start.bself), method = "lm") +
+  stat_cor(mapping = aes(x = start.pop.density, y = start.bself), 
            method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") 
 
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
-  geom_point(aes(x = average.prop.unforageable, y = start.propbene, color = climate.condition)) +
-  geom_smooth(aes(x = average.prop.unforageable, y = start.propbene), method = "lm") +
-  stat_cor(mapping = aes(x = average.prop.unforageable, y = start.propbene), 
+  geom_point(aes(x = average.prop.unforageable, y = start.bself, color = climate.condition)) +
+  geom_smooth(aes(x = average.prop.unforageable, y = start.bself), method = "lm") +
+  stat_cor(mapping = aes(x = average.prop.unforageable, y = start.bself), 
            method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") 
 
-fit1 = lmer(end.propbene ~ start.steps + average.prop.unforageable + start.pop.density +  (1 | tick.range), 
+fit1 = lmer(end.bself ~ start.steps + average.prop.unforageable + start.pop.density +  (1 | tick.range), 
             data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "productive"))
-fit2 = lmer(end.propbene ~ start.steps + average.prop.unforageable + start.pop.density + start.steps + (1 | tick.range), 
+fit2 = lmer(end.bself ~ start.steps + average.prop.unforageable + start.pop.density + start.steps + (1 | tick.range), 
             data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "unproductive"))
 
 plot_summs(fit1, fit2, scale = T, model.names = c("productive intervals", "unproductive intervals"))
 
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = average.prop.unforageable, color = climate.condition)) +
-  facet_wrap(~ `cycle-duration`, scales = "free") +
-  geom_hline(aes(yintercept = 0), color = "black") +
-  scale_color_brewer(palette = "Set2")
+
 
 #### population change ####
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
