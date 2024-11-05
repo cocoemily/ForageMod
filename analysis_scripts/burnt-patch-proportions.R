@@ -1,10 +1,10 @@
 library(tidyverse)
 library(rcompanion)
 library(fitdistrplus)
-library(QuantPsyc)
+#library(QuantPsyc)
 library(betareg)
 library(ggpubr)
-library(jtools)
+#library(jtools)
 theme_set(theme_bw())
 
 #data = readRDS("results/bb-data.rds")
@@ -35,35 +35,35 @@ data$bother.prop = data$benefit_other / (data$pop.count * data$mean.fm)
 data$burnt = data$`veg_-1`
 
 
-plotNormalHistogram(data$burnt)
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `natural-ignition`))
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `cycle-duration`))
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `veg-cycle-start`))
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `veg-distribution`))
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `burnt-neighbor-limit`))
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `burn-cost`))
-#decreasing burn cost shifts the distribution right
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `burn-veg-type-threshold`))
-
-ggplot(data) +
-  geom_density(aes(x = burnt, color = `movement-model`))
-
+# plotNormalHistogram(data$burnt)
+# 
 # ggplot(data) +
-#   geom_smooth(aes(x = ticks, y = burnt, color = `burn-cost`), se = T)
+#   geom_density(aes(x = burnt, color = `natural-ignition`))
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `cycle-duration`))
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `veg-cycle-start`))
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `veg-distribution`))
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `burnt-neighbor-limit`))
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `burn-cost`))
+# #decreasing burn cost shifts the distribution right
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `burn-veg-type-threshold`))
+# 
+# ggplot(data) +
+#   geom_density(aes(x = burnt, color = `movement-model`))
+# 
+# # ggplot(data) +
+# #   geom_smooth(aes(x = ticks, y = burnt, color = `burn-cost`), se = T)
 
 plot.data = data %>% select_at(c("ticks", "burnt", parameters)) %>%
   filter(`burnt-neighbor-limit` %in% c(8,1))
@@ -97,8 +97,8 @@ bprop.plot = ggplot(plot.data) +
                      labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
   theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(size = 8), 
         strip.text = element_text(size = 6), axis.text = element_text(size = 8), axis.title = element_text(size = 8))
-ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot, 
-       dpi = 300, width = 8, height = 5)
+# ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot, 
+#        dpi = 300, width = 8, height = 5)
 
 
 #### plot all burning behaviors ####
