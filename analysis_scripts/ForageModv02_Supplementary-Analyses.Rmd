@@ -374,7 +374,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased burning behaviors.  
 
-```{r bp-and-other-outputs_1, echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_2, echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = start.bself, color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free", labeller = label_both) +
@@ -386,7 +386,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
 
 Across model run, we see high proportions of self benefit during foraging during unproductive periods.
 
-```{r bp-and-other-outputs_2, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_3, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 fit1 = lmer(end.bself ~ start.steps + average.prop.unforageable + start.pop.density +  (1 | tick.range), 
             data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "productive"))
 fit2 = lmer(end.bself ~ start.steps + average.prop.unforageable + start.pop.density + start.steps + (1 | tick.range), 
@@ -398,7 +398,7 @@ plot_summs(fit1, fit2, scale = T, model.names = c("productive intervals", "unpro
 
 This self benefit is significantly affected by forager mobility, population density, proportion of unforageable land, as these will all limit what patches agents have access to for foraging. This also explains why we see high self benefit in unproductive period, when the amount of unforeagble land is typically lower. 
 
-```{r bp-and-other-outputs_3, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_4, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
   geom_point(aes(x = end.burn.prob, y = end.bself, color = climate.condition)) +
   geom_smooth(aes(x = end.burn.prob, y = end.bself), method = "lm") +
@@ -414,7 +414,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle
 
 When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run. 
 
-```{r bp-and-other-outputs_4, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_5, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
   geom_point(aes(x = end.burn.prob, y = end.bother, color = climate.condition)) +
   geom_smooth(aes(x = end.burn.prob, y = end.bother), method = "lm") +
