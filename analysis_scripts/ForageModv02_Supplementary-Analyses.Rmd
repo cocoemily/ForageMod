@@ -936,9 +936,9 @@ parameters = c(
 )
 
 be.morans.100 <- readRDS("../results/outputs/be_morans.i_cycle.100.rds")
-be.morans.100[,parameters[-2]] = lapply(be.morans.100[,parameters[-2]] , as.factor)
+be.morans.100[,parameters[-1]] = lapply(be.morans.100[,parameters[-1]] , as.factor)
 be.morans.250 <- readRDS("../results/outputs/be_morans.i_cycle.250.rds")
-be.morans.250[,parameters[-2]] = lapply(be.morans.250[,parameters[-2]] , as.factor)
+be.morans.250[,parameters[-1]] = lapply(be.morans.250[,parameters[-1]] , as.factor)
 
 be.morans.100$veg_distribution = factor(be.morans.100$veg_distribution, levels = c("\"random\"", "\"clustered\""))
 be.morans.250$veg_distribution = factor(be.morans.250$veg_distribution, levels = c("\"random\"", "\"clustered\""))
@@ -955,9 +955,9 @@ be.morans.250 = be.morans.250 %>% filter(ticks != 1000) %>% filter(ticks != 2000
 # hist(be.morans.100$morans.i)
 # hist(be.morans.250$morans.i)
 
-fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-2], "morans.i")))
+fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-1], "morans.i")))
 
-fit2 = lm(morans.i ~ ticks*(.), data = be.morans.250 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-2], "morans.i")))
+fit2 = lm(morans.i ~ ticks*(.), data = be.morans.250 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-1], "morans.i")))
 
 par(mfrow = c(1,2))
 plot(fit1, which = 2)
@@ -1185,9 +1185,9 @@ By comparing standardized regression coefficients, we can see the greatest effec
 rw.data = fi.data %>% filter(`movement-model` == "\"Random Walk\"") 
 dw.data = fi.data %>% filter(`movement-model` == "\"Directed Walk\"") 
 
-dw.fit1 = lm(adj.fi ~ ticks*(.), data = dw.data %>% filter(ticks > 0) %>% select_at(c("ticks", "adj.fi", parameters[-8])))
+dw.fit1 = lm(adj.fi ~ ticks*(.), data = dw.data %>% filter(ticks > 0) %>% select_at(c("ticks", "adj.fi", parameters[-7])))
 
-rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>% filter(ticks > 0) %>% select_at(c("ticks", "adj.fi", parameters[-8])))
+rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>% filter(ticks > 0) %>% select_at(c("ticks", "adj.fi", parameters[-7])))
 
 par(mfrow = c(1,2))
 par(mar=c(1,1,1,1))
