@@ -577,7 +577,7 @@ parameters = c(
   "movement_model" #Random, Directed
 )
 
-reg.params = parameters[c(1,4:8)]
+reg.params = parameters[c(3:7)]
 veg.100.prod[,reg.params] = lapply(veg.100.prod[,reg.params], as.factor)
 veg.100.unprod[,reg.params] = lapply(veg.100.unprod[,reg.params] , as.factor)
 veg.250.prod[,reg.params] = lapply(veg.250.prod[,reg.params], as.factor)
