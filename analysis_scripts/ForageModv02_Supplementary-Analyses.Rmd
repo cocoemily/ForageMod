@@ -144,6 +144,8 @@ bc.labs = c("burn cost = 0", "burn cost = 100", "burn cost = 200", "burn cost = 
 names(bc.labs) = c(0, 100, 200, 300)
 bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
 names(bt.labs) = c(4, 7)
+bn.labs = c("can burn with 1 burnt neighbor", "can burn with 4 burnt neighbors", "can burn with 8 burnt neighbors")
+names(bn.labs) = c(1, 4, 8)
 
 ```
 
@@ -675,7 +677,7 @@ ggarrange(
 
 When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs. When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
 
-```{r echo=TRUE, message=FALSE, warning=FALSE}
+```{r morans-i-by-burn-limits, echo=TRUE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
 plot.data = veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")
 plot.data$burn_cost = as.factor(plot.data$burn_cost)
 
