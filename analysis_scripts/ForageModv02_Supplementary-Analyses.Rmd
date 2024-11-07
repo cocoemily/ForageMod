@@ -146,6 +146,8 @@ bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
 names(bt.labs) = c(4, 7)
 bn.labs = c("can burn with 1 burnt neighbor", "can burn with 4 burnt neighbors", "can burn with 8 burnt neighbors")
 names(bn.labs) = c(1, 4, 8)
+move.labs = c("random walks", "directed walks")
+names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
 
 ```
 
