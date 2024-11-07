@@ -114,6 +114,12 @@ cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
 names(cycle.labs) = c(250, 100)
 move.labs = c("random walks", "directed walks")
 names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
+bc.labs = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")
+names(bc.labs) = c(0, 100, 200, 300)
+bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+names(bt.labs) = c(4, 7)
+bn.labs = c("can burn with 1 burnt neighbor", "can burn with 4 burnt neighbors", "can burn with 8 burnt neighbors")
+names(bn.labs) = c(1, 4, 8)
 
 veg.cluster.plot = ggplot(veg.data %>% filter(signif == T)) +
   geom_boxplot(mapping = aes(x = ticks, y = morans.i, color = climate.condition, group = ticks)) +
@@ -196,23 +202,24 @@ p1 = ggplot(plot.data) +
         axis.title = element_text(size = 7.5))
 plot(p1)
 
-p2 = ggplot(plot.data) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+plot.data2 = plot.data %>% filter(burnt_neighbor_limit != 4)
+p2 = ggplot(plot.data2) +
+  geom_jitter(data = plot.data2 %>% filter(burn_cost == 0), mapping =
                 aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+  geom_jitter(data = plot.data2 %>% filter(burn_cost == 100), mapping =
                 aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+  geom_jitter(data = plot.data2 %>% filter(burn_cost == 200), mapping =
                 aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+  geom_jitter(data = plot.data2 %>% filter(burn_cost == 300), mapping =
                 aes(x = ticks, y = shannon.div, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
   geom_smooth(mapping = aes(x = ticks, y = shannon.div, color = burn_cost)) +
-  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
-               labeller(cycle_duration = cycle.labs, 
-                        veg_cycle_start = start.labs, 
+  facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, labeller = 
+               labeller(burnt_neighbor_limit = bn.labs,
+                        burn_veg_type_threshold = bt.labs,
                         movement_model = move.labs)) +
   labs(color = "", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 7.5))
@@ -228,13 +235,13 @@ p3 = ggplot(plot.data) +
   geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
   geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0, color = burn_cost)) +
-  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
-               labeller(cycle_duration = cycle.labs, 
-                        veg_cycle_start = start.labs, 
+  facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, labeller = 
+               labeller(burnt_neighbor_limit = bn.labs,
+                        burn_veg_type_threshold = bt.labs,
                         movement_model = move.labs)) +
   labs(color = "", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 7.5))
@@ -242,8 +249,8 @@ plot(p3)
 
 
 all.plot =  ggarrange(p1, p2, ncol = 1, nrow = 2, 
-                      common.legend = T, legend = "bottom", labels = "AUTO") +
+                      common.legend = T, legend = "bottom", labels = "AUTO", heights = c(1, 1.5)) +
   theme(axis.title = element_text(size = 7))
 
 ggsave(filename = "figures/veg-type-clustering+diversity.png", plot = all.plot,
-       dpi = 300, width = 8, height = 5)
+       dpi = 300, width = 8, height = 6)

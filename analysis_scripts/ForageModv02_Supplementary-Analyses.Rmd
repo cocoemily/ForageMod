@@ -240,7 +240,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle
 ```
 We can see that, with short environmental intervals, change in population density over a climatic interval is highly correlated with the proportion of patches that cannot be foraged, indicating that population is indeed controlled by access to energy.
 
-Interestingly, we see opposite correlations for productive vs unproductive climatic windows. During productive periods, there will be population growth (positive slopes) with more forageable land (low proportions of unforageable patches). Conversely, during unproductive periods, there is more frequently population decline and this is strongly associated with lower proportions of unforageable land. This perhaps demonstrates a reverse causation, where population decline allows for more land to be left unforaged during a climatic interval. When more of the landscape is unforageable, we see a pattern of population stagnation in unproductive climatic intervals. 
+Interestingly, we see opposite correlations for productive vs unproductive climatic windows. During productive periods, there will be population growth (positive slopes) with more forageable land (low proportions of unforageable patches). Conversely, during unproductive periods, there is more frequently population decline and this is strongly associated with lower proportions of unforageable land. This perhaps simply captures the fact that population decline allows for more land to be left unforaged, so smaller proportions of unforageable land, during a climatic interval. When more of the landscape is unforageable (higher proportions), we see a pattern of population stagnation in unproductive climatic intervals because there is not enough energy to allow for growth. 
 
 ```{r pop-dens-forageable_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "250")) +
@@ -394,7 +394,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased burning behaviors.  
 
-```{r bp-and-other-outputs_2, echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs_2, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = start.bself, color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free", labeller = label_both) +
@@ -675,6 +675,34 @@ ggarrange(
 
 When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs. When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
 
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+plot.data = veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")
+plot.data$burn_cost = as.factor(plot.data$burn_cost)
+
+ ggplot(plot.data) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = burn_cost)) +
+  facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, labeller = 
+               labeller(burnt_neighbor_limit = bn.labs,
+                        burn_veg_type_threshold = bt.labs,
+                        movement_model = move.labs)) +
+  labs(color = "", y = "Shannon Diversity Index") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
+  theme(legend.position = "bottom", 
+        strip.text = element_text(size = 6), 
+        axis.title = element_text(size = 7.5))
+```
+
+There are also differing trends based on spatial limits and vegetation limits on burning behaviors. When patches can only be burnt with 4 or less burnt neighbors, spatial clustering of vegetation types is much more decreased, particularly for lower disturbance costs that allow for more burning. 
+
 ## Vegetation diversity
 
 Vegetation diversity was measured by Shannon's Diversity Index. This metric considers the proportional abundances of vegetation types to indicate whether one type dominates or abundances are more evenly spread across all types. A SDI value of 0 indicates a lack of diversity with abundance being concentrated in a single species. Higher SDI values indicate more diversity of vegetation types.
@@ -734,17 +762,6 @@ qq.gam(rw.gam2)
 
 ```
 
-<!-- # ```{r veg-diversity-regression_1_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
-<!-- # par(mfrow=c(1,2), cex=0.8) -->
-<!-- # plot(rw.gam2, select=1, shade=T) -->
-<!-- # abline(h=0, lty = 2) -->
-<!-- # plot(rw.gam2, select=2, shade=T) -->
-<!-- # abline(h=0, lty = 2) -->
-<!-- #  -->
-<!-- # ``` -->
-<!-- #  -->
-<!-- # When there is natural ignition events in the model, we can see that vegetation diversity steadily decreases. Conversely, without natural ignition events, there is initially an increase in vegetation diversity and then a steady decreases. This is likely because diversity decreases as the proportion of burnt landscape steadily increases over model run. Having natural ignition events simply creates even more burnt landscape. -->
-
 ```{r veg-diversity-regression_1_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
 plot(rw.gam2, select=1, shade=T)
@@ -754,7 +771,7 @@ abline(h=0, lty = 2)
 
 ```
 
-The starting environmental conditions do not appear to have a large effect on vegetation diversity.
+The starting environmental conditions do not appear to have significantly differing effects on the evolution of vegetation diversity over model run.
 
 ```{r veg-diversity-regression_1_4, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -801,7 +818,7 @@ plot(rw.gam2, select=13, shade=T)
 abline(h=0, lty = 2)
 ```
 
-This same pattern is seen even more distinctly with the stricter burnt neighbor limits. 
+This same pattern is seen even more distinctly with the stricter burnt neighbor limits. When agents can burn patches with 8 burnt neighbors, vegetation diversity declines much more by the end of model run as the number of burnt patches increases.
 
 ```{r veg-diversity-regression_1_8, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -858,16 +875,6 @@ qq.gam(dw.gam2)
 
 Overall with directed walks, we get very similar parameter effects through time for most of the parameters. There are, however, key differences in the effects of burning costs and limits to where burning can occur.
 
-<!-- # ```{r veg-diversity-regression_2_2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'} -->
-<!-- # par(mfrow=c(1,2), cex=0.8) -->
-<!-- # plot(dw.gam2, select=1, shade=T) -->
-<!-- # abline(h=0, lty = 2) -->
-<!-- # plot(dw.gam2, select=2, shade=T) -->
-<!-- # abline(h=0, lty = 2) -->
-<!-- #  -->
-<!-- # ``` -->
-<!-- #  -->
-<!-- # For directed walks, natural ignition does not have a very large effect on vegetation diversity. -->
 
 ```{r veg-diversity-regression_2_3, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -904,7 +911,7 @@ abline(h=0, lty = 2)
 
 ```
 
-With directed walks, we can see that low and medium costs for burning behaviors have similar effects: at first negative, since burning is required to introduce new vegetation types, but then becoming positive as more burning is allowed to occur. We see a similar initial pattern with no burning costs; however, by the end of model run, the huge amount of burning leads to too many burnt patches that decreases the overall diversity of vegetation on the landscape. High burning cost has the opposite effect pattern, but a much more limited effect size. This is likely because high burning costs severely limits burning behaviors and therefore does not have a substantial impact on what vegetation types are available on the landscape. 
+With directed walks, we can see that low and medium costs for burning behaviors have similar effects: at first negative, since burning is required to introduce new vegetation types, but then becoming positive as more burning is allowed to occur. We see a similar initial pattern with no burning costs; however, by the end of model run, the huge amount of burning leads to too many burnt patches that decreases the overall diversity of vegetation on the landscape. Higher burning costs has the similar effect patterns, but a much more limited effect size. This is likely because high burning costs severely limits burning behaviors and therefore does not have a substantial impact on what vegetation types are available on the landscape. 
 
 ```{r veg-diversity-regression_2_6, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -935,6 +942,7 @@ abline(h=0, lty = 2)
 Cycle duration appears to have no effect on vegetation diversity with directed walks.
 
 Overall, vegetation diversity is closely tied to proportion of burnt landscape and average burning probability, which are themselves primarily controlled by the restrictions and cost of burning behaviors. By the end of model run we see a strong negative correlation between these two outputs, showing that increasing burning results in less diversity due to the dominating proportion of burnt patches on the landscape when burning is very frequent.
+
 
 ## Spatial distribution of burning events
 
@@ -1029,7 +1037,7 @@ First, it is clear that, under random walks, underlying distribution of vegetati
 
 With directed walks, the effect of underlying vegetation potential is more varied. For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
 
-```{r be-dispersion-and-pop}
+```{r be-dispersion-and-pop, echo=TRUE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
 be.data = bind_rows(be.morans.100, be.morans.250) %>% filter(ticks == 3500) %>%
   left_join(data, by = c("exp", "ticks"))
 
@@ -1145,7 +1153,7 @@ corrplot::corrplot(cor(data250 %>% select(mean.fm, shannon.div, veg_morans.i, ve
                    p.mat = pvalue250, insig="blank", sig.level=0.1, 
                    type = "lower", number.cex = 0.5, diag=F)
 
-#plot at 1000
+#plot at 2000
 pvalue2000 = psych::corr.test(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
 corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
                    method = "square", addCoef.col = "black", 
@@ -1153,7 +1161,7 @@ corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, v
                    p.mat = pvalue2000, insig="blank", sig.level=0.1, 
                    type = "lower", number.cex = 0.5, diag=F)
 
-#plot at 2000
+#plot at 3500
 pvalue3500 = psych::corr.test(data3500 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
 corrplot::corrplot(cor(data3500 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
                    method = "square", addCoef.col = "black", 
@@ -1165,9 +1173,9 @@ corrplot::corrplot(cor(data3500 %>% select(mean.fm, shannon.div, veg_morans.i, v
 
 We can see this pattern exemplified when looking at correlations between forager movement (*mean.fm*) and the highest vegetation types (*veg_7*, *veg_6*, *veg_5*), that is those that provide the most resources. We generally see negative correlations with the high vegetation types, indicating that low forager mobility is significantly correlated with higher proportions of these vegetation types. 
 
-We can also see that low forager mobility is highly correlated with dispersion of vegetation types, as is evidenced by the positive correlation between *mean.fm* and *veg_morans.i*. This indicates that local heterogeneity of the landscape dictates how far the foragers need to move. 
+We can also see that low forager mobility is highly correlated with dispersion of vegetation types, as is evidenced by the positive correlation between *mean.fm* and *veg_morans.i*. This indicates that local heterogeneity of the landscape affects how far the foragers need to move. 
 
-Because mobility is the behavior that agents can control in the model, we looked at how changes in this behavior affected population evolution. 
+Because mobility is the behavior that agents can control in the model, we looked at how changes in this behavior changes with population evolution. 
 
 ```{r mobility-pop-correlations_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>%
@@ -1184,7 +1192,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle
 
 ```
 
-Because there is relatively little change in forager steps within climatic intervals, we looked at the relationship between the starting number of steps during a climatic interval and the resulting population density at the end of that interval. Throughout model run, these outputs are highly negatively correlated. This suggests that lower amounts of mobility lead to higher population densities because each foraging group requires less room to meet their foraging needs. 
+Because there is relatively little change in forager steps within climatic intervals, we looked at the relationship between the starting number of steps during a climatic interval and the resulting population density at the end of that interval. Throughout model run, these outputs are highly negatively correlated. This suggests that lower amounts of mobility lead to higher population densities because each foraging group requires less room to meet their foraging needs.
 
 ## Forager interactions
 
