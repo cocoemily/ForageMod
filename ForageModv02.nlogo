@@ -13,7 +13,7 @@ foragers-own [ moves move-tracker energy burn-prob age offspring interactions pr
 patches-own [ veg-type foraged? burnt? regenerating? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
 links-own [ counter ]
 
-globals [ stamp1 file-path patch-burn-list patch-veg-list available-forage forage-per-capita self-burn other-burn current-veg-regime current-max-veg ]
+globals [ stamp1 file-path patch-burn-list patch-veg-list turtle-location-list available-forage forage-per-capita self-burn other-burn current-veg-regime current-max-veg ]
 
 to setup
   clear-all
@@ -29,6 +29,7 @@ to setup
 
   set patch-burn-list []
   set patch-veg-list []
+  set turtle-location-list []
 
   ;Tracking for burn benefit
   set self-burn 0
@@ -119,6 +120,7 @@ to go
     if export? = true [
       set patch-burn-list lput burn-grid patch-burn-list
       set patch-veg-list lput veg-type-grid patch-veg-list
+      set turtle-location-list lput turtle-location turtle-location-list
       export-data
     ]
 
@@ -135,6 +137,7 @@ to go
   if ticks mod 50 = 0 and ticks != 0 [
     set patch-burn-list lput burn-grid patch-burn-list
     set patch-veg-list lput veg-type-grid patch-veg-list
+    set turtle-location-list lput turtle-location turtle-location-list
   ]
 
 
@@ -231,6 +234,7 @@ to go
     if export? = true [
       set patch-burn-list lput burn-grid patch-burn-list
       set patch-veg-list lput veg-type-grid patch-veg-list
+      set turtle-location-list lput turtle-location turtle-location-list
       export-data
     ]
 
@@ -466,6 +470,14 @@ end
 ;  report num / denom
 ;end
 
+to-report turtle-location
+  let loc-list []
+  ask turtles [
+    set loc-list lput (list ([xcor] of self) ([ycor] of self) who ticks) loc-list
+  ]
+  report loc-list
+end
+
 to-report veg-type-grid
   let veg-list []
   ask patches [
@@ -494,6 +506,11 @@ to export-data
   set patch-veg-list reduce sentence patch-veg-list
   file-open (word file-path "gridded-veg-types.csv")
   csv:to-file (word file-path "gridded-veg-types.csv") patch-veg-list
+  file-close
+
+  set turtle-location-list reduce sentence turtle-location-list
+  file-open (word file-path "turtle-locations.csv")
+  csv:to-file (word file-path "turtle-locations.csv") turtle-location-list
   file-close
 
   export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
