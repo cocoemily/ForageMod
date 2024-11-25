@@ -472,8 +472,9 @@ end
 
 to-report turtle-location
   let loc-list []
-  ask turtles [
-    set loc-list lput (list ([xcor] of self) ([ycor] of self) who ticks) loc-list
+  ask patches [
+    let tcount count turtles-here
+    set loc-list lput (list ([pxcor] of self) ([pycor] of self) tcount ticks) loc-list
   ]
   report loc-list
 end
