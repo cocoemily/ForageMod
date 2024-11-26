@@ -22,7 +22,7 @@ for (x in experiments) {
 
   tl.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]])
   tl.df[nrow(tl.df) + 1, ] <- as.list(as.numeric(colnames(tl.df)))
-  colnames(tl.df) = c("x", "y", "who", "ticks")
+  colnames(tl.df) = c("x", "y", "turtle_count", "ticks")
 
   final.tl.df = bind_cols(tl.df, model.parameters)
   final.tl.df$exp = x
