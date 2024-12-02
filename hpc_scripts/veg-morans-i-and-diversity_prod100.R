@@ -47,10 +47,10 @@ rm(list = c("grid.data"))
 #### get data for cycle duration = 100 & productive start ####
 veg.data = list()
 for(e in unique(grid.data.100.prod$exp)) {
-  #print(e)
+  print(e)
   run.grid = grid.data.100.prod %>% filter(exp == e)
-  #print(nrow(run.grid))
-  #print(length(unique(run.grid$ticks)))
+  print(nrow(run.grid))
+  print(length(unique(run.grid$ticks)))
   
   run.grid$climate.condition = "productive"
   cc = "productive"
