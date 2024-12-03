@@ -14,15 +14,13 @@ outputs = c(
 
 vt.data = list()
 
-i = 1
 for (x in experiments) {
-  print(paste0("reading data from exp: ", i))
+  print(paste0("reading data from exp: ", x))
   exp.files = file.list[which(str_detect(file.list, as.character(x)))]
   
   model.parameters = read_csv(exp.files[1], skip = 5, n_max = 1)
 
-  gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]])
-  gvt.df[nrow(gvt.df) + 1, ] <- as.list(as.numeric(colnames(gvt.df)))
+  gvt.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]], col_names = F)
   colnames(gvt.df) = c("x", "y", "veg.type", "ticks")
   gvt.df$veg.type = as.numeric(gvt.df$veg.type)
 
@@ -30,7 +28,6 @@ for (x in experiments) {
   final.vt.df$exp = x
 
   vt.data[[x]] = final.vt.df
-  i = i + 1
 }
 
 final.vt.data = rbindlist(vt.data)

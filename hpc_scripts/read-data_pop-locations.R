@@ -20,8 +20,7 @@ for (x in experiments) {
   
   model.parameters = read_csv(exp.files[1], skip = 5, n_max = 1)
 
-  tl.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]])
-  tl.df[nrow(tl.df) + 1, ] <- as.list(as.numeric(colnames(tl.df)))
+  tl.df = read_csv(exp.files[[which(str_detect(exp.files, outputs[1]))]], col_names = F)
   colnames(tl.df) = c("x", "y", "turtle_count", "ticks")
 
   final.tl.df = bind_cols(tl.df, model.parameters)
