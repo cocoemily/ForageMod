@@ -48,11 +48,11 @@ viz.100 = grid.data.100 %>%
   filter(burnt_neighbor_limit == 8) %>%
   filter(burn_veg_type_threshold == 7)
 
-viz.100.exp = viz.100 %>% filter(exp == "0.4142932377424505")
+viz.100.exp = viz.100 %>% filter(exp == "0.43236824148938036")
 #possiblities
-#	0.4567276795484566
-# 0.729356525274977
-# 0.7136660102172733
+#	0.7517798120598171
+# 0.15933762127450224
+# 0.5045667019271891
 print(head(viz.100.exp))
 
 plot.list = list()
@@ -92,11 +92,11 @@ viz.100 = grid.data.100 %>%
   filter(burnt_neighbor_limit == 1) %>%
   filter(burn_veg_type_threshold == 4)
 
-viz.100.exp = viz.100 %>% filter(exp == "0.39176435477442073")
+viz.100.exp = viz.100 %>% filter(exp == "0.5856679713207628")
 #possiblities
-#	0.39176435477442073
-# 0.09666490716611498
-# 0.6832004117961296
+#	0.39611807009940825
+# 0.22841896647327742
+# 0.23537187913244184
 
 print(head(viz.100.exp))
 

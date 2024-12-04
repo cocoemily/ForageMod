@@ -50,7 +50,7 @@ for(e in unique(grid.data.100.prod$exp)) {
   print(e)
   run.grid = grid.data.100.prod %>% filter(exp == e)
   print(nrow(run.grid))
-  print(length(unique(run.grid$ticks)))
+  #print(length(unique(run.grid$ticks)))
   
   run.grid$climate.condition = "productive"
   cc = "productive"
