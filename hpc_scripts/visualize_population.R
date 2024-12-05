@@ -45,7 +45,7 @@ rm(list = c("grid.data"))
 viz.100 = grid.data.100 %>% 
   filter(movement_model == "\"Directed Walk\"") %>%
   filter(burnt_neighbor_limit != 1) %>%
-  filter(burn_cost != 300)
+  filter(burn_cost == 100)
 
 # viz.100.exp = viz.100 %>% filter(exp == "0.43236824148938036")
 # #possiblities
@@ -56,7 +56,7 @@ viz.100 = grid.data.100 %>%
 
 plot.list = list()
 for(e in unique(viz.100$exp)){
-  for(t in c(250, 2000, 3500)) {
+  for(t in c(2000, 3500)) {
     grid = viz.100 %>% filter(exp == e) %>% filter(ticks == t)
     coordinates(grid) = ~y+x
     gridded(grid) = TRUE
