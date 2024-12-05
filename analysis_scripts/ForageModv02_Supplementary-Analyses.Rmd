@@ -154,7 +154,7 @@ names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
 
 ## Population maintenance?
 
-First, we checked to see whether all model runs maintained a population across all 2000 ticks.
+First, we checked to see whether all model runs maintained a population across all 3500 ticks.
 
 ```{r pop-maintenance, echo=TRUE, message=FALSE, warning=FALSE}
 all.exp = unique(data$exp)

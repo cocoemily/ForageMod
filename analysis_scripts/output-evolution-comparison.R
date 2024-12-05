@@ -376,3 +376,4 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
            method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01) +
   facet_wrap(~ tick.range, scales = "free_x") +
   scale_color_brewer(palette = "Set2")
+
