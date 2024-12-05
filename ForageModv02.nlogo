@@ -1161,6 +1161,10 @@ A file that records the frequency of human burning events for each patch (x, y c
 
 -There is a high disparity in the amount of resources agents obtain each time step, with some agents substantially exceeding the reproduction threshold. It would be interesting to add a component that allows agents to share resources.
 
+-There are no lagged effects of forage regeneration, which allows the model to maintain a higher population density. It would be interesting to look at how lagged forage regrowth affects the patterns. Adding to this, it could be useful to modulate how quickly certain types of vegetation regrow or transition into different succession stages.
+
+-The current implementation assumes that all burning results in better long-term foraging returns. However, it is possible that there would be diminishing returns for burned patches depending on how frequently they are burned. This could be further broken down by vegetation type, such that some types of patches are more or less affected by burning. 
+
 
 ## CREDITS AND REFERENCES
 
