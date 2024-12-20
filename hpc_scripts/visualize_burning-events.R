@@ -92,8 +92,9 @@ viz.100 = grid.data.100 %>%
   filter(burnt_neighbor_limit == 1) %>%
   filter(burn_veg_type_threshold == 4)
 
-viz.100.exp = viz.100 %>% filter(exp == "0.333196539658415")
+viz.100.exp = viz.100 %>% filter(exp == "0.39362646188917383")
 #possiblities
+# 0.333196539658415
 #	0.39362646188917383
 # 0.2761139414521929
 # 0.7817399377302088
