@@ -164,7 +164,7 @@ names(move.labs) = c("\"Directed Walk\"", "\"Random Walk\"")
 # )
 
 ####FINAL -- smoothed step plots#####
-burn.labs = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")
+burn.labs = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")
 names(burn.labs) = c(0, 100, 200, 300)
 
 plot.data$climate.condition = factor(plot.data$climate.condition, levels = c("productive", "unproductive"))

@@ -743,7 +743,7 @@ CHOOSER
 movement-model
 movement-model
 "Directed Walk" "Random Walk"
-1
+0
 
 SLIDER
 17
@@ -912,7 +912,7 @@ burnt-neighbor-limit
 burnt-neighbor-limit
 0
 8
-8.0
+4.0
 1
 1
 NIL
@@ -924,7 +924,7 @@ INPUTBOX
 543
 70
 tick-limit
-500.0
+3500.0
 1
 0
 Number
@@ -969,7 +969,7 @@ burn-cost
 burn-cost
 0
 500
-0.0
+200.0
 100
 1
 NIL
@@ -983,7 +983,7 @@ CHOOSER
 veg-distribution
 veg-distribution
 "random" "clustered"
-1
+0
 
 PLOT
 1014
@@ -1030,7 +1030,7 @@ burn-veg-type-threshold
 burn-veg-type-threshold
 1
 7
-7.0
+4.0
 1
 1
 NIL

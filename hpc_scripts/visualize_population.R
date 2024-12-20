@@ -88,3 +88,23 @@ write_rds(plot.list, file = "results/outputs/pop_plots.rds")
 #        plot = ggarrange(plotlist = plot.list, ncol = 3, nrow = 1, legend = "none"), 
 #        width = 12, height = 5, dpi = 300
 # )
+
+#### plotting off the HPC ####
+parameters = c(
+  "cycle-duration",  # 100, 250
+  "veg-cycle-start", # productive, unproductive
+  "veg-distribution", # random, clustered
+  "burnt-neighbor-limit", # 1, 4, 8
+  "burn-cost", # 0, 50
+  "burn-veg-type-threshold", # 4, 7
+  "movement-model" #Random, Directed
+)
+
+pop_plots <- readRDS("~/Desktop/Yale/ABM-development/ForageMod/results/outputs/pop_plots.rds")
+source("analysis_scripts/filter-out-unsuccessful-runs.R")
+names(pop_plots)
+
+plot(pop_plots[[2]])
+as.vector(data %>% filter(exp == "0.00444187064819368") %>% select_at(parameters) %>% distinct())
+
+plot(pop_plots[[44]])

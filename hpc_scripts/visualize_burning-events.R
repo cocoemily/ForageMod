@@ -42,61 +42,61 @@ grid.data.100 = grid.data %>% filter(cycle_duration == 100)
 rm(list = c("grid.data"))
 
 ##### visualization -- clustering #####
-viz.100 = grid.data.100 %>% 
-  filter(movement_model == "\"Random Walk\"") %>%
-  filter(veg_distribution == "\"clustered\"") %>%
-  filter(burnt_neighbor_limit == 8) %>%
-  filter(burn_veg_type_threshold == 7)
-
-viz.100.exp = viz.100 %>% filter(exp == "0.43236824148938036")
-#possiblities
-#	0.7517798120598171
-# 0.15933762127450224
-# 0.5045667019271891
-print(head(viz.100.exp))
-
-plot.list = list()
-for(t in c(250, 2000, 3500)) {
-  grid = viz.100.exp %>% filter(ticks == t)
-  coordinates(grid) = ~y+x
-  gridded(grid) = TRUE
-  grid = as(grid, "SpatialPolygonsDataFrame")
-  #spplot(grid, c("times.burned"))
-  
-  nb = poly2nb(grid, queen = T)
-  lw = nb2listw(nb, zero.policy = T)
-  moran.i = moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")$statistic
-  p.value = moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")$p.value
-  
-  plot = ggplot(st_as_sf(grid)) +
-    geom_sf(aes(fill = times.burned)) +
-    theme_minimal() +
-    scale_fill_viridis_c() +
-    labs(fill = "burn event count", title = paste(t, "ticks")) +
-    annotate("rect", xmin = 13, xmax = 25, ymin = 21, ymax = 25, fill = "white") +
-    annotate("text", x = 19, y = 24, label = paste0("Z = ", round(moran.i, digits = 4))) +
-    annotate("text", x = 19, y = 22, label = paste0("p = ", round(p.value, digits = 4))) +
-    theme(axis.title = element_blank(), plot.title = element_text(hjust = 0.5), axis.text = element_text(size = 5))
-  
-  plot.list[[length(plot.list) + 1]] <- plot
-}
-ggsave(filename = "preliminary_figures/landscape_use_clustering.png", 
-       plot = ggarrange(plotlist = plot.list, ncol = 3, nrow = 1, legend = "none"), 
-       width = 12, height = 5, dpi = 300
-)
+# viz.100 = grid.data.100 %>% 
+#   filter(movement_model == "\"Random Walk\"") %>%
+#   filter(veg_distribution == "\"clustered\"") %>%
+#   filter(burnt_neighbor_limit == 8) %>%
+#   filter(burn_veg_type_threshold == 7)
+# 
+# viz.100.exp = viz.100 %>% filter(exp == "0.43236824148938036")
+# #possiblities
+# #	0.7517798120598171
+# # 0.15933762127450224
+# # 0.5045667019271891
+# print(head(viz.100.exp))
+# 
+# plot.list = list()
+# for(t in c(250, 2000, 3500)) {
+#   grid = viz.100.exp %>% filter(ticks == t)
+#   coordinates(grid) = ~y+x
+#   gridded(grid) = TRUE
+#   grid = as(grid, "SpatialPolygonsDataFrame")
+#   #spplot(grid, c("times.burned"))
+#   
+#   nb = poly2nb(grid, queen = T)
+#   lw = nb2listw(nb, zero.policy = T)
+#   moran.i = moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")$statistic
+#   p.value = moran.mc(grid$times.burned, lw, nsim = 999, alternative = "greater")$p.value
+#   
+#   plot = ggplot(st_as_sf(grid)) +
+#     geom_sf(aes(fill = times.burned)) +
+#     theme_minimal() +
+#     scale_fill_viridis_c() +
+#     labs(fill = "burn event count", title = paste(t, "ticks")) +
+#     annotate("rect", xmin = 13, xmax = 25, ymin = 21, ymax = 25, fill = "white") +
+#     annotate("text", x = 19, y = 24, label = paste0("Z = ", round(moran.i, digits = 4))) +
+#     annotate("text", x = 19, y = 22, label = paste0("p = ", round(p.value, digits = 4))) +
+#     theme(axis.title = element_blank(), plot.title = element_text(hjust = 0.5), axis.text = element_text(size = 5))
+#   
+#   plot.list[[length(plot.list) + 1]] <- plot
+# }
+# ggsave(filename = "preliminary_figures/landscape_use_clustering.png", 
+#        plot = ggarrange(plotlist = plot.list, ncol = 3, nrow = 1, legend = "none"), 
+#        width = 12, height = 5, dpi = 300
+# )
 
 ##### visualization -- dispersion #####
 viz.100 = grid.data.100 %>% 
-  filter(movement_model == "\"Random Walk\"") %>%
+  filter(movement_model == "\"Directed Walk\"") %>%
   filter(veg_distribution == "\"random\"") %>%
   filter(burnt_neighbor_limit == 1) %>%
   filter(burn_veg_type_threshold == 4)
 
-viz.100.exp = viz.100 %>% filter(exp == "0.5856679713207628")
+viz.100.exp = viz.100 %>% filter(exp == "0.333196539658415")
 #possiblities
-#	0.39611807009940825
-# 0.22841896647327742
-# 0.23537187913244184
+#	0.39362646188917383
+# 0.2761139414521929
+# 0.7817399377302088
 
 print(head(viz.100.exp))
 

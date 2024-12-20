@@ -68,73 +68,41 @@ data$burnt = data$`veg_-1`
 plot.data = data %>% select_at(c("ticks", "burnt", parameters)) %>%
   filter(`burnt-neighbor-limit` %in% c(8,1))
 
-bt.labs = c("can disturb veg types 1-4", "can disturb veg types 1-7")
+bt.labs = c("can disturb limited resource types", "can disturb all resource types")
 names(bt.labs) = c(4, 7)
-bc.labs = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")
+bc.labs = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")
 names(bc.labs) = c(0, 100, 200, 300)
-bn.labs = c("disturb with 8 disturbed neighbors", 
-            "disturb with 4 disturbed neighbors", 
-            "disturb with 1 disturbed neighbor")
+bn.labs = c("can disturb with 8 disturbed neighbors", 
+            "can disturb with 4 disturbed neighbors", 
+            "can disturb with 1 disturbed neighbor")
 names(bn.labs) = c(8, 4, 1)
 
-bprop.plot = ggplot(plot.data) +
+
+
+bprop.plot = ggplot(plot.data %>% filter(`burn-cost` == 0 | `burn-cost` == 300)) +
   geom_point(data = plot.data %>% filter(`burn-cost` == 0), mapping =
                aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
-  geom_point(data = plot.data %>% filter(`burn-cost` == 100), mapping =
-               aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
-  geom_point(data = plot.data %>% filter(`burn-cost` == 200), mapping =
-               aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
+  # geom_point(data = plot.data %>% filter(`burn-cost` == 100), mapping =
+  #              aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
+  # geom_point(data = plot.data %>% filter(`burn-cost` == 200), mapping =
+  #              aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
   geom_point(data = plot.data %>% filter(`burn-cost` == 300), mapping =
                aes(x = ticks, y = burnt, group = ticks, color = `burn-cost`), alpha = 0.1, size = 0.1) +
   geom_smooth(aes(x = ticks, y = burnt, color = `burn-cost`), se = F) +
   geom_smooth(aes(x = ticks, y = burnt), se = F, color = "black") +
   geom_hline(yintercept = 1.0, linetype = "dotted") +
-  facet_grid(`burnt-neighbor-limit` ~ `burn-cost`, labeller = 
-               labeller(`burnt-neighbor-limit` = bn.labs, 
+  facet_grid(`burn-cost` ~ `burnt-neighbor-limit` + `burn-veg-type-threshold`, labeller = 
+               labeller(`burnt-neighbor-limit` = bn.labs,
+                        `burn-veg-type-threshold` = bt.labs, 
                         `burn-cost` = bc.labs)) +
   labs(y = "proportion of patches that are disturbed") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
-  theme(legend.title = element_blank(), legend.position = "bottom", legend.text = element_text(size = 8), 
-        strip.text = element_text(size = 6), axis.text = element_text(size = 8), axis.title = element_text(size = 8))
-# ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot, 
-#        dpi = 300, width = 8, height = 5)
+  #scale_color_brewer(palette = "Set2") +
+  scale_color_manual(values = RColorBrewer::brewer.pal(4, "Set2")[c(1,4)]) +
+  theme(legend.position = "none", 
+        strip.text = element_text(size = 6), 
+        axis.title = element_text(size = 7.5))
+#plot(bprop.plot)
 
-
-#### plot all burning behaviors ####
-mbp.plot2 = ggplot(data) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  labs(y = "mean probability of disturbance", x = "ticks", color = "cost of burning") +
-  theme(legend.position = "none", axis.title = element_text(size = 8))
-
-br.plot2 = ggplot(data %>% filter(`cycle-duration` == 100) %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
-  geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  labs(x = "ticks", y = "proportion of disturbance benefits for self") +
-  theme(legend.position = "none", axis.title = element_text(size = 8))
-
-img = png::readPNG("preliminary_figures/ForageModv02_view.png")
-img.in = grid::rasterGrob(img, interpolate = T)
-img.plot = ggplot()+
-  geom_blank()+
-  annotation_custom(img.in, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
-  theme_minimal()
-
-
-all.plot = ggarrange(
-  ggarrange(
-    ggarrange(mbp.plot2, br.plot2, labels = "AUTO", 
-              nrow = 1) + theme(legend.title = element_text(size = 7)), 
-    img.plot, nrow = 1, labels = c("", "C"), widths = c(2,1)), 
-  bprop.plot, nrow = 2, labels = c("", "D"), widths = c(1, 1.75)
-)
-
-ggsave(filename = "figures/disturbance-behaviors-plot.png", plot = all.plot,
-       dpi = 300, width = 8, height = 7)
+write_rds(bprop.plot, file = "preliminary_figures/proportion-burnt-landscape.rds")
+ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot,
+       dpi = 300, width = 8, height = 5)

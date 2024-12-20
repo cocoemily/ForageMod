@@ -25,12 +25,6 @@ veg.250.prod = readRDS("results/outputs/veg_moransi_250-prod.rds")
 veg.250.unprod = readRDS("results/outputs/veg_moransi_250-unprod.rds")
 #veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod)
 
-#filtering out ticks used for correlations
-veg.100.prod = veg.100.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-veg.100.unprod = veg.100.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-veg.250.prod = veg.250.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-veg.250.unprod = veg.250.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-
 reg.params = parameters[-c(2:3)]
 
 #### cycle duration = 100 & productive start ####
@@ -114,11 +108,11 @@ cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
 names(cycle.labs) = c(250, 100)
 move.labs = c("random walks", "directed walks")
 names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
-bc.labs = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")
+bc.labs = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")
 names(bc.labs) = c(0, 100, 200, 300)
-bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+bt.labs = c("can disturb limited resource types", "can disturb all resource types")
 names(bt.labs) = c(4, 7)
-bn.labs = c("can burn with 1 burnt neighbor", "can burn with 4 burnt neighbors", "can burn with 8 burnt neighbors")
+bn.labs = c("can disturb with 1 disturbed neighbor", "can disturb with 4 disturbed neighbors", "can disturb with 8 disturbed neighbors")
 names(bn.labs) = c(1, 4, 8)
 
 veg.cluster.plot = ggplot(veg.data %>% filter(signif == T)) +
@@ -135,6 +129,61 @@ plot(veg.cluster.plot)
 
 ggsave(filename = "preliminary_figures/veg-type-clustering.png", plot = veg.cluster.plot,
        dpi = 300, width = 8, height = 5.5)
+
+img = png::readPNG("preliminary_figures/ForageModv02_250ticks.png")
+img.in = grid::rasterGrob(img, interpolate = T)
+img.plot1 = ggplot()+
+  geom_blank()+
+  annotation_custom(img.in, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_minimal()
+
+img = png::readPNG("preliminary_figures/ForageModv02_1401ticks.png")
+img.in = grid::rasterGrob(img, interpolate = T)
+img.plot2 = ggplot()+
+  geom_blank()+
+  annotation_custom(img.in, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_minimal()
+
+img = png::readPNG("preliminary_figures/ForageModv02_3003ticks.png")
+img.in = grid::rasterGrob(img, interpolate = T)
+img.plot3 = ggplot()+
+  geom_blank()+
+  annotation_custom(img.in, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_minimal()
+
+veg.data$morans.i = as.numeric(veg.data$morans.i)
+plot.data = veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")
+plot.data$burn_cost = as.factor(plot.data$burn_cost)
+
+p1 = ggplot(plot.data) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = burn_cost)) +
+  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
+               labeller(cycle_duration = cycle.labs, 
+                        veg_cycle_start = start.labs, 
+                        movement_model = move.labs)) +
+  labs(color = "", y = "Global Moran's I") +
+  scale_color_brewer(palette = "Set2",
+                     labels = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")) +
+  theme(legend.position = "bottom", 
+        strip.text = element_text(size = 6), 
+        axis.title = element_text(size = 7.5))
+
+all.plot =  ggarrange(
+  ggarrange(img.plot1, img.plot2, img.plot3, labels = "AUTO", nrow = 1),
+  p1, ncol = 1, nrow = 2, 
+  common.legend = T, legend = "bottom", labels = c("", "D"), heights = c(1.5, 1)) +
+  theme(axis.title = element_text(size = 7))
+
+ggsave(filename = "figures/veg-type-dispersion.png", plot = all.plot,
+       dpi = 300, width = 8, height = 6)
 
 #### vegetation diversity####
 veg.div.plot = ggplot(veg.data %>% filter(signif == T)) +
@@ -163,44 +212,11 @@ veg.div.plot2 = ggplot(veg.data %>% filter(signif == T) %>%
   theme(legend.position = "bottom", strip.text = element_text(size = 6.5),)
 plot(veg.div.plot2)
 
-##all data together
-# long.veg = veg.data %>% pivot_longer(c(morans.i, shannon.div), names_to = "metric", values_to = "value")
-# metric.labs = c("Global Moran's I", "Shannon Diversity Index")
-# names(metric.labs) = c("morans.i", "shannon.div")
-# 
-# all.plot = ggplot(long.veg %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")) +
-#   geom_boxplot(mapping = aes(x = ticks, y = value, color = climate.condition, group = ticks)) +
-#   geom_smooth(mapping = aes(x = ticks, y = value), method = "gam", color = "black") +
-#   facet_grid(metric ~ movement_model, labeller = 
-#                labeller(movement_model = move.labs, metric = metric.labs), scales = "free") +
-#   labs(color = "climate condition") +
-#   scale_color_brewer(palette = "Dark2") +
-#   theme(legend.position = "bottom")
 veg.data$morans.i = as.numeric(veg.data$morans.i)
 plot.data = veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")
 plot.data$burn_cost = as.factor(plot.data$burn_cost)
 
-p1 = ggplot(plot.data) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = burn_cost)) +
-  facet_grid(cycle_duration + veg_cycle_start ~ movement_model, labeller = 
-               labeller(cycle_duration = cycle.labs, 
-                        veg_cycle_start = start.labs, 
-                        movement_model = move.labs)) +
-  labs(color = "", y = "Global Moran's I") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
-  theme(legend.position = "bottom", 
-        strip.text = element_text(size = 6), 
-        axis.title = element_text(size = 7.5))
-plot(p1)
+
 
 plot.data2 = plot.data %>% filter(burnt_neighbor_limit != 4)
 p2 = ggplot(plot.data2) +
@@ -219,38 +235,35 @@ p2 = ggplot(plot.data2) +
                         movement_model = move.labs)) +
   labs(color = "", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
+                     labels = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 7.5))
 plot(p2)
 
-p3 = ggplot(plot.data) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
-                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
-                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
-                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
-                aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0, color = burn_cost)) +
-  facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, labeller = 
-               labeller(burnt_neighbor_limit = bn.labs,
-                        burn_veg_type_threshold = bt.labs,
-                        movement_model = move.labs)) +
-  labs(color = "", y = "Shannon Diversity Index") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
-  theme(legend.position = "bottom", 
-        strip.text = element_text(size = 6), 
-        axis.title = element_text(size = 7.5))
-plot(p3)
+# p3 = ggplot(plot.data) +
+#   geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
+#                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+#   geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
+#                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+#   geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
+#                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+#   geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
+#                 aes(x = ticks, y = shannon.div.no0, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+#   geom_smooth(mapping = aes(x = ticks, y = shannon.div.no0, color = burn_cost)) +
+#   facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, labeller = 
+#                labeller(burnt_neighbor_limit = bn.labs,
+#                         burn_veg_type_threshold = bt.labs,
+#                         movement_model = move.labs)) +
+#   labs(color = "", y = "Shannon Diversity Index") +
+#   scale_color_brewer(palette = "Set2",
+#                      labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
+#   theme(legend.position = "bottom", 
+#         strip.text = element_text(size = 6), 
+#         axis.title = element_text(size = 7.5))
+# plot(p3)
 
-
-all.plot =  ggarrange(p1, p2, ncol = 1, nrow = 2, 
-                      common.legend = T, legend = "bottom", labels = "AUTO", heights = c(1, 1.5)) +
-  theme(axis.title = element_text(size = 7))
-
-ggsave(filename = "figures/veg-type-clustering+diversity.png", plot = all.plot,
+bprop.plot = readRDS("preliminary_figures/proportion-burnt-landscape.rds")
+all.plot2 = ggpubr::ggarrange(p2, bprop.plot + theme(legend.position = "none"), nrow = 2, labels = "AUTO")
+ggsave(filename = "figures/veg-type-diversity.png", plot = all.plot2,
        dpi = 300, width = 8, height = 6)
