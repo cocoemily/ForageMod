@@ -115,7 +115,7 @@ ggplot(data %>% filter(ticks > 0)) +
 plot.data = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 100) %>% filter(`veg-cycle-start` == "\"productive\"")
 plot.data$`burn-cost` =  as.factor(plot.data$`burn-cost`)
 
-move.labs = c("Directed Walk", "Random Walk")
+move.labs = c("directed walks", "random walks")
 names(move.labs) = c("\"Directed Walk\"", "\"Random Walk\"")
 
 ##### figure with points #####
@@ -208,7 +208,7 @@ mobility.plot = ggplot(plot.data2) +
                                  `burn-cost` = burn.labs)) +
   scale_color_brewer(palette = "Set2", 
                      labels = c(burn.labs, "productive", "unproductive")) +
-  theme(strip.text = element_text(size = 6), 
+  theme(strip.text = element_text(size = 8), 
         legend.title = element_blank(), 
         legend.position = "bottom", 
         axis.title = element_text(size = 7.5),
@@ -254,7 +254,7 @@ interaction.plot = ggplot(plot.data3) +
                                  `burn-cost` = burn.labs)) +
   scale_color_brewer(palette = "Set2", 
                      labels = c(burn.labs, "productive", "unproductive")) +
-  theme(strip.text = element_text(size = 6), 
+  theme(strip.text = element_text(size = 8), 
         legend.title = element_blank(), 
         legend.position = "bottom", 
         axis.title = element_text(size = 7.5),
