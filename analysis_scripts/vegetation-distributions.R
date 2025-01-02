@@ -173,13 +173,13 @@ p1 = ggplot(plot.data) +
   scale_color_brewer(palette = "Set2",
                      labels = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")) +
   theme(legend.position = "bottom", 
-        strip.text = element_text(size = 6), 
+        strip.text = element_text(size = 7.5), 
         axis.title = element_text(size = 7.5))
 
 all.plot =  ggarrange(
   ggarrange(img.plot1, img.plot2, img.plot3, labels = "AUTO", nrow = 1),
   p1, ncol = 1, nrow = 2, 
-  common.legend = T, legend = "bottom", labels = c("", "D"), heights = c(1.5, 1)) +
+  common.legend = T, legend = "bottom", labels = c("", "D"), heights = c(1.5, 1.25)) +
   theme(axis.title = element_text(size = 7))
 
 ggsave(filename = "figures/veg-type-dispersion.png", plot = all.plot,
@@ -237,7 +237,7 @@ p2 = ggplot(plot.data2) +
   scale_color_brewer(palette = "Set2",
                      labels = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")) +
   theme(legend.position = "bottom", 
-        strip.text = element_text(size = 6), 
+        strip.text = element_text(size = 7), 
         axis.title = element_text(size = 7.5))
 plot(p2)
 
@@ -266,4 +266,4 @@ plot(p2)
 bprop.plot = readRDS("preliminary_figures/proportion-burnt-landscape.rds")
 all.plot2 = ggpubr::ggarrange(p2, bprop.plot + theme(legend.position = "none"), nrow = 2, labels = "AUTO")
 ggsave(filename = "figures/veg-type-diversity.png", plot = all.plot2,
-       dpi = 300, width = 8, height = 6)
+       dpi = 300, width = 8, height = 8)

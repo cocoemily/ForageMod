@@ -99,10 +99,10 @@ bprop.plot = ggplot(plot.data %>% filter(`burn-cost` == 0 | `burn-cost` == 300))
   #scale_color_brewer(palette = "Set2") +
   scale_color_manual(values = RColorBrewer::brewer.pal(4, "Set2")[c(1,4)]) +
   theme(legend.position = "none", 
-        strip.text = element_text(size = 6), 
+        strip.text = element_text(size = 7), 
         axis.title = element_text(size = 7.5))
 #plot(bprop.plot)
 
 write_rds(bprop.plot, file = "preliminary_figures/proportion-burnt-landscape.rds")
-ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot,
-       dpi = 300, width = 8, height = 5)
+# ggsave(filename = "preliminary_figures/proportion-burnt-landscape.png", plot = bprop.plot,
+#        dpi = 300, width = 8, height = 5)

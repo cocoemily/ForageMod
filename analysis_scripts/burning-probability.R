@@ -186,21 +186,21 @@ mbp.plot2 = ggplot(data) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   #facet_grid( ~ `burn-cost`, labeller = labeller(`burn-cost` = dc.labs)) +
   labs(y = "mean probability of disturbance", x = "ticks", color = "") +
-  theme(axis.title = element_text(size = 8), 
-        legend.key.size = unit(2, "cm")) +
-  guides(colour = guide_legend(override.aes = list(alpha = 1)))
-plot(mbp.plot2)
+  theme(axis.title = element_text(size = 8)) +
+  guides(colour = guide_legend(override.aes = list(linewidth = 2)))
+#plot(mbp.plot2)
 
 br.plot2 = ggplot(data %>% filter(ticks > 0)) +
   geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
   geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = dc.labs) +
+                     labels = dc.labs, 
+                     guide = "legend") +
   geom_hline(yintercept = 0, linetype = "dotted") +
   #facet_grid( ~ `burn-cost`, labeller = labeller(`burn-cost` = dc.labs)) +
   labs(y = "proportion of disturbance benefits for self", x = "ticks", color = "") +
-  guides(linetype = guide_legend(overrride.aes = list(size = 2))) +
-  theme(legend.position = "bottom", axis.title = element_text(size = 8))
+  theme(axis.title = element_text(size = 8)) +
+  guides(colour = guide_legend(override.aes = list(linewidth = 2)))
 
 ####FIGURE 1####
 all.plot = ggpubr::ggarrange(mbp.plot2, br.plot2, labels = "AUTO", 
