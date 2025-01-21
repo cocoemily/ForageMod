@@ -23,7 +23,6 @@ library(mgcv)
 library(ggpubr)
 library(ggthemes)
 library(lme4)
-library(bookdown)
 theme_set(theme_bw())
 
 data = readRDS("../results/bb-data.rds")
