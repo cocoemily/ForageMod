@@ -37,8 +37,10 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 data[,parameters] = lapply(data[,parameters], as.factor)
-data$`veg-distribution` = factor(data$`veg-distribution`, levels = c("\"random\"", "\"clustered\""))
-data$`movement-model` = factor(data$`movement-model`, levels = c("\"Random Walk\"", "\"Directed Walk\""))
+data$`veg-distribution` = factor(data$`veg-distribution`, 
+                                 levels = c("\"random\"", "\"clustered\""))
+data$`movement-model` = factor(data$`movement-model`, 
+                               levels = c("\"Random Walk\"", "\"Directed Walk\""))
 
 data$adj.fi = data$mean.fi/data$pop.count
 data$same.fi.prop = data$mean.same.fi / data$mean.fi
@@ -61,7 +63,8 @@ be.100 = readRDS("../results/outputs/be_morans.i_cycle.100.rds")
 be.250 = readRDS("../results/outputs/be_morans.i_cycle.250.rds")
 be.data = bind_rows(be.100, be.250)
 
-rm(list = c("veg.100.prod", "veg.100.unprod", "veg.250.prod", "veg.250.unprod", 
+rm(list = c("veg.100.prod", "veg.100.unprod", 
+            "veg.250.prod", "veg.250.unprod", 
             "be.100", "be.250"))
 
 outputs = c(
@@ -122,13 +125,17 @@ start.labs = c("unproductive start", "productive start")
 names(start.labs) = c("\"unproductive\"", "\"productive\"")
 cycle.labs = c("cycle every 250 ticks", "cycle every 100 ticks")
 names(cycle.labs) = c(250, 100)
-dist.labs = c("random environmental potential", "clustered environmental potential")
+dist.labs = c("random environmental potential", 
+              "clustered environmental potential")
 names(dist.labs) = c("\"random\"", "\"clustered\"")
-bc.labs = c("burn cost = 0", "burn cost = 100", "burn cost = 200", "burn cost = 300")
+bc.labs = c("burn cost = 0", "burn cost = 100", 
+            "burn cost = 200", "burn cost = 300")
 names(bc.labs) = c(0, 100, 200, 300)
 bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
 names(bt.labs) = c(4, 7)
-bn.labs = c("can burn with 1 burnt neighbor", "can burn with 4 burnt neighbors", "can burn with 8 burnt neighbors")
+bn.labs = c("can burn with 1 burnt neighbor", 
+            "can burn with 4 burnt neighbors", 
+            "can burn with 8 burnt neighbors")
 names(bn.labs) = c(1, 4, 8)
 move.labs = c("random walks", "directed walks")
 names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
@@ -136,7 +143,7 @@ names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
 ```
 
 
-## Population maintenance?
+# Population maintenance?
 
 First, we checked to see whether all model runs maintained a population across all 3500 ticks.
 
@@ -156,22 +163,29 @@ length(unique(unfinished.data$exp))
 
 None of our modeled scenarios resulted in population extinction. 
 ```{r pop-maintenance_2, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-lapply((unfinished.data %>% select_at(c("exp", parameters)) %>% distinct())[,parameters], table)
+lapply((unfinished.data %>% 
+          select_at(c("exp", parameters)) %>% 
+          distinct())[,parameters], table)
 ```
 
 ```{r filter-out-unsuccessful-runs, echo=TRUE, message=FALSE, warning=FALSE}
 data = data %>% filter(exp %in% finished.exp)
 ```
 
-## Population during model run
+# Population during model run
 
 ```{r population_1, echo=FALSE, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(data) +
-  geom_smooth(aes(y = pop.dens, x = ticks, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
+  geom_smooth(aes(y = pop.dens, x = ticks, group = exp, color = `burn-cost`), 
+              alpha = 0.01, size = 0.05) +
   geom_smooth(aes(x = ticks, y = pop.dens), color = "black", se = T) +
-  facet_grid(`burn-cost` ~ `cycle-duration`+`veg-cycle-start`, labeller = label_both, scale = "free") +
+  facet_grid(`burn-cost` ~ `cycle-duration`+`veg-cycle-start`, 
+             labeller = label_both, scale = "free") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
+                     labels = c("no disturbance cost (0)", 
+                                "low disturbance cost (100)", 
+                                "medium disturbance cost (200)", 
+                                "high disturbance cost (300)")) +
   theme(legend.position = "bottom")
 ```
 
@@ -182,7 +196,8 @@ We looked at linear rates of changes within each climate period of the model to 
 ```{r population-change-over-time_1, message=FALSE, warning=FALSE, include=FALSE}
 rates <- readRDS("../results/outputs/output-evolution-comparison.rds")
 
-rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
+rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), 
+                            by = "exp", multiple = "first")
 rates[,4:28] <- lapply(rates[,4:28], as.numeric)
 
 tick.seq1 = seq(from = 0, to = 3500, by = 100)
@@ -202,7 +217,8 @@ rm(list = c("tick.seq1", "tick.seq2", "tick.levels"))
 
 ```{r population-change-over-time_2, echo=TRUE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = pop.dens.slope, color = climate.condition)) +
+  geom_boxplot(aes(x = tick.range, y = pop.dens.slope, 
+                   color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free") +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2") +
@@ -216,13 +232,18 @@ Conversely, there is pretty consistent population growth during productive perio
 We can investigate this carrying capacity by looking at how many patches on the landscape are available to be foraged during a given time interval and how this is related to the change in population density over that same interval.
 
 ```{r pop-dens-forageable_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
-  geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, color = climate.condition)) +
-  geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), method = "lm") +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, 
+                 color = climate.condition)) +
+  geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), 
+              method = "lm") +
   geom_vline(aes(xintercept = 0), color = "black") +
   geom_hline(aes(yintercept = 1), color = "black") +
   stat_cor(mapping = aes(x = pop.dens.slope, y = average.prop.unforageable), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 2.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") +
   theme(axis.text = element_text(size = 6), legend.position = "bottom", 
@@ -234,13 +255,18 @@ We can see that, with short environmental intervals, change in population densit
 Interestingly, we see opposite correlations for productive vs unproductive climatic windows. During productive periods, there will be population growth (positive slopes) with more forageable land (low proportions of unforageable patches). Conversely, during unproductive periods, there is more frequently population decline and this is strongly associated with lower proportions of unforageable land. This perhaps simply captures the fact that population decline allows for more land to be left unforaged, so smaller proportions of unforageable land, during a climatic interval. When more of the landscape is unforageable (higher proportions), we see a pattern of population stagnation in unproductive climatic intervals because there is not enough energy to allow for growth. 
 
 ```{r pop-dens-forageable_2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "250")) +
-  geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, color = climate.condition)) +
-  geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), method = "lm") +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "250")) +
+  geom_point(aes(x = pop.dens.slope, y = average.prop.unforageable, 
+                 color = climate.condition)) +
+  geom_smooth(aes(x = pop.dens.slope, y = average.prop.unforageable), 
+              method = "lm") +
   geom_vline(aes(xintercept = 0), color = "black") +
   geom_hline(aes(yintercept = 1), color = "black") +
   stat_cor(mapping = aes(x = pop.dens.slope, y = average.prop.unforageable), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 3.5) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 3.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") +
   theme(axis.text = element_text(size = 6), legend.position = "bottom", 
@@ -275,7 +301,8 @@ data.mid = data %>% dplyr::filter(`cycle-duration`== 250) %>%
             by = c("exp"))
 
 pvalue.mid = psych::corr.test(data.mid %>% select_at(outputs))$p
-corrplot::corrplot(cor(data.mid %>% select_at(outputs), use = "pairwise.complete.obs"),
+corrplot::corrplot(cor(data.mid %>% select_at(outputs), 
+                       use = "pairwise.complete.obs"),
                    method = "square", addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
                    p.mat = pvalue.mid, insig="blank", sig.level=0.1, 
@@ -287,7 +314,7 @@ rm(list = c("data.mid", "pvalue.mid"))
 When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types (that is patches that produce more resources). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
 
 
-## Forager probability of burning patches
+# Forager probability of burning patches
 
 We examined the effects of all model parameters on burning probability across model run using linear regressions. We model the effect of the different parameter settings on model behavior. We also model change over model run by including "ticks" as a independent variable. Finally, we investigate the interaction between time and model parameters.
 
@@ -311,15 +338,23 @@ Every parameter significantly affects burning probability on average across mode
 ```{r burning-probability-regression_2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=3}
 
 ggarrange(
-  ggeffects::ggpredict(mbp.fit3, terms = c("ticks", "burnt-neighbor-limit")) %>%
+  ggeffects::ggpredict(mbp.fit3, terms = c("ticks", "burnt-neighbor-limit")) 
+  %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
-  ggeffects::ggpredict(mbp.fit3, terms = c("ticks", "burn-veg-type-threshold")) %>%
+    theme(legend.title = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)), 
+  ggeffects::ggpredict(mbp.fit3, terms = c("ticks", "burn-veg-type-threshold")) 
+  %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)), 
   ggeffects::ggpredict(mbp.fit3, terms = c("ticks", "burn-cost")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
+    theme(legend.title = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)), 
   nrow = 1, legend = "bottom"
 )
 
@@ -341,16 +376,22 @@ for(x in experiments) {
   fit = lm(mean.burn.prob ~ ticks, data = lmdata)
   bp.rates[nrow(bp.rates) + 1, ] <- c(x, summary(fit)$coefficients[2,1])
 }
-bp.rates = bp.rates %>% left_join(data %>% select_at(c("exp", parameters)), by = "exp", multiple = "first")
+bp.rates = bp.rates %>% left_join(data %>% select_at(c("exp", parameters)), 
+                                  by = "exp", multiple = "first")
 bp.rates$slope = as.numeric(bp.rates$slope)
 
 bp.rates[,parameters] = lapply(bp.rates[,parameters], as.factor)
-bp.rates$`veg-distribution` = factor(bp.rates$`veg-distribution`, levels = c("\"random\"", "\"clustered\""))
-bp.rates$`movement-model` = factor(bp.rates$`movement-model`, levels = c("\"Random Walk\"", "\"Directed Walk\""))
+bp.rates$`veg-distribution` = factor(bp.rates$`veg-distribution`, 
+                                     levels = c("\"random\"", 
+                                                "\"clustered\""))
+bp.rates$`movement-model` = factor(bp.rates$`movement-model`, 
+                                   levels = c("\"Random Walk\"", 
+                                              "\"Directed Walk\""))
 
 length(unique((bp.rates %>% filter(slope < 0))$exp))/length(unique(bp.rates$exp))
 
-neg.bprate = bp.rates %>% filter(slope < 0) %>% select_at(c(parameters)) %>% distinct()
+neg.bprate = bp.rates %>% filter(slope < 0) %>% select_at(c(parameters)) %>% 
+  distinct()
 table(neg.bprate$`burn-cost`)
 
 rm(list = c("neg.bprate"))
@@ -359,8 +400,10 @@ rm(list = c("neg.bprate"))
 Approximately 12% of all model runs result in a decreasing rate of change in burning probabilities. These occur when burning costs are 300, greater than the benefit gained from burning.
 
 ```{r rate-of-bp-increase_1-5, echo=TRUE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
-rate.fit1= lm(slope ~ ., data = bp.rates %>% select_at(c("slope", parameters)))
-rate.fit2 = lm(slope ~ .:., data = bp.rates %>% select_at(c("slope", parameters)))
+rate.fit1= lm(slope ~ ., data = bp.rates %>% 
+                select_at(c("slope", parameters)))
+rate.fit2 = lm(slope ~ .:., data = bp.rates %>% 
+                 select_at(c("slope", parameters)))
 anova(rate.fit1, rate.fit2)
 
 plot(rate.fit2, which = 2)
@@ -369,7 +412,8 @@ rate.fit.df = rate.fit2 %>% broom::tidy() %>%
   mutate(p.signif = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
   filter(p.signif == F)
 
-plot_summs(rate.fit2, scale = T, omit.coefs = c("(Intercept)", rate.fit.df$term))
+plot_summs(rate.fit2, scale = T, 
+           omit.coefs = c("(Intercept)", rate.fit.df$term))
 
 rm(list = c("rate.fit1", "rate.fit2"))
 ```
@@ -380,15 +424,25 @@ Positive selection for burning behaviors across most of the model runs occurs be
 
 ```{r bp-and-other-outputs_1, echo=TRUE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(data %>% filter(ticks > 0)) +
-  geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
+  geom_smooth(aes(x = ticks, y = bself.prop, group = exp, 
+                  color = as.factor(`burn-cost`)), 
+              alpha = 0.01, linewidth = 0.05) +
   geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+                     labels = c("no burn cost (0)", 
+                                "low burn cost (100)", 
+                                "high burn cost (200)", 
+                                "highest burn cost (300)")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
-                labeller(`burn-cost` = bc.labs, `cycle-duration` = cycle.labs, `veg-cycle-start` = start.labs)) +
-  labs(y = "proportion of burning benefits for self", x = "ticks", color = "cost of burning") +
-  theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
+  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, 
+             labeller = labeller(`burn-cost` = bc.labs, 
+                                `cycle-duration` = cycle.labs, 
+                                `veg-cycle-start` = start.labs)) +
+  labs(y = "proportion of burning benefits for self", 
+       x = "ticks", 
+       color = "cost of burning") +
+  theme(legend.position = "none", axis.title = element_text(size = 8), 
+        strip.text = element_text(size = 6))
 
 ```
 
@@ -396,7 +450,8 @@ Benefit to self consistently occurs at low levels across model run for most para
 
 ```{r bp-and-other-outputs_2, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = start.bself, color = climate.condition)) +
+  geom_boxplot(aes(x = tick.range, y = start.bself, 
+                   color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free", labeller = label_both) +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2") +
@@ -407,27 +462,45 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
 Across model run, we see higher proportions of self benefit during foraging during unproductive periods, in part due to reduced population density in these climatic intervals.
 
 ```{r bp-and-other-outputs_3, echo=TRUE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%'}
-fit1 = lmer(end.bself ~ start.steps + average.prop.unforageable + start.pop.density +  (1 | tick.range), 
-            data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "productive"))
-fit2 = lmer(end.bself ~ start.steps + average.prop.unforageable + start.pop.density + start.steps + (1 | tick.range), 
-            data = rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>% filter(climate.condition == "unproductive"))
+fit1 = lmer(end.bself ~ start.steps 
+            + average.prop.unforageable 
+            + start.pop.density 
+            + (1 | tick.range), 
+            data = rates %>% 
+              filter(`veg-cycle-start` == "\"productive\"") %>% 
+              filter(`cycle-duration` == "100") %>% 
+              filter(climate.condition == "productive"))
+fit2 = lmer(end.bself ~ start.steps 
+            + average.prop.unforageable 
+            + start.pop.density 
+            + start.steps 
+            + (1 | tick.range), 
+            data = rates %>% 
+              filter(`veg-cycle-start` == "\"productive\"") %>% 
+              filter(`cycle-duration` == "100") %>% 
+              filter(climate.condition == "unproductive"))
 
-plot_summs(fit1, fit2, scale = T, model.names = c("productive intervals", "unproductive intervals"))
+plot_summs(fit1, fit2, scale = T, 
+           model.names = c("productive intervals", "unproductive intervals"))
 
 ```
 
 This self benefit is significantly affected by forager mobility, population density, and proportion of unforageable land, as these will impact the number of patches agents have access to for foraging.  
 
 ```{r bp-and-other-outputs_4, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100")) +
   geom_point(aes(x = end.burn.prob, y = end.bself, color = climate.condition)) +
   geom_smooth(aes(x = end.burn.prob, y = end.bself), method = "lm") +
   stat_cor(mapping = aes(x = end.burn.prob, y = end.bself), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 2.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2") +
   theme(legend.position = "bottom") +
-  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+  theme(axis.text = element_text(size = 6), 
+        legend.position = "bottom", 
         strip.text = element_text(size = 7))
 
 ```
@@ -435,22 +508,27 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle
 When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run. We can also see that, within each climatic interval, low burning probabilities cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
 
 ```{r bp-and-other-outputs_5, echo=TRUE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100")) +
-  geom_point(aes(x = end.burn.prob, y = end.bother, color = climate.condition)) +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100")) +
+  geom_point(aes(x = end.burn.prob, y = end.bother, 
+                 color = climate.condition)) +
   geom_smooth(aes(x = end.burn.prob, y = end.bother), method = "lm") +
   stat_cor(mapping = aes(x = end.burn.prob, y = end.bother), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 2.5) +
   facet_wrap(~ tick.range, scales = "free") +
   scale_color_brewer(palette = "Set2")  +
   theme(legend.position = "bottom") +
-  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+  theme(axis.text = element_text(size = 6), 
+        legend.position = "bottom", 
         strip.text = element_text(size = 7))
 
 ```
 
 By the end of model run, burning probabilities are more highly positively correlated with benefit to others, meaning that the highest probabilities of burning behaviors occur when agents besides the one that burned a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of burning allows for further positive selection of this behavior. 
 
-### Positive evolution of burning behaviors with high burning costs
+## Positive evolution of burning behaviors with high burning costs
 One interesting model result is the evolution of high probabilities of burning under conditions where this behavior has a high cost - that is a cost that outweighs the energetic benefits gained. 
 
 ```{r high-cost-burning_1, echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE, out.width='100%'}
@@ -458,7 +536,9 @@ One interesting model result is the evolution of high probabilities of burning u
 high.burn = data %>% filter(`burn-cost` == 300)
 
 ggplot(high.burn) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05, method = "lm") +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, 
+                  color = as.factor(`burn-cost`)), 
+              alpha = 0.01, linewidth = 0.05, method = "lm") +
   geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
   geom_hline(yintercept = 0, linetype = "dotted")
 
@@ -480,7 +560,7 @@ ggplot(high.burn %>% filter(ticks == 3500)) +
 
 This bimodal distribution in final burning probability appears to be primarily related to the movement model that agents employ. Under random walks, agents are more likely to develop increased burning probabilities. Under directed walks, the high cost of burning keeps burning probabilities low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through burning behaviors. 
 
-## Burnt landscape proportions
+# Burnt landscape proportions
 
 Initial correlations reveal that the proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents.
 
@@ -507,19 +587,39 @@ ggplot(data) +
 We used regressions on the proportions of burnt landscape to look at the effects of each parameter. We compared Beta regression and logistic regressions, which are often used for modeling proportion data, and linear regressions using AIC.
 
 ```{r veg_0-regressions_2, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
-beta.data = data %>% mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt)) %>% mutate(burnt = ifelse(burnt == 1, burnt - 0.00001, burnt))
+beta.data = data %>% 
+  mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt)) %>% 
+  mutate(burnt = ifelse(burnt == 1, burnt - 0.00001, burnt))
 
 beta.fit1 = betareg(burnt ~ ticks*(ticks + `cycle-duration` + 
-                                     `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` +  `burnt-neighbor-limit` + 
-                                     `movement-model`), data = beta.data %>% select_at(c("ticks", "burnt", parameters)))
+                                     `veg-cycle-start` + 
+                                     `veg-distribution` + 
+                                     `burn-cost` + 
+                                     `burn-veg-type-threshold` +  
+                                     `burnt-neighbor-limit` + 
+                                     `movement-model`), 
+                    data = beta.data %>% 
+                      select_at(c("ticks", "burnt", parameters)))
 
 log.fit1 = glm(burnt ~ ticks*(ticks + `cycle-duration` + 
-                                `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` +  `burnt-neighbor-limit` + 
-                                `movement-model`), data = data %>% select_at(c("ticks", "burnt", parameters)), family = binomial)
+                                `veg-cycle-start` + 
+                                `veg-distribution` + 
+                                `burn-cost` + 
+                                `burn-veg-type-threshold` +  
+                                `burnt-neighbor-limit` + 
+                                `movement-model`), 
+               data = data %>% 
+                 select_at(c("ticks", "burnt", parameters)), 
+               family = binomial)
 
 lin.fit1 = lm(burnt ~ ticks*(ticks + `cycle-duration` + 
-                               `veg-cycle-start` + `veg-distribution` + `burn-cost` + `burn-veg-type-threshold` +  `burnt-neighbor-limit` + 
-                               `movement-model`), data = data %>% select_at(c("ticks", "burnt", parameters)))
+                               `veg-cycle-start` +
+                               `veg-distribution` +
+                               `burn-cost` +
+                               `burn-veg-type-threshold` +
+                               `burnt-neighbor-limit` + 
+                               `movement-model`), 
+              data = data %>% select_at(c("ticks", "burnt", parameters)))
 
 AIC(beta.fit1)
 AIC(log.fit1)
@@ -534,28 +634,52 @@ Comparison of AIC shows that the Beta regression performs best.
 ggarrange(
   # ggeffects::ggpredict(beta.fit1, terms = c("ticks", "natural-ignition")) %>%
   #   plot(show_data = FALSE, show_ci = FALSE) +
-  #   theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+  #   theme(legend.title = element_text(size = 5), 
+  # legend.text = element_text(size = 6), 
+  # title = element_text(size = 6), 
+  # axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "cycle-duration")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "veg-cycle-start")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "burn-veg-type-threshold")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "burnt-neighbor-limit")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "burn-cost")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "movement-model")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   ggeffects::ggpredict(beta.fit1, terms = c("ticks", "veg-distribution")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(legend.title = element_text(size = 5), legend.text = element_text(size = 6), title = element_text(size = 6), axis.title = element_text(size = 5)),
+    theme(legend.title = element_text(size = 5), 
+          legend.text = element_text(size = 6), 
+          title = element_text(size = 6), 
+          axis.title = element_text(size = 5)),
   legend = "bottom"
 )
 
@@ -563,7 +687,7 @@ ggarrange(
 
 The predicted proportions of burnt landscape from the best fit Beta regression model show that increasing limits on location of burning or increasing cost to burning significantly affect the amount of burnt landscape. This matches the results above for the effect of these parameters on mean burning probability. This is also consistent with the high positive correlation between proportion of burnt landscape and burning probability through time. 
 
-## Spatial clustering of vegetation types
+# Spatial clustering of vegetation types
 
 Spatial clustering (and its converse spatial heterogeneity) of vegetation types is assessed via Moran's I values. We limit our analysis to those significant values of Moran's I to assess the degree of clustering (positive values) or dispersion (negative values). We assessed the effects of the different parameters using linear regressions.
 
@@ -573,15 +697,23 @@ veg.100.unprod = readRDS("../results/outputs/veg_moransi_100-unprod.rds")
 veg.250.prod = readRDS("../results/outputs/veg_moransi_250-prod.rds")
 veg.250.unprod = readRDS("../results/outputs/veg_moransi_250-unprod.rds")
 
-veg.100.prod = veg.100.prod %>% filter(exp %in% finished.exp)
-veg.100.unprod = veg.100.unprod %>% filter(exp %in% finished.exp)
-veg.250.prod = veg.250.prod %>% filter(exp %in% finished.exp)
-veg.250.unprod = veg.250.unprod %>% filter(exp %in% finished.exp)
+veg.100.prod = veg.100.prod %>% 
+  filter(exp %in% finished.exp)
+veg.100.unprod = veg.100.unprod %>% 
+  filter(exp %in% finished.exp)
+veg.250.prod = veg.250.prod %>% 
+  filter(exp %in% finished.exp)
+veg.250.unprod = veg.250.unprod %>% 
+  filter(exp %in% finished.exp)
 
-veg.100.prod = veg.100.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-veg.100.unprod = veg.100.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-veg.250.prod = veg.250.prod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-veg.250.unprod = veg.250.unprod %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.100.prod = veg.100.prod %>% 
+  filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.100.unprod = veg.100.unprod %>% 
+  filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.250.prod = veg.250.prod %>% 
+  filter(ticks != 1000) %>% filter(ticks != 2000)
+veg.250.unprod = veg.250.unprod %>% 
+  filter(ticks != 1000) %>% filter(ticks != 2000)
 
 parameters = c(
   "cycle_duration",  # 100, 250
@@ -599,35 +731,67 @@ veg.100.unprod[,reg.params] = lapply(veg.100.unprod[,reg.params] , as.factor)
 veg.250.prod[,reg.params] = lapply(veg.250.prod[,reg.params], as.factor)
 veg.250.unprod[,reg.params] = lapply(veg.250.unprod[,reg.params] , as.factor)
 
-veg.100.prod$veg_distribution = factor(veg.100.prod$veg_distribution, levels = c("\"random\"", "\"clustered\""))
-veg.100.unprod$veg_distribution = factor(veg.100.unprod$veg_distribution, levels = c("\"random\"", "\"clustered\""))
-veg.250.prod$veg_distribution = factor(veg.250.prod$veg_distribution, levels = c("\"random\"", "\"clustered\""))
-veg.250.unprod$veg_distribution = factor(veg.250.unprod$veg_distribution, levels = c("\"random\"", "\"clustered\""))
+veg.100.prod$veg_distribution = factor(veg.100.prod$veg_distribution, 
+                                       levels = c("\"random\"", 
+                                                  "\"clustered\""))
+veg.100.unprod$veg_distribution = factor(veg.100.unprod$veg_distribution, 
+                                         levels = c("\"random\"", 
+                                                    "\"clustered\""))
+veg.250.prod$veg_distribution = factor(veg.250.prod$veg_distribution, 
+                                       levels = c("\"random\"", 
+                                                  "\"clustered\""))
+veg.250.unprod$veg_distribution = factor(veg.250.unprod$veg_distribution, 
+                                         levels = c("\"random\"", 
+                                                    "\"clustered\""))
 
-veg.100.prod$movement_model = factor(veg.100.prod$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
-veg.100.unprod$movement_model = factor(veg.100.unprod$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
-veg.250.prod$movement_model = factor(veg.250.prod$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
-veg.250.unprod$movement_model = factor(veg.250.unprod$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
+veg.100.prod$movement_model = factor(veg.100.prod$movement_model, 
+                                     levels = c("\"Random Walk\"", 
+                                                "\"Directed Walk\""))
+veg.100.unprod$movement_model = factor(veg.100.unprod$movement_model, 
+                                       levels = c("\"Random Walk\"",
+                                                  "\"Directed Walk\""))
+veg.250.prod$movement_model = factor(veg.250.prod$movement_model, 
+                                     levels = c("\"Random Walk\"", 
+                                                "\"Directed Walk\""))
+veg.250.unprod$movement_model = factor(veg.250.unprod$movement_model, 
+                                       levels = c("\"Random Walk\"", 
+                                                  "\"Directed Walk\""))
 
 # hist(veg.100.prod$morans.i)
 # hist(veg.100.unprod$morans.i)
 # hist(veg.250.prod$morans.i)
 # hist(veg.250.unprod$morans.i)
 
-veg.100.prod.fit1 = lm(morans.i ~ ticks*(.), data = veg.100.prod %>% filter(signif == T) %>% select_at(c("ticks", "morans.i", reg.params)))
+veg.100.prod.fit1 = lm(morans.i ~ ticks*(.), 
+                       data = veg.100.prod %>% 
+                         filter(signif == T) %>% 
+                         select_at(c("ticks", "morans.i", reg.params)))
 
-veg.100.unprod.fit1 = lm(morans.i ~ ticks*(.), data = veg.100.unprod %>% filter(signif == T) %>% select_at(c("ticks", "morans.i", reg.params)))
+veg.100.unprod.fit1 = lm(morans.i ~ ticks*(.), 
+                         data = veg.100.unprod %>% 
+                           filter(signif == T) %>% 
+                           select_at(c("ticks", "morans.i", reg.params)))
 
-veg.250.prod.fit1 = lm(morans.i ~ ticks*(.), data = veg.250.prod %>% filter(signif == T) %>% select_at(c("ticks", "morans.i", reg.params)))
+veg.250.prod.fit1 = lm(morans.i ~ ticks*(.), 
+                       data = veg.250.prod %>% 
+                         filter(signif == T) %>% 
+                         select_at(c("ticks", "morans.i", reg.params)))
 
-veg.250.unprod.fit1 = lm(morans.i ~ ticks*(.), data = veg.250.unprod %>% filter(signif == T) %>% select_at(c("ticks", "morans.i", reg.params)))
+veg.250.unprod.fit1 = lm(morans.i ~ ticks*(.), 
+                         data = veg.250.unprod %>% 
+                           filter(signif == T) %>% 
+                           select_at(c("ticks", "morans.i", reg.params)))
 
 plot(veg.100.prod.fit1, which = 2)
 plot(veg.100.unprod.fit1, which = 2)
 plot(veg.250.prod.fit1, which = 2)
 plot(veg.250.unprod.fit1, which = 2)
 
-plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unprod.fit1, model.names = c(
+plot_summs(veg.100.prod.fit1, 
+           veg.100.unprod.fit1,
+           veg.250.prod.fit1, 
+           veg.250.unprod.fit1, 
+           model.names = c(
   "start = productive, cycle = 100", 
   "start = unproductive, cycle = 100", 
   "start = productive, cycle = 250", 
@@ -644,8 +808,19 @@ plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unp
   "start = unproductive, cycle = 100", 
   "start = productive, cycle = 250", 
   "start = unproductive, cycle = 250"
-), coefs = c("ticks", "natural_ignition0.05", "veg_distribution\"random\"", "burnt_neighbor_limit4", "burnt_neighbor_limit8", "burn_cost100", "burn_cost200", "burn_cost300", "burn_veg_type_threshold7", "movement_model\"Directed Walk\"")) +
-  theme(legend.position = "bottom", legend.title = element_blank(), legend.text = element_text(size = 6))
+), coefs = c("ticks", 
+             "natural_ignition0.05", 
+             "veg_distribution\"random\"", 
+             "burnt_neighbor_limit4", 
+             "burnt_neighbor_limit8", 
+             "burn_cost100", 
+             "burn_cost200", 
+             "burn_cost300", 
+             "burn_veg_type_threshold7", 
+             "movement_model\"Directed Walk\"")) +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank(), 
+        legend.text = element_text(size = 6))
 
 ```
 
@@ -653,21 +828,33 @@ Comparing across individual models for the experiments split by whether the mode
 
 ```{r morans-i-regression_3, echo=TRUE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
 ggarrange(
-  ggeffects::ggpredict(veg.100.prod.fit1, terms = c("ticks", "movement_model", "burn_cost")) %>%
+  ggeffects::ggpredict(veg.100.prod.fit1, 
+                       terms = c("ticks", "movement_model", "burn_cost")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 5), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    theme(legend.title = element_text(size = 5), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)) +
     labs(subtitle = "cycle = 100, start = productive"), 
-  ggeffects::ggpredict(veg.100.unprod.fit1, terms = c("ticks", "movement_model", "burn_cost")) %>%
+  ggeffects::ggpredict(veg.100.unprod.fit1, 
+                       terms = c("ticks", "movement_model", "burn_cost")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    theme(legend.title = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)) +
     labs(subtitle = "cycle = 100, start = unproductive"), 
-  ggeffects::ggpredict(veg.250.prod.fit1, terms = c("ticks", "movement_model", "burn_cost")) %>%
+  ggeffects::ggpredict(veg.250.prod.fit1, 
+                       terms = c("ticks", "movement_model", "burn_cost")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    theme(legend.title = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)) +
     labs(subtitle = "cycle = 250, start = productive"), 
-  ggeffects::ggpredict(veg.250.unprod.fit1, terms = c("ticks", "movement_model", "burn_cost")) %>%
+  ggeffects::ggpredict(veg.250.unprod.fit1, 
+                       terms = c("ticks", "movement_model", "burn_cost")) %>%
     plot(show_data = FALSE, show_ci = TRUE) +
-    theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)) +
+    theme(legend.title = element_text(size = 6), 
+          title = element_text(size = 8), 
+          axis.title = element_text(size = 6)) +
     labs(subtitle = "cycle = 250, start = unproductive"), 
   common.legend = T, legend = "bottom", nrow = 2, ncol = 2)
 
@@ -676,26 +863,38 @@ ggarrange(
 When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs. When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
 
 ```{r morans-i-by-burn-limits, echo=TRUE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
-plot.data = veg.data %>% filter(signif == T) %>% filter(cycle_duration == 100) %>% filter(veg_cycle_start == "\"productive\"")
+plot.data = veg.data %>% 
+  filter(signif == T) %>% 
+  filter(cycle_duration == 100) %>% 
+  filter(veg_cycle_start == "\"productive\"")
 plot.data$burn_cost = as.factor(plot.data$burn_cost)
 
  ggplot(plot.data) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 100), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 200), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
-  geom_jitter(data = plot.data %>% filter(burn_cost == 300), mapping =
-                aes(x = ticks, y = morans.i, group = ticks, color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 0), 
+              mapping = aes(x = ticks, y = morans.i, group = ticks, 
+                            color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 100), 
+              mapping = aes(x = ticks, y = morans.i, group = ticks, 
+                            color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 200), 
+              mapping = aes(x = ticks, y = morans.i, group = ticks, 
+                            color = burn_cost), alpha = 0.1, size = 0.25) +
+  geom_jitter(data = plot.data %>% filter(burn_cost == 300), 
+              mapping = aes(x = ticks, y = morans.i, group = ticks, 
+                            color = burn_cost), alpha = 0.1, size = 0.25) +
   geom_smooth(mapping = aes(x = ticks, y = morans.i, color = burn_cost)) +
-  facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, labeller = 
-               labeller(burnt_neighbor_limit = bn.labs,
+  facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, 
+             labeller = labeller(burnt_neighbor_limit = bn.labs,
                         burn_veg_type_threshold = bt.labs,
                         movement_model = move.labs)) +
   labs(color = "", y = "Shannon Diversity Index") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)", "productive interval", "unproductive interval")) +
+                     labels = c("no disturbance cost (0)", 
+                                "low disturbance cost (100)", 
+                                "medium disturbance cost (200)", 
+                                "high disturbance cost (300)", 
+                                "productive interval", 
+                                "unproductive interval")) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 7.5))
@@ -703,7 +902,7 @@ plot.data$burn_cost = as.factor(plot.data$burn_cost)
 
 There are also differing trends based on spatial limits and vegetation limits on burning behaviors. When patches can only be burnt with 4 or less burnt neighbors, spatial clustering of vegetation types is much more decreased, particularly for lower disturbance costs that allow for more burning. 
 
-## Vegetation diversity
+# Vegetation diversity
 
 Vegetation diversity was measured by Shannon's Diversity Index. This metric considers the proportional abundances of vegetation types to indicate whether one type dominates or abundances are more evenly spread across all types. A SDI value of 0 indicates a lack of diversity with abundance being concentrated in a single species. Higher SDI values indicate more diversity of vegetation types.
 
@@ -742,7 +941,12 @@ rw.gam1 = gam(shannon.div ~
                 s(ticks, by = burnt_neighbor_limit) +
                 s(ticks, by = cycle_duration), data = veg.data.r)
 
-rw.gam2 = gam(shannon.div ~ veg_cycle_start + veg_distribution + burn_cost + burn_veg_type_threshold + burnt_neighbor_limit + cycle_duration +
+rw.gam2 = gam(shannon.div ~ veg_cycle_start + 
+                veg_distribution + 
+                burn_cost + 
+                burn_veg_type_threshold + 
+                burnt_neighbor_limit + 
+                cycle_duration +
                 #s(ticks, by = natural_ignition) + 
                 s(ticks, by = veg_cycle_start) + 
                 s(ticks, by = veg_distribution) + 
@@ -753,7 +957,8 @@ rw.gam2 = gam(shannon.div ~ veg_cycle_start + veg_distribution + burn_cost + bur
 
 anova(rw.gam1, rw.gam2, test = "Chisq")
 
-rw.fit1 = lm(shannon.div ~ ticks*(.), data = veg.data.r %>% select_at(c("ticks", "shannon.div", reg.params)))
+rw.fit1 = lm(shannon.div ~ ticks*(.), data = veg.data.r %>% 
+               select_at(c("ticks", "shannon.div", reg.params)))
 
 AIC(rw.gam2)
 AIC(rw.fit1)
@@ -944,7 +1149,7 @@ Cycle duration appears to have no effect on vegetation diversity with directed w
 Overall, vegetation diversity is closely tied to proportion of burnt landscape and average burning probability, which are themselves primarily controlled by the restrictions and cost of burning behaviors. By the end of model run we see a strong negative correlation between these two outputs, showing that increasing burning results in less diversity due to the dominating proportion of burnt patches on the landscape when burning is very frequent.
 
 
-## Spatial distribution of burning events
+# Spatial distribution of burning events
 
 Because burning behaviors have such a significant impact on the structure of the vegetation in the environment, we were curious if this is caused by differential use of space. To examine this, we looked at the spatial autocorrelation of where burning events occur within the landscape to assess land use by the agents. This analysis is split *cycle-duration.* We first use linear regressions to assess how the parameters and time affect the spatial autocorrelation of burning events. For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
 
@@ -964,11 +1169,19 @@ be.morans.100[,parameters[-1]] = lapply(be.morans.100[,parameters[-1]] , as.fact
 be.morans.250 <- readRDS("../results/outputs/be_morans.i_cycle.250.rds")
 be.morans.250[,parameters[-1]] = lapply(be.morans.250[,parameters[-1]] , as.factor)
 
-be.morans.100$veg_distribution = factor(be.morans.100$veg_distribution, levels = c("\"random\"", "\"clustered\""))
-be.morans.250$veg_distribution = factor(be.morans.250$veg_distribution, levels = c("\"random\"", "\"clustered\""))
+be.morans.100$veg_distribution = factor(be.morans.100$veg_distribution, 
+                                        levels = c("\"random\"", 
+                                                   "\"clustered\""))
+be.morans.250$veg_distribution = factor(be.morans.250$veg_distribution, 
+                                        levels = c("\"random\"", 
+                                                   "\"clustered\""))
 
-be.morans.100$movement_model = factor(be.morans.100$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
-be.morans.250$movement_model = factor(be.morans.250$movement_model, levels = c("\"Random Walk\"", "\"Directed Walk\""))
+be.morans.100$movement_model = factor(be.morans.100$movement_model, 
+                                      levels = c("\"Random Walk\"", 
+                                                 "\"Directed Walk\""))
+be.morans.250$movement_model = factor(be.morans.250$movement_model, 
+                                      levels = c("\"Random Walk\"", 
+                                                 "\"Directed Walk\""))
 
 be.morans.100 = be.morans.100 %>% filter(exp %in% finished.exp)
 be.morans.250 = be.morans.250 %>% filter(exp %in% finished.exp)
@@ -979,9 +1192,13 @@ be.morans.250 = be.morans.250 %>% filter(exp %in% finished.exp)
 # hist(be.morans.100$morans.i)
 # hist(be.morans.250$morans.i)
 
-fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-1], "morans.i")))
+fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% 
+            filter(signif == T) %>% 
+            select_at(c("ticks", parameters[-1], "morans.i")))
 
-fit2 = lm(morans.i ~ ticks*(.), data = be.morans.250 %>% filter(signif == T) %>% select_at(c("ticks", parameters[-1], "morans.i")))
+fit2 = lm(morans.i ~ ticks*(.), data = be.morans.250 %>% 
+            filter(signif == T) %>% 
+            select_at(c("ticks", parameters[-1], "morans.i")))
 
 par(mfrow = c(1,2))
 plot(fit1, which = 2)
@@ -997,34 +1214,57 @@ fit2$coefficients[1:2]
 The intercept values show that, on average, burning events are on average marginally clustered on the landscape. This spatial autocorrelation is then significantly affected by time and, on average, decreases as model run progresses. 
 
 ```{r burning-events_2_1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-plot_summs(fit1, fit2, scale = T, model.names = c("cycle = 100 ticks", "cycle = 250 ticks"))
+plot_summs(fit1, fit2, scale = T, 
+           model.names = c("cycle = 100 ticks", "cycle = 250 ticks"))
 ```
 
 When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events. These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
 
 ```{r burning-events_2_2_1, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%"}
 
-bn.labs = c("can burn with 1 burnt neighbor", "can burn with 4 burnt neighbors", "can burn with 8 burnt neighbors")
+bn.labs = c("can burn with 1 burnt neighbor", 
+            "can burn with 4 burnt neighbors", 
+            "can burn with 8 burnt neighbors")
 names(bn.labs) = c(1, 4, 8)
 
-p1.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% filter(movement_model == "\"Random Walk\"")) +
-  geom_point(mapping = aes(x = ticks, y = morans.i, color = as.factor(veg_distribution)), alpha = 0.1) +
-  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = as.factor(veg_distribution), group = as.factor(veg_distribution)), method = "lm") +
+p1.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
+                filter(movement_model == "\"Random Walk\"")) +
+  geom_point(mapping = aes(x = ticks, y = morans.i, 
+                           color = as.factor(veg_distribution)), alpha = 0.1) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, 
+                            color = as.factor(veg_distribution), 
+                            group = as.factor(veg_distribution)), 
+              method = "lm") +
   geom_hline(aes(yintercept = 0)) +
-  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, scales = "free", labeller = labeller(burn_cost = bc.labs, burn_veg_type_threshold = bt.labs, burnt_neighbor_limit = bn.labs)) +
-  theme(axis.text = element_text(size = 5), strip.text = element_text(size = 6), 
+  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, 
+             scales = "free", 
+             labeller = labeller(burn_cost = bc.labs, 
+                                 burn_veg_type_threshold = bt.labs, 
+                                 burnt_neighbor_limit = bn.labs)) +
+  theme(axis.text = element_text(size = 5), 
+        strip.text = element_text(size = 6), 
         legend.position = "bottom")
 
 plot(p1.2)
 ```
 
 ```{r burning-events_2_2_2, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%"}
-p2.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% filter(movement_model == "\"Directed Walk\"")) +
-  geom_point(mapping = aes(x = ticks, y = morans.i, color = as.factor(veg_distribution)), alpha = 0.1) +
-  geom_smooth(mapping = aes(x = ticks, y = morans.i, color = as.factor(veg_distribution), group = as.factor(veg_distribution)), method = "lm") +
+p2.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
+                filter(movement_model == "\"Directed Walk\"")) +
+  geom_point(mapping = aes(x = ticks, y = morans.i, 
+                           color = as.factor(veg_distribution)), alpha = 0.1) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, 
+                            color = as.factor(veg_distribution), 
+                            group = as.factor(veg_distribution)), 
+              method = "lm") +
   geom_hline(aes(yintercept = 0)) +
-  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, scales = "free", labeller = labeller(burn_cost = bc.labs, burn_veg_type_threshold = bt.labs, burnt_neighbor_limit = bn.labs)) +
-  theme(axis.text = element_text(size = 5), strip.text = element_text(size = 6), 
+  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, 
+             scales = "free", 
+             labeller = labeller(burn_cost = bc.labs, 
+                                 burn_veg_type_threshold = bt.labs, 
+                                 burnt_neighbor_limit = bn.labs)) +
+  theme(axis.text = element_text(size = 5), 
+        strip.text = element_text(size = 6), 
         legend.position = "bottom")
 
 plot(p2.2)
@@ -1038,27 +1278,37 @@ First, it is clear that, under random walks, underlying distribution of vegetati
 With directed walks, the effect of underlying vegetation potential is more varied. For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
 
 ```{r be-dispersion-and-pop, echo=TRUE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
-be.data = bind_rows(be.morans.100, be.morans.250) %>% filter(ticks == 3500) %>%
+be.data = bind_rows(be.morans.100, be.morans.250) %>% 
+  filter(ticks == 3500) %>%
   left_join(data, by = c("exp", "ticks"))
 
 ggplot(be.data %>% filter(signif == T)) +
   geom_point(aes(y = morans.i, x = pop.dens)) +
-  geom_smooth(data = be.data %>% filter(signif == T) %>% filter(morans.i < 0), aes(y = morans.i, x = pop.dens), method = "lm") +
-  geom_smooth(data = be.data %>% filter(signif == T) %>% filter(morans.i > 0), aes(y = morans.i, x = pop.dens), method = "lm")
+  geom_smooth(data = be.data %>% 
+                filter(signif == T) %>% 
+                filter(morans.i < 0), 
+              aes(y = morans.i, x = pop.dens), method = "lm") +
+  geom_smooth(data = be.data %>% 
+                filter(signif == T) %>% 
+                filter(morans.i > 0), 
+              aes(y = morans.i, x = pop.dens), method = "lm")
 
 ```
 Here, we can see that increased population density is clearly associated with increased dispersion of burning events at the end of model run. The correlation between clustering and population density skews positive, but the graph shows that this is less consistent at the highest population densities. 
 
-## Forager mobility
+# Forager mobility
 
 In the model, foragers can adjust how many steps they take during a foraging bout if they determine they will meet their energy requirements with fewer steps. Movement in the model is, therefore, patterned primarily by the energy available in the gridded landscape, which is determined by whether the model is in a productive or unproductive climatic period and how long those climatic periods last.
 
 ```{r fm-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(data %>% filter(ticks > 0)) +
-  # geom_point(aes(x = ticks, y = mean.fm, color = `movement-model`), alpha = 0.01, size = 0.1) +
-  geom_smooth(aes(x = ticks, y = mean.fm, color = `movement-model`), method = "gam") +
+  # geom_point(aes(x = ticks, y = mean.fm, color = `movement-model`), 
+  # alpha = 0.01, size = 0.1) +
+  geom_smooth(aes(x = ticks, y = mean.fm, color = `movement-model`), 
+              method = "gam") +
   #geom_hline(yintercept = 0, linetype = "dotted") +
-  facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both) +
+  facet_grid(`cycle-duration` ~ `veg-cycle-start`, 
+             labeller = label_both) +
   scale_color_colorblind(labels = c("Directed Walk", "Random Walk"))
 
 ```
@@ -1066,22 +1316,32 @@ ggplot(data %>% filter(ticks > 0)) +
 We can see from the above plot that there is a decrease in movement during productive periods and an increase in movement during unproductive periods of the model. This is more smoothed when cycle duration is shorter. 
 
 ```{r fm-viz_2, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = steps.slope, color = climate.condition)) +
-  facet_grid(`movement-model`~ `cycle-duration`, scales = "free", labeller = label_both) +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = steps.slope, 
+                   color = climate.condition)) +
+  facet_grid(`movement-model`~ `cycle-duration`, 
+             scales = "free", 
+             labeller = label_both) +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45))
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 45))
 
 ```
 When we break this down by climatic interval, we can see that most of the change to mobility occurs during productive intervals. Interestingly, across these productive intervals, it primarily at the beginning of model run when mobility decreases across the interval. By the end of model run, there is actually a slight increase in mobility across the climatic interval.
 
 ```{r fm-viz_3, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = start.steps, color = climate.condition)) +
-  facet_grid(`movement-model`~ `cycle-duration`, scales = "free", labeller = label_both) +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"")) +
+  geom_boxplot(aes(x = tick.range, y = start.steps, 
+                   color = climate.condition)) +
+  facet_grid(`movement-model`~ `cycle-duration`, 
+             scales = "free", 
+             labeller = label_both) +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45))
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 45))
 
 ```
 
@@ -1092,50 +1352,79 @@ To understand how model parameters affected forager mobility, we first chose to 
 ```{r fm-mm-regs, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width="100%"}
 mm.fit1.1 = lmer(mean.fm ~ ticks + (1 | `veg-cycle-start`), data = data)
 
-mm.fit1.2 = lmer(mean.fm ~ ticks + `movement-model` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold`  + `cycle-duration` + `veg-distribution`+ (1 | `veg-cycle-start`),, data = data)
+mm.fit1.2 = lmer(mean.fm ~ ticks + 
+                   `movement-model` + 
+                   `burnt-neighbor-limit` + 
+                   `burn-cost` + 
+                   `burn-veg-type-threshold`  + 
+                   `cycle-duration` + 
+                   `veg-distribution`+ 
+                   (1 | `veg-cycle-start`),
+                 data = data)
 
-mm.fit1.3 = lmer(mean.fm ~ ticks*(`movement-model` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `cycle-duration` + `veg-distribution`) + (1 | `veg-cycle-start`), data = data)
+mm.fit1.3 = lmer(mean.fm ~ ticks*(`movement-model` + 
+                                    `burnt-neighbor-limit` + 
+                                    `burn-cost` + 
+                                    `burn-veg-type-threshold` + 
+                                    `cycle-duration` + 
+                                    `veg-distribution`) + 
+                   (1 | `veg-cycle-start`), 
+                 data = data)
 
-mm.fit1.4 = lmer(mean.fm ~ ticks*(`movement-model` + `burnt-neighbor-limit` + `burn-cost` + `burn-veg-type-threshold` + `veg-distribution`) + (1 | `veg-cycle-start`) + (1 | `cycle-duration`), data = data)
+mm.fit1.4 = lmer(mean.fm ~ ticks*(`movement-model` + 
+                                    `burnt-neighbor-limit` + 
+                                    `burn-cost` + 
+                                    `burn-veg-type-threshold` + 
+                                    `veg-distribution`) + 
+                   (1 | `veg-cycle-start`) + 
+                   (1 | `cycle-duration`), 
+                 data = data)
 
 anova(mm.fit1.1, mm.fit1.2, mm.fit1.3, mm.fit1.4)
 
 qqnorm(resid(mm.fit1.3))
 qqline(resid(mm.fit1.3))
 
+rm(list = c("mm.fit1.1", "mm.fit1.2", mm.fit1.3, "mm.fit1.4"))
+
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "veg-distribution")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
+    theme(title = element_text(size = 6), 
+          legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "cycle-duration")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
+    theme(title = element_text(size = 6), 
+          legend.title = element_text(size = 6)), 
   legend = "bottom", nrow = 1
 )
 
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "burnt-neighbor-limit")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
+    theme(title = element_text(size = 6), 
+          legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "burn-veg-type-threshold")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
+    theme(title = element_text(size = 6), 
+          legend.title = element_text(size = 6)), 
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "burn-cost")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
+    theme(title = element_text(size = 6), 
+          legend.title = element_text(size = 6)), 
   legend = "bottom", nrow = 1
 )
 
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "movement-model")) %>%
     plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
+    theme(title = element_text(size = 6), 
+          legend.title = element_text(size = 6)), 
   # ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "natural-ignition")) %>%
   #   plot(show_data = FALSE, show_ci = FALSE) +
   #   theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
   legend = "bottom", nrow = 1
 )
-
 ```
 
 The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility. Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the differential impact that low cost niche construction strategies can have on forager behaviors.
@@ -1146,28 +1435,58 @@ These mobility patterns due to different limits on burning behaviors occur becau
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
-pvalue250 = psych::corr.test(data250 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data250 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
+pvalue250 = psych::corr.test(data250 %>% 
+                               select(mean.fm, shannon.div, 
+                                      veg_morans.i, veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data250 %>% 
+                         select(mean.fm, shannon.div, 
+                                veg_morans.i, veg_7, veg_6, veg_5), 
+                       use = "pairwise.complete.obs"),
+                   method = "square", 
+                   addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue250, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+                   p.mat = pvalue250, 
+                   insig="blank", 
+                   sig.level=0.1, 
+                   type = "lower", 
+                   number.cex = 0.5, 
+                   diag=F)
 
 #plot at 2000
-pvalue2000 = psych::corr.test(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data2000 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
+pvalue2000 = psych::corr.test(data2000 %>% 
+                                select(mean.fm, shannon.div, 
+                                       veg_morans.i, veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data2000 %>% 
+                         select(mean.fm, shannon.div, 
+                                veg_morans.i, veg_7, veg_6, veg_5), 
+                       use = "pairwise.complete.obs"),
+                   method = "square", 
+                   addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue2000, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+                   p.mat = pvalue2000, 
+                   insig="blank", 
+                   sig.level=0.1, 
+                   type = "lower", 
+                   number.cex = 0.5, 
+                   diag=F)
 
 #plot at 3500
-pvalue3500 = psych::corr.test(data3500 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data3500 %>% select(mean.fm, shannon.div, veg_morans.i, veg_7, veg_6, veg_5), use = "pairwise.complete.obs"),
-                   method = "square", addCoef.col = "black", 
+pvalue3500 = psych::corr.test(data3500 %>% 
+                                select(mean.fm, shannon.div, 
+                                       veg_morans.i, veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data3500 %>% 
+                         select(mean.fm, shannon.div, 
+                                veg_morans.i, veg_7, veg_6, veg_5), 
+                       use = "pairwise.complete.obs"),
+                   method = "square", 
+                   addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue3500, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+                   p.mat = pvalue3500, 
+                   insig="blank", 
+                   sig.level=0.1, 
+                   type = "lower", 
+                   number.cex = 0.5, 
+                   diag=F)
 
 ```
 
@@ -1178,30 +1497,39 @@ We can also see that low forager mobility is highly correlated with dispersion o
 Because mobility is the behavior that agents can control in the model, we looked at how changes in this behavior changes with population evolution. 
 
 ```{r mobility-pop-correlations_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "100") %>%
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100") %>%
          filter(`movement-model` == "\"Directed Walk\"")) +
-  geom_point(aes(y = end.pop.density, x = start.steps, color = climate.condition)) +
-  geom_smooth(aes(y = end.pop.density, x = start.steps), method = "lm") +
+  geom_point(aes(y = end.pop.density, x = start.steps, 
+                 color = climate.condition)) +
+  geom_smooth(aes(y = end.pop.density, x = start.steps), 
+              method = "lm") +
   stat_cor(mapping = aes(y = end.pop.density, x = start.steps), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 2.5) +
   facet_wrap(~ tick.range, scales = "free_y") +
   scale_color_brewer(palette = "Set2") +
   theme(legend.position = "bottom") +
-  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+  theme(axis.text = element_text(size = 6), 
+        legend.position = "bottom", 
         strip.text = element_text(size = 7))
 
 ```
 
 Because there is relatively little change in forager steps within climatic intervals, we looked at the relationship between the starting number of steps during a climatic interval and the resulting population density at the end of that interval. Throughout model run, these outputs are highly negatively correlated. This suggests that lower amounts of mobility lead to higher population densities because each foraging group requires less room to meet their foraging needs.
 
-## Forager interactions
+# Forager interactions
 
 When looking at forager interactions, we have to consider them in relation to populations since more foragers on the landscape will necessarily mean more possible interactions. The model outputs interaction counts averaged across all agents and we divided this by the population count to get the average proportion of the population that an individual agent interacts with each tick.
 
 ```{r adj-fi-viz, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(data %>% filter(ticks > 0)) +
   geom_smooth(aes(x = ticks, y = adj.fi, color = `movement-model`), se = T) +
-  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = labeller(`veg-cycle-start` = start.labs, `cycle-duration` = cycle.labs, `burn-cost` = bc.labs)) +
+  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, 
+             labeller = labeller(`veg-cycle-start` = start.labs, 
+                                 `cycle-duration` = cycle.labs, 
+                                 `burn-cost` = bc.labs)) +
   scale_color_colorblind() +
   theme(legend.position = "bottom", strip.text = element_text(size = 6))
 
@@ -1224,7 +1552,8 @@ parameters = c(
   "movement-model" #Random, Directed
 )
 
-fi.fit1 = lm(adj.fi ~ ticks*(.), data = fi.data %>% dplyr::select_at(c(parameters, "ticks", "adj.fi")))
+fi.fit1 = lm(adj.fi ~ ticks*(.), data = fi.data %>% 
+               dplyr::select_at(c(parameters, "ticks", "adj.fi")))
 
 plot_summs(fi.fit1, scale = T)
 
@@ -1236,9 +1565,13 @@ By comparing standardized regression coefficients, we can see the greatest effec
 rw.data = fi.data %>% filter(`movement-model` == "\"Random Walk\"") 
 dw.data = fi.data %>% filter(`movement-model` == "\"Directed Walk\"") 
 
-dw.fit1 = lm(adj.fi ~ ticks*(.), data = dw.data %>% filter(ticks > 0) %>% select_at(c("ticks", "adj.fi", parameters[-7])))
+dw.fit1 = lm(adj.fi ~ ticks*(.), data = dw.data %>% 
+               filter(ticks > 0) %>% 
+               select_at(c("ticks", "adj.fi", parameters[-7])))
 
-rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>% filter(ticks > 0) %>% select_at(c("ticks", "adj.fi", parameters[-7])))
+rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>% 
+               filter(ticks > 0) %>% 
+               select_at(c("ticks", "adj.fi", parameters[-7])))
 
 par(mfrow = c(1,2))
 par(mar=c(1,1,1,1))
@@ -1249,7 +1582,8 @@ plot(rw.fit1, which = 2)
 
 ```{r parameter-effects-adj-fi_1, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
 
-plot_summs(dw.fit1, rw.fit1, scale = T, model.names = c("directed walks", "random walks"))
+plot_summs(dw.fit1, rw.fit1, scale = T, 
+           model.names = c("directed walks", "random walks"))
 
 
 ggarrange(
@@ -1259,36 +1593,51 @@ ggarrange(
   ggeffects::ggpredict(rw.fit1, terms = c("ticks", "burn-cost")) %>%
     plot(show_data = FALSE, show_ci = FALSE, limits = c(0, 0.020)) +
     theme(title = element_text(size = 7)),
-  common.legend = T, legend = "bottom", labels = c("Directed Walk", "Random Walk"), nrow = 1, ncol = 2, font.label = list(size = 8), vjust = 0.8
+  common.legend = T, legend = "bottom", 
+  labels = c("Directed Walk", "Random Walk"), 
+  nrow = 1, ncol = 2, 
+  font.label = list(size = 8), vjust = 0.8
 ) +
-  theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), title = element_text(size = 7))
+  theme(plot.margin = margin(0.1,0.2,0.1,0.1, "cm"), 
+        title = element_text(size = 7))
 
 ```
 These two regressions demonstrate that restrictions/costs to burning behaviors impact forager interactions, but that these effects are much more prominent and diverging for directed walks. This again indicates that the amount of burning has a significant impact on the evolution of human behaviors in the model. 
 
 ```{r interaction-change-over-time, out.width="100%", echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% filter(`cycle-duration` == "250")) +
-  geom_boxplot(aes(x = tick.range, y = interactions.slope, color = climate.condition)) +
-  facet_grid( `movement-model` ~ `burn-cost`, scales = "free", labeller = label_both) +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "250")) +
+  geom_boxplot(aes(x = tick.range, y = interactions.slope, 
+                   color = climate.condition)) +
+  facet_grid( `movement-model` ~ `burn-cost`, 
+              scales = "free", labeller = label_both) +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2") +
-  theme(axis.text.x = element_text(angle = 45), legend.position = 'bottom')
+  theme(axis.text.x = element_text(angle = 45), 
+        legend.position = 'bottom')
 
 ```
 As is expected, when we look at how forager interactions changes over across climate intervals, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks and when burning costs are lower. 
 
 Therefore, we investigate how interaction rates over time are related to mobility and population density only with directed walks. 
 ```{r interactions-mobility, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
-ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
-         filter(`cycle-duration` == "100") %>% filter(`movement-model` == "\"Directed Walk\"")) +
-  geom_point(aes(y = start.steps, x = start.interactions, color = climate.condition)) +
-  geom_smooth(aes(y = start.steps, x = start.interactions), method = "lm") +
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100") %>% 
+         filter(`movement-model` == "\"Directed Walk\"")) +
+  geom_point(aes(y = start.steps, x = start.interactions, 
+                 color = climate.condition)) +
+  geom_smooth(aes(y = start.steps, x = start.interactions), 
+              method = "lm") +
   stat_cor(mapping = aes(y = start.steps, x = start.interactions), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 2.5) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 2.5) +
   facet_wrap(~ tick.range, scales = "free_x") +
   scale_color_brewer(palette = "Set2") +
   theme(legend.position = "bottom") +
-  theme(axis.text = element_text(size = 6), legend.position = "bottom", 
+  theme(axis.text = element_text(size = 6), 
+        legend.position = "bottom", 
         strip.text = element_text(size = 7))
 
 ```
@@ -1300,10 +1649,13 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
          filter(`cycle-duration` == "100") %>% 
          filter(`movement-model` == "\"Directed Walk\"") %>%
          filter(tick.range == "1001-1100")) +
-  geom_point(aes(y = start.steps, x = start.interactions, color = climate.condition)) +
-  geom_smooth(aes(y = start.steps, x = start.interactions), method = "lm") +
+  geom_point(aes(y = start.steps, x = start.interactions, 
+                 color = climate.condition)) +
+  geom_smooth(aes(y = start.steps, x = start.interactions), 
+              method = "lm") +
   stat_cor(mapping = aes(y = start.steps, x = start.interactions), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 4) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 4) +
   facet_wrap(~ `burn-cost`, scales = "free_x", labeller = label_both) +
   scale_color_brewer(palette = "Set2") +
   theme(axis.text = element_text(size = 6), legend.position = "bottom")
@@ -1317,10 +1669,13 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
          filter(`cycle-duration` == "100") %>% 
          filter(`movement-model` == "\"Directed Walk\"") %>%
          filter(tick.range == "1001-1100")) +
-  geom_point(aes(y = start.pop.density, x = start.interactions, color = climate.condition)) +
-  geom_smooth(aes(y = start.pop.density, x = start.interactions), method = "lm") +
+  geom_point(aes(y = start.pop.density, x = start.interactions, 
+                 color = climate.condition)) +
+  geom_smooth(aes(y = start.pop.density, x = start.interactions), 
+              method = "lm") +
   stat_cor(mapping = aes(y = start.pop.density, x = start.interactions), 
-           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, size = 4) +
+           method = "pearson", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 4) +
   facet_wrap(~ `burn-cost`, scales = "free_x", labeller = label_both) +
   scale_color_brewer(palette = "Set2") +
   theme(axis.text = element_text(size = 6), legend.position = "bottom")
@@ -1329,44 +1684,74 @@ The same is true for negative correlations between interactions and population d
 
 These results are because there is minimal change in forager mobility and therefore interactions at the highest burning costs. 
 
-### Maintaining connections with the same foragers
+## Maintaining connections with the same foragers
 In addition to understanding overall forager interaction rates, we also loosely investigated the formation of social networks. To do so, we tracked how many of a forager's interactions during a given foraging bout overlapped with the interactions of the previous bout. Doing this provides insight into whether foragers are consistently interacting with new people or if there is incipient formation of social groups. If social groups were "forming", we would expect to see increased proportions of interactions being comprised of the same foragers. 
 
 ```{r same-network_1, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE}
-plot.data3 = data %>% filter(ticks > 0) %>% filter(`cycle-duration` == 250) %>% filter(`veg-cycle-start` == "\"productive\"")
+plot.data3 = data %>% filter(ticks > 0) %>% 
+  filter(`cycle-duration` == 250) %>% 
+  filter(`veg-cycle-start` == "\"productive\"")
 plot.data3$`burn-cost` =  as.factor(plot.data3$`burn-cost`)
 
 ggplot(plot.data3) +
   # geom_smooth(data = plot.data3, 
   #             mapping = aes(x = ticks, y = same.fi.prop, color = `burn-cost`)) +
   geom_smooth(data = plot.data3 %>% filter(ticks > 0 & ticks <= 250), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 250 & ticks <= 500), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 500 & ticks <= 750), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 750 & ticks <= 1000), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 1000 & ticks <= 1250), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 1250 & ticks <= 1500), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 1500 & ticks <= 1750), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 1750 & ticks <= 2000), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 2000 & ticks <= 2250), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 2250 & ticks <= 2500), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 2500 & ticks <= 2750), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 2750 & ticks <= 3000), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 3000 & ticks <= 3250), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_smooth(data = plot.data3 %>% filter(ticks > 3250 & ticks <= 3500), 
-              mapping = aes(x = ticks, y = same.fi.prop, color = climate.condition), method = "lm") +
+              mapping = aes(x = ticks, y = same.fi.prop, 
+                            color = climate.condition), 
+              method = "lm") +
   geom_vline(aes(xintercept = 2500), color = "black") +
   facet_grid(`movement-model` ~ `burn-cost`, 
              labeller = label_both, scales = "free") +
@@ -1376,7 +1761,8 @@ ggplot(plot.data3) +
         legend.position = "bottom", 
         axis.title = element_text(size = 7.5),
         axis.text = element_text(size = 7)) +
-  guides(fill = "none") + labs(y = "average same interaction proportion")
+  guides(fill = "none") + 
+  labs(y = "average same interaction proportion")
 
 ```
 
@@ -1386,9 +1772,11 @@ Conversely, with directed walks, we see an initial dip in the proportion of inte
 
 If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher the population reaches equilibrium and carrying capacity. Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of burning and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
 
-## References
+# References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
-pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc", "marginaleffects"))
+pkgs <- grateful::cite_packages(output = "table", 
+                                out.dir = ".", 
+                                omit = c("QuantPsyc", "marginaleffects"))
 knitr::kable(pkgs)
 ```
