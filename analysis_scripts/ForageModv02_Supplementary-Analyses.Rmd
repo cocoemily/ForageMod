@@ -165,11 +165,11 @@ data = data %>% filter(exp %in% finished.exp)
 
 ## Population during model run
 
-```{r population_1, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r population_1, echo=FALSE, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(data) +
   geom_smooth(aes(y = pop.dens, x = ticks, group = exp, color = `burn-cost`), alpha = 0.01, size = 0.05) +
   geom_smooth(aes(x = ticks, y = pop.dens), color = "black", se = T) +
-  facet_grid(`cycle-duration`~ `veg-cycle-start`, labeller = label_both) +
+  facet_grid(`burn-cost` ~ `cycle-duration`+`veg-cycle-start`, labeller = label_both, scale = "free") +
   scale_color_brewer(palette = "Set2",
                      labels = c("no disturbance cost (0)", "low disturbance cost (100)", "medium disturbance cost (200)", "high disturbance cost (300)")) +
   theme(legend.position = "bottom")

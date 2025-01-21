@@ -1,9 +1,10 @@
 ---
 title: "ForageModv02 sensitivity analysis"
 output:
-  html_document:
+  pdf_document:
     toc: true
-    toc_depth: 3
+    toc_depth: 2
+    number_sections: true
 bibliography: grateful-refs.bib
 csl: pnas.csl
 ---
