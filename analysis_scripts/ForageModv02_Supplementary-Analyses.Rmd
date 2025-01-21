@@ -1,11 +1,13 @@
 ---
 title: "ForageModv02 Supplementary Analysis"
 output:
-  html_document:
+  pdf_document:
     toc: true
     toc_depth: 2
+    number_sections: true
 bibliography: grateful-refs.bib
 csl: pnas.csl
+
 ---
 
 ```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
@@ -21,6 +23,7 @@ library(mgcv)
 library(ggpubr)
 library(ggthemes)
 library(lme4)
+library(bookdown)
 theme_set(theme_bw())
 
 data = readRDS("../results/bb-data.rds")
@@ -59,6 +62,9 @@ be.100 = readRDS("../results/outputs/be_morans.i_cycle.100.rds")
 be.250 = readRDS("../results/outputs/be_morans.i_cycle.250.rds")
 be.data = bind_rows(be.100, be.250)
 
+rm(list = c("veg.100.prod", "veg.100.unprod", "veg.250.prod", "veg.250.unprod", 
+            "be.100", "be.250"))
+
 outputs = c(
   "pop.dens", #pop count/world size
   "burnt", 
@@ -86,13 +92,6 @@ data250 = data %>% dplyr::filter(ticks == 250) %>%
               dplyr::select(exp, morans.i) %>%
               rename(be_morans.i = morans.i), 
             by = c("exp"))
-# 
-# pvalue250 = psych::corr.test(data250 %>% select_at(outputs))$p
-# corrplot::corrplot(cor(data250 %>% select_at(outputs), use = "pairwise.complete.obs"),
-#                    method = "square", addCoef.col = "black", 
-#                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-#                    p.mat = pvalue250, insig="blank", sig.level=0.1, 
-#                    type = "lower", number.cex = 0.5, diag=F)
 
 #plot at 2000
 data2000 = data %>% filter(ticks == 2000) %>% 
@@ -107,13 +106,6 @@ data2000 = data %>% filter(ticks == 2000) %>%
               rename(be_morans.i = morans.i), 
             by = c("exp"))
 
-# pvalue1000 = psych::corr.test(data1000 %>% select_at(outputs))$p
-# corrplot::corrplot(cor(data1000 %>% select_at(outputs), use = "pairwise.complete.obs"),
-#                    method = "square", addCoef.col = "black", 
-#                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-#                    p.mat = pvalue1000, insig="blank", sig.level=0.1, 
-#                    type = "lower", number.cex = 0.5, diag=F)
-
 #plot at 3500
 data3500 = data %>% filter(ticks == 3500) %>% 
   left_join(veg.data %>% 
@@ -126,13 +118,6 @@ data3500 = data %>% filter(ticks == 3500) %>%
               dplyr::select(exp, morans.i) %>%
               rename(be_morans.i = morans.i), 
             by = c("exp"))
-
-# pvalue2000 = psych::corr.test(data2000 %>% select_at(outputs))$p
-# corrplot::corrplot(cor(data2000 %>% select_at(outputs), use = "pairwise.complete.obs"),
-#                    method = "square", addCoef.col = "black", 
-#                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-#                    p.mat = pvalue3500, insig="blank", sig.level=0.1, 
-#                    type = "lower", number.cex = 0.5, diag=F)
 
 start.labs = c("unproductive start", "productive start")
 names(start.labs) = c("\"unproductive\"", "\"productive\"")
@@ -162,8 +147,9 @@ all.exp = unique(data$exp)
 end.tick = unique(data$`tick-limit`)
 fd = data %>% filter(ticks == end.tick)
 finished.exp = unique(fd$exp)
+rm(list = "fd")
 
-finished.data = data %>% filter(exp %in% finished.exp)
+#finished.data = data %>% filter(exp %in% finished.exp)
 unfinished.data = data %>% filter(!(exp %in% finished.exp))
 length(unique(unfinished.data$exp))
 
@@ -210,6 +196,8 @@ for(i in 1:(length(tick.seq2) - 1)){
   tick.levels = c(tick.levels, paste0(tick.seq2[i] + 1, "-", tick.seq2[i+1]))
 }
 rates$tick.range = factor(rates$tick.range, levels = tick.levels)
+
+rm(list = c("tick.seq1", "tick.seq2", "tick.levels"))
 ```
 
 
@@ -294,6 +282,8 @@ corrplot::corrplot(cor(data.mid %>% select_at(outputs), use = "pairwise.complete
                    p.mat = pvalue.mid, insig="blank", sig.level=0.1, 
                    type = "lower", number.cex = 0.5, diag=F)
 
+
+rm(list = c("data.mid", "pvalue.mid"))
 ```
 When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types (that is patches that produce more resources). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
 
@@ -310,6 +300,7 @@ mbp.fit2 = lm(mean.burn.prob ~ ticks:(.), data = data %>% dplyr::select_at(c("me
 mbp.fit3 = lm(mean.burn.prob ~ ticks*(.), data = data %>% dplyr::select_at(c("mean.burn.prob", "ticks", parameters)))
 
 anova(mbp.fit1, mbp.fit2, mbp.fit3)
+rm(list = c("mbp.fit1", "mbp.fit2"))
 
 plot(mbp.fit3, which = 2)
 
@@ -332,6 +323,8 @@ ggarrange(
     theme(legend.title = element_text(size = 6), title = element_text(size = 8), axis.title = element_text(size = 6)), 
   nrow = 1, legend = "bottom"
 )
+
+rm(list = c("mbp.fit3"))
 ```
 
 In general, parameters that add limits to burning behaviors (*burn-cost*, *burnt-neighbor-limit*, *burn-veg-type-threshold*) reduce the rate of increase of burning probabilities through model run. The increase of burning probabilities during model run is also faster when agents move randomly.
@@ -360,6 +353,8 @@ length(unique((bp.rates %>% filter(slope < 0))$exp))/length(unique(bp.rates$exp)
 
 neg.bprate = bp.rates %>% filter(slope < 0) %>% select_at(c(parameters)) %>% distinct()
 table(neg.bprate$`burn-cost`)
+
+rm(list = c("neg.bprate"))
 ```
 
 Approximately 12% of all model runs result in a decreasing rate of change in burning probabilities. These occur when burning costs are 300, greater than the benefit gained from burning.
@@ -376,6 +371,8 @@ rate.fit.df = rate.fit2 %>% broom::tidy() %>%
   filter(p.signif == F)
 
 plot_summs(rate.fit2, scale = T, omit.coefs = c("(Intercept)", rate.fit.df$term))
+
+rm(list = c("rate.fit1", "rate.fit2"))
 ```
 
 The parameters that have the strongest positive impacts on the rate of change of burning behaviors are those that control the limits and costs of burning. Increased burning cost always decreases the rate of change, even when interacting with other variables. Increased burning costs have more negative effects when burning behaviors are less restricted by where foragers can perform burning behaviors, likely because more burning opportunities leads to greater accrued costs. However, when burning behaviors are less restricted without a burning cost, this allows burning probabilities to increase more quickly. 
