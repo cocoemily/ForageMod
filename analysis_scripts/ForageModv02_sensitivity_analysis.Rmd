@@ -122,7 +122,7 @@ essentially unlimited burning behaviors by holding *burn-cost*,
 *burnt-neighbor-limit*, and *burn-veg-type-threshold* constant. We also tested with one type of environmental scenario - starting in a productive environment and cycling the environment every 100 ticks - and one type of movement model - random walking. We tested the effects of the parameters listed below at a low, medium, and high value.
 
 ```{r read-parameter-data, echo=FALSE, message=FALSE, warning=FALSE}
-data = readRDS("../sensitivity-analysis_time/SA-data_parameters.rds")
+data = readRDS("../sensitivity-analysis_parameters/SA-data_parameters.rds")
 
 parameters = c(
   "natural_ignition", 
