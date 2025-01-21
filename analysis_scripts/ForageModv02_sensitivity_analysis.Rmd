@@ -11,7 +11,7 @@ csl: pnas.csl
 
 We assessed two aspects of the model to determine the best set of variables to use. First, we looked at how long to run each model for. Second, we look the effects of parameters that were not under investigation to determine the best values.
 
-## Time
+# Time
 We explored how long to run the model for by testing how long it took the model to reach 100% burning probability for forager agents and how long it took the model to reach population equilibrium. We tested this at different values for the parameters that control burning costs and movement models, while holding all other parameters constant. We limited the model to 6000 ticks.
 
 ```{r load-time-data, echo=FALSE, message=FALSE, warning=FALSE}
@@ -73,7 +73,7 @@ reg.parameters = parameters[c(1, 5, 7, 10, 12:14)]
 lapply(data[, c(reg.parameters)], unique)
 ```
 
-### How long to run the model?
+## How long to run the model?
 ```{r end-ticks, echo=FALSE, message=FALSE, warning=FALSE}
 max.ticks = data %>% group_by_at(c("exp", parameters)) %>%
   filter(mean.burn.prob <= 1) %>%
@@ -115,7 +115,7 @@ When looking at population growth over time, we see that unlimited burning allow
 
 To capture information about the carrying capacity of the environment, we decided to run the model for 3500 ticks. Although this will likely result in populations that evolve burning probabilities greater than 100%, it will allow us to examine what behavioral and environmental factors influence or are influenced by population stasis. 
 
-## Parameters
+# Parameters
 We examined how forager burning probabilities and forager movement was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs
 of non-disturbance forager behaviors. To do so, we allowed for
 essentially unlimited burning behaviors by holding *burn-cost*,
@@ -166,7 +166,7 @@ lapply(data[, c(reg.parameters)], unique)
 
 ```
 
-### What parameters result in population dying off?
+## What parameters result in population dying off?
 ```{r pop-death, fig.height=6, fig.width=10, message=FALSE, warning=FALSE, out.width='100%'}
 all.exp = unique(data$exp)
 
@@ -188,7 +188,10 @@ max.ticks = unfinished.data %>% group_by_at(c("exp", parameters)) %>%
 
 #lapply(max.ticks[,c(reg.parameters)], summary)
 
-plot_summs(glm(max.tick ~ ., data = max.ticks[,c("max.tick", reg.parameters)], family = "poisson"), scale = T)
+plot_summs(glm(max.tick ~ ., 
+               data = max.ticks[,c("max.tick", reg.parameters)], 
+               family = "poisson"), 
+           scale = T)
 
 ```
 
@@ -218,7 +221,7 @@ ggplot(max.ticks) +
 
 The above count graph shows those model runs that do not sustain a population until the end of model run. We can clearly see that limited forager mobility (*forager-moves* = 5) and high movement cost (*movement-cost* = 150), low resource availability (*veg-type-modifier* = 100), and high cost of foraging (*forager-energy-requirement* = 2000) result in population extinction. High reproduction costs and thresholds also can lead to populations dying off before the end of model run. For the final experiments, we chose parameters that allow for populations to frequently be sustained until the end of model run.
 
-### When population is maintained, how do the parameters affect this?
+## When population is maintained, how do the parameters affect this?
 
 ```{r pop_density, echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 finished.data$pop.dens = finished.data$pop.count/(51*51)
@@ -239,7 +242,7 @@ ggplot(finished.data) +
 
 Access to energy is a critical determinant of population survival and population size. High amounts of energy in the environment (*veg_type_modifier* = 300) and low forager/reproduction costs (top left graphs) result in very large populations, which in turn have high computing requirements for the model. For this reason, we intentionally chose some values for the final experiments that keep the population smaller.
 
-### How do the parameters affect burning probabilities?
+## How do the parameters affect burning probabilities?
 
 ```{r burning-probabilities_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -413,7 +416,7 @@ Finally, when comparing across different values for forager energy requirements 
 While altering these parameters do change the rate of increase of
 burning probabilities in the model, all parameter settings result in increasing burning probabilities, meaning that final result of the model will always be the same: 100% burning probability. This means that choosing the parameters for the final experiments could take into consideration other factors beside their effect on burning probability.
 
-### How do the parameters affect forager movement?
+## How do the parameters affect forager movement?
 
 ```{r forager_moves_1, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -484,7 +487,7 @@ ggarrange(
 
 It is clear that the reproduction parameters do not have a large effect on forager movement compared to the parameters that control resource availability (*veg-type-modifier*) and foraging costs (*forager-energy-requirement*). Aside from showing what we already know (that foragers must be able to perform a high enough number of steps per foraging bouts when foraging costs are higher and resource availability is limited), the above results demonstrate that differences caused by the other parameters are minimized with lower forager movement. However, since forager movement needs to be high enough to maintain the population, we chose the middle value for the final experiments.
 
-### How do the parameters affect proportion of vegetation types across the landscape?
+## How do the parameters affect proportion of vegetation types across the landscape?
 ```{r veg_props, echo=FALSE, fig.height=14, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 finished.data$burnt = finished.data$`veg_-1`
 
@@ -544,7 +547,7 @@ Otherwise, the main trend is low levels of vegetation types greater than 1 (whic
 
 Given these results, any of the values used would produce a similar pattern of vegetation types. This supports our use of the middle values tested.
 
-## Conclusion
+# Conclusion
 
 For all of the reasons outlined in the above sensitivity analysis, we use the middle values of each of the parameters tested here for the final experiments. These are:
 
