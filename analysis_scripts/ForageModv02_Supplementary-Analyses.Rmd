@@ -1385,7 +1385,7 @@ anova(mm.fit1.1, mm.fit1.2, mm.fit1.3, mm.fit1.4)
 qqnorm(resid(mm.fit1.3))
 qqline(resid(mm.fit1.3))
 
-rm(list = c("mm.fit1.1", "mm.fit1.2", mm.fit1.3, "mm.fit1.4"))
+rm(list = c("mm.fit1.1", "mm.fit1.2", "mm.fit1.4"))
 
 ggpubr::ggarrange(
   ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "veg-distribution")) %>%
