@@ -436,7 +436,6 @@ rate.fit.df = rate.fit2 %>% broom::tidy() %>%
 plot_summs(rate.fit2, scale = T, 
            omit.coefs = c("(Intercept)", rate.fit.df$term))
 
-rm(list = c("rate.fit1", "rate.fit2"))
 ```
 
 
