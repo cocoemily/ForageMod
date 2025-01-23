@@ -5,6 +5,7 @@ output:
     toc: true
     toc_depth: 2
     number_sections: true
+    dev: png
 bibliography: grateful-refs.bib
 csl: pnas.csl
 
