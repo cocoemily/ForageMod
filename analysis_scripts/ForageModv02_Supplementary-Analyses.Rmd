@@ -1,9 +1,6 @@
 ---
 title: "Supplementary Material 1 for: Low-cost niche construction can create conditions for subdivided populations"
 subtitle: "Supplementary Analyses"
-author: "Emily Coco"
-author: "Benjamin Davies"
-author: "Jessica C. Thompson"
 
 output:
   bookdown::pdf_document2:
