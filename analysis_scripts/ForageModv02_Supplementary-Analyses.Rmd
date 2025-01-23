@@ -1675,7 +1675,7 @@ plot(rw.fit1, which = 2)
 
 The QQ plots show relatively good model performance.
 
-```{r parameter-effects-adj-fi_1, fig.cap="fig.cap="Standardized regression coefficients for effect of model parameters and their interaction with time on average proportion of population foragers interact with across model run split by movement model",  out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
+```{r parameter-effects-adj-fi_1, fig.cap="Standardized regression coefficients for effect of model parameters and their interaction with time on average proportion of population foragers interact with across model run split by movement model",  out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
 
 plot_summs(dw.fit1, rw.fit1, scale = T, 
            model.names = c("directed walks", "random walks"))
