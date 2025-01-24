@@ -35,6 +35,7 @@ library(bookdown)
 theme_set(theme_bw())
 
 knitr::opts_chunk$set(dpi=200,fig.width=6)
+options(tinytex.verbose = TRUE)
 
 data = readRDS("../results/bb-data.rds")
 
