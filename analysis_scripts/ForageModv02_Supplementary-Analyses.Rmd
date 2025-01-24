@@ -185,7 +185,7 @@ data = data %>% filter(exp %in% finished.exp)
 
 # Population during model run
 ## Population density over time
-```{r population_1, echo=FALSE, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Population density over time"}
+```{r population-1, echo=FALSE, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Population density over time"}
 ggplot(data) +
   geom_smooth(aes(y = pop.dens, x = ticks, group = exp, color = `burn-cost`), 
               alpha = 0.01, size = 0.05) +
@@ -200,7 +200,7 @@ ggplot(data) +
   theme(legend.position = "none")
 ```
 
-As we can see in Figure S\@ref(fig:population_1), population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive. However, the overall trend of population increase is evident across all modeled scenarios.
+As we can see in Figure \@ref(fig:population-1), population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive. However, the overall trend of population increase is evident across all modeled scenarios.
 
 We looked at linear rates of changes within each climate period of the model to get a more detailed understanding of population change during model run. 
 
@@ -236,7 +236,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   theme(legend.position = "bottom", axis.text.x = element_text(angle = 45))
 
 ```
-We find that with short climate cycles, unproductive periods see essentially no change in population, with slopes being essentially zero (Figure S\@ref(fig:population-change-over-time_2)). With longer climatic cycles, there is slight positive population change during unproductive periods at the beginning of model run. 
+We find that with short climate cycles, unproductive periods see essentially no change in population, with slopes being essentially zero (Figure \@ref(fig:population-change-over-time_2)). With longer climatic cycles, there is slight positive population change during unproductive periods at the beginning of model run. 
 
 Conversely, there is pretty consistent population growth during productive periods of the model until populations reach an equilibrium around 3000 ticks. The results show that population grows more quickly during productive periods at the beginning of model run, with rates of change decreasing toward zero by the end of the model, when population reaches equilibrium. This demonstrates the effect of a carrying capacity in the model.
 
@@ -262,7 +262,7 @@ ggplot(rates %>%
         strip.text = element_text(size = 7))
 
 ```
-We can see that, with short environmental intervals, change in population density over a climatic interval is highly correlated with the proportion of patches that cannot be foraged, indicating that population is indeed controlled by access to energy (Figure S\@ref(fig:pop-dens-forageable_1)).
+We can see that, with short environmental intervals, change in population density over a climatic interval is highly correlated with the proportion of patches that cannot be foraged, indicating that population is indeed controlled by access to energy (Figure \@ref(fig:pop-dens-forageable_1)).
 
 Interestingly, we see opposite correlations for productive vs unproductive climatic windows. During productive periods, there will be population growth (positive slopes) with more forageable land (low proportions of unforageable patches). Conversely, during unproductive periods, there is more frequently population decline and this is strongly associated with lower proportions of unforageable land. This perhaps simply captures the fact that population decline allows for more land to be left unforaged, so smaller proportions of unforageable land, during a climatic interval. When more of the landscape is unforageable (higher proportions), we see a pattern of population stagnation in unproductive climatic intervals because there is not enough energy to allow for growth. 
 
@@ -285,7 +285,7 @@ ggplot(rates %>%
         strip.text = element_text(size = 7))
 
 ```
-When climatic periods are longer (Figure S\@ref(fig:pop-dens-forageable_2)), the significant and strong relationship between change in population density and proportions of unforageable patches is reduced or disappears in productive periods until the end of model run. This suggests that with longer climatic cycling, a different aspect of the environment is controlling population density initially.
+When climatic periods are longer (Figure \@ref(fig:pop-dens-forageable_2)), the significant and strong relationship between change in population density and proportions of unforageable patches is reduced or disappears in productive periods until the end of model run. This suggests that with longer climatic cycling, a different aspect of the environment is controlling population density initially.
 
 ```{r pop-density-correlations_1, fig.cap="Correlation between population density, change in population density, and counts of high value resource types (veg_7, veg_6, veg_5) at the middle of model run during a productive climatic interval", echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 outputs = c(
@@ -323,7 +323,7 @@ corrplot::corrplot(cor(data.mid %>% select_at(outputs),
 
 rm(list = c("data.mid", "pvalue.mid"))
 ```
-When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types, that is patches that have a high resource value (Figure S\@ref(fig:pop-density-correlations_1). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
+When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types, that is patches that have a high resource value (Figure \@ref(fig:pop-density-correlations_1). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
 
 
 # Forager probability of burning patches
@@ -347,7 +347,7 @@ plot(mbp.fit3, which = 2)
 plot_summs(mbp.fit3, scale = T)
 ```
 
-Every parameter significantly affects burning probability on average across model run (independent variables) as well as how burning probability changes during model run (interaction variables). The scaled regression variables (Figure S\@ref(fig:burning-probability-regression_2)) shown above also demonstrate that *burn-cost* has the strongest effect on the evolution of burning probability across model run.
+Every parameter significantly affects burning probability on average across model run (independent variables) as well as how burning probability changes during model run (interaction variables). The scaled regression variables (Figure \@ref(fig:burning-probability-regression_2)) shown above also demonstrate that *burn-cost* has the strongest effect on the evolution of burning probability across model run.
 
 ```{r burning-probability-regression_3, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=6, fig.width=4, fig.cap="Predicted values of average burning probability across model run by burn cost and burn restriction parameters"}
 
@@ -375,7 +375,7 @@ ggarrange(
 rm(list = c("mbp.fit3"))
 ```
 
-In general, parameters that add limits to burning behaviors (*burn-cost*, *burnt-neighbor-limit*, *burn-veg-type-threshold*) reduce the rate of increase of burning probabilities through model run (Figure S\@ref(fig:burning-probability-regression_3)). The increase of burning probabilities during model run is also faster when agents move randomly.
+In general, parameters that add limits to burning behaviors (*burn-cost*, *burnt-neighbor-limit*, *burn-veg-type-threshold*) reduce the rate of increase of burning probabilities through model run (Figure \@ref(fig:burning-probability-regression_3)). The increase of burning probabilities during model run is also faster when agents move randomly.
 
 This model behavior is confirmed by looking at the effects of model parameters on slope of the linear relationship between ticks and burning probability.
 
@@ -450,7 +450,7 @@ plot_summs(rate.fit2, scale = T,
 rm(list = c("rate.fit1", "rate.fit2", "rate.fit.df"))
 ```
 
-The parameters that have the strongest positive impacts on the rate of change of burning behaviors are those that control the limits and costs of burning (Figure S\@ref(fig:rate-of-bp-increase_5)). Increased burning cost always decreases the rate of change, even when interacting with other variables. Increased burning costs have more negative effects when burning behaviors are less restricted by where foragers can perform burning behaviors, likely because more burning opportunities leads to greater accrued costs. However, when burning behaviors are less restricted without a burning cost, this allows burning probabilities to increase more quickly. 
+The parameters that have the strongest positive impacts on the rate of change of burning behaviors are those that control the limits and costs of burning (Figure \@ref(fig:rate-of-bp-increase_5)). Increased burning cost always decreases the rate of change, even when interacting with other variables. Increased burning costs have more negative effects when burning behaviors are less restricted by where foragers can perform burning behaviors, likely because more burning opportunities leads to greater accrued costs. However, when burning behaviors are less restricted without a burning cost, this allows burning probabilities to increase more quickly. 
 
 ## Effect of self benefit on burning behaviors
 Positive selection for burning behaviors across most of the model runs occurs because there is a consistent low benefit to self of these behaviors. Here, we measure benefit to self as the number of times an agent forages from a patch where they were the last agent to burn it as a proportion of the average total number of foraging events at each tick. 
@@ -479,7 +479,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 ```
 
-Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased burning behaviors (Figure S\@ref(fig:bp-and-other-outputs_1)).  
+Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased burning behaviors (Figure \@ref(fig:bp-and-other-outputs_1)).  
 ### Effect of model parameters on self benefit
 ```{r bp-and-other-outputs_2, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%', fig.cap="Average proportion of foraging events where benefit of burning is recouped by agent that last performed the burning behavior at a given patch at the start of each climatic interval during model run"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
@@ -492,7 +492,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
 
 ```
 
-When we break this down by each climatic interval, we see higher proportions of self benefit during unproductive periods (Figure S\@ref(fig:bp-and-other-outputs_2)), in part due to reduced population density in these climatic intervals.
+When we break this down by each climatic interval, we see higher proportions of self benefit during unproductive periods (Figure \@ref(fig:bp-and-other-outputs_2)), in part due to reduced population density in these climatic intervals.
 
 ```{r bp-and-other-outputs_3, fig.cap="Standardized regression coefficients for linear mixed models on benefit to self controlling for variation within climatic intervals", echo=TRUE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%'}
 fit1 = lmer(end.bself ~ start.steps 
@@ -518,7 +518,7 @@ plot_summs(fit1, fit2, scale = T,
 
 ```
 
-This self benefit is significantly affected by forager mobility, population density, and proportion of unforageable land, as these will impact the number of patches agents have access to for foraging (Figure S\@ref(fig:bp-and-other-outputs_3).  
+This self benefit is significantly affected by forager mobility, population density, and proportion of unforageable land, as these will impact the number of patches agents have access to for foraging (Figure \@ref(fig:bp-and-other-outputs_3).  
 
 ### Relationship between self benefit and burning behaviors over time
 ```{r bp-and-other-outputs_4, fig.cap="Relationship between proportion of self benefit and burning probability at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
@@ -539,7 +539,7 @@ ggplot(rates %>%
 
 ```
 
-When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs_4). We can also see that, within each climatic interval, low burning probabilities cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
+When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure \@ref(fig:bp-and-other-outputs_4). We can also see that, within each climatic interval, low burning probabilities cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
 
 ```{r bp-and-other-outputs_5, fig.cap="Relationship between proportion of other benefit (inverse of self benefit) and burning probability at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% 
@@ -560,7 +560,7 @@ ggplot(rates %>%
 
 ```
 
-By the end of model run, burning probabilities are more highly positively correlated with benefit to others (Figure S\@ref(fig:bp-and-other-outputs_5)), meaning that the highest probabilities of burning behaviors occur when agents besides the one that burned a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of burning allows for further positive selection of this behavior. 
+By the end of model run, burning probabilities are more highly positively correlated with benefit to others (Figure \@ref(fig:bp-and-other-outputs_5)), meaning that the highest probabilities of burning behaviors occur when agents besides the one that burned a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of burning allows for further positive selection of this behavior. 
 
 ## Positive evolution of burning behaviors with high burning costs
 One interesting model result is the evolution of high probabilities of burning under conditions where this behavior has a high cost - that is a cost that outweighs the energetic benefits gained. 
@@ -583,7 +583,7 @@ bprate.300 = bp.rates %>% filter(`burn-cost` == 300)
 nrow(bprate.300 %>% filter(slope < 0)) / nrow(bprate.300)
 ```
 
-Around 49% of these high cost scenarios result in decreasing probabilities of burning behaviors (Figure S\@ref(fig:high-cost-burning_1)). 
+Around 49% of these high cost scenarios result in decreasing probabilities of burning behaviors (Figure \@ref(fig:high-cost-burning_1)). 
 
 ```{r high-cost-burning_3, fig.cap="Burning probability at the end of the model run during high burn cost model scenarios", echo=FALSE, fig.height=3, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
 #hist((high.burn %>% filter(ticks == 3500))$mean.burn.prob)
@@ -595,10 +595,10 @@ ggplot(high.burn %>% filter(ticks == 3500)) +
 rm(list = c("high.burn", "bprate.300"))
 ```
 
-The final burning probability of the model during these high burn cost scenarios appears to be primarily related to the movement model that agents employ (Figure S\@ref(fig:high-cost-burning_3)). Under random walks, agents are more likely to develop increased burning probabilities. Under directed walks, the high cost of burning keeps burning probabilities low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through burning behaviors. 
+The final burning probability of the model during these high burn cost scenarios appears to be primarily related to the movement model that agents employ (Figure \@ref(fig:high-cost-burning_3)). Under random walks, agents are more likely to develop increased burning probabilities. Under directed walks, the high cost of burning keeps burning probabilities low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through burning behaviors. 
 
 # Burnt landscape proportions
-The proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents (Figure S\@ref(fig:burnt-landscape-proportions_plots)).
+The proportion of burnt landscape is significantly highly correlated with population density and the average burning probability of agents (Figure \@ref(fig:burnt-landscape-proportions_plots)).
 
 ```{r burnt-landscape-proportions_plots, fig.cap="Relationship between proportion of landscape that is burnt and population density (A) and burning probabilities (B)", echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 data$burnt = data$`veg_-1`
@@ -721,7 +721,7 @@ ggarrange(
 
 ```
 
-The predicted proportions of burnt landscape from the best fit Beta regression model show that increasing limits on location of burning or increasing cost to burning significantly affect the amount of burnt landscape (Figure S\@ref(fig:veg_0-regressions_3)). This matches the results above for the effect of these parameters on mean burning probability. This is also consistent with the high positive correlation between proportion of burnt landscape and burning probability through time. 
+The predicted proportions of burnt landscape from the best fit Beta regression model show that increasing limits on location of burning or increasing cost to burning significantly affect the amount of burnt landscape (Figure \@ref(fig:veg_0-regressions_3)). This matches the results above for the effect of these parameters on mean burning probability. This is also consistent with the high positive correlation between proportion of burnt landscape and burning probability through time. 
 
 ```{r veg_0-regressions_clean, echo=FALSE, fig.height=8, message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -849,7 +849,7 @@ plot_summs(veg.100.prod.fit1,
 
 ```
 
-Looking at the standardized regression coefficients of the linear regressions, we can see that high/medium cost of burning behaviors and a directed walk movement model have the greatest impact on clustering of vegetation types (Figure S\@ref(fig:morans-i-regression_1-5)). Interestingly, the underlying distribution of maximum potential vegetation types for patches has essentially no impact on spatial clustering of vegetation types relative to the other parameters. 
+Looking at the standardized regression coefficients of the linear regressions, we can see that high/medium cost of burning behaviors and a directed walk movement model have the greatest impact on clustering of vegetation types (Figure \@ref(fig:morans-i-regression_1-5)). Interestingly, the underlying distribution of maximum potential vegetation types for patches has essentially no impact on spatial clustering of vegetation types relative to the other parameters. 
 
 ```{r morans-i-regression_2, fig.cap="Unstandarized regression coefficients of model parameters and their interaction with time on global spatial autocorrelation of vegetation types. Results shown for four different model scenarios based on climatic interval length and starting interval type", echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
 plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unprod.fit1, model.names = c(
@@ -873,7 +873,7 @@ plot_summs(veg.100.prod.fit1, veg.100.unprod.fit1,veg.250.prod.fit1, veg.250.unp
 
 ```
 
-We we compare unstandardized parameter effects for the most impactful parameters, we can see that most of the parameters have similar effects regardless of the cycle duration or starting interval type (Figure S\@ref(fig:morans-i-regression_2)). The parameter with significant differences in regression coefficients between the models is: *movement-model*. We can see that when model run starts in a productive state and the climatic cycles are longer, Directed Walks allow for, on average, less spatial clustering of vegetation types.
+We we compare unstandardized parameter effects for the most impactful parameters, we can see that most of the parameters have similar effects regardless of the cycle duration or starting interval type (Figure \@ref(fig:morans-i-regression_2)). The parameter with significant differences in regression coefficients between the models is: *movement-model*. We can see that when model run starts in a productive state and the climatic cycles are longer, Directed Walks allow for, on average, less spatial clustering of vegetation types.
 
 ```{r morans-i-regression_3, fig.cap="Predicted values of spatial autocorrelation of vegetation types over model run by burning cost (grey facets) and movement models", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
 ggarrange(
@@ -909,7 +909,7 @@ ggarrange(
 
 ```
 
-When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs (Figure S\@ref(fig:morans-i-regression_3). When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
+When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs (Figure \@ref(fig:morans-i-regression_3). When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
 
 ```{r morans-i-by-burn-limits, fig.cap="Trends in spatial autocorrelation of vegetation types across model run by parameters for burning costs, movement models and restrictions of burning behaviors", echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
 plot.data = veg.data %>% 
@@ -952,7 +952,7 @@ plot.data$burn_cost = as.factor(plot.data$burn_cost)
  rm(list = "plot.data")
 ```
 
-There are also differing trends based on spatial limits and vegetation limits on burning behaviors. When patches can only be burnt with 4 or less burnt neighbors, spatial clustering of vegetation types is much more decreased (Figure S\@ref(fig:morans-i-by-burn-limits)), particularly for lower disturbance costs that allow for more burning. 
+There are also differing trends based on spatial limits and vegetation limits on burning behaviors. When patches can only be burnt with 4 or less burnt neighbors, spatial clustering of vegetation types is much more decreased (Figure \@ref(fig:morans-i-by-burn-limits)), particularly for lower disturbance costs that allow for more burning. 
 
 # Vegetation diversity
 
@@ -968,7 +968,7 @@ ggplot(veg.data) +
 
 ```
 
-The distribution of this metric is bimodal across model runs. This bimodality is caused by the different movement models used: directed walks result in less diversity than random walks (Figures S\@ref(fig:veg-diversity-distribution)).
+The distribution of this metric is bimodal across model runs. This bimodality is caused by the different movement models used: directed walks result in less diversity than random walks (Figures \@ref(fig:veg-diversity-distribution)).
 
 ## Vegetation diversity under random walks
 We fit a GAM to vegetation type diversity for model runs with random walks because it is a better fit than a linear model. We use GAM to investigate how the effects of the parameters change through time.
@@ -1031,7 +1031,7 @@ abline(h=0, lty = 2)
 
 ```
 
-The starting environmental conditions do not appear to have significantly differing effects on the evolution of vegetation diversity over model run (Figure S\@ref(fig:veg-diversity-regression_1_3)).
+The starting environmental conditions do not appear to have significantly differing effects on the evolution of vegetation diversity over model run (Figure \@ref(fig:veg-diversity-regression_1_3)).
 
 ```{r veg-diversity-regression_1_4, fig.cap="Effect through time of underlying distribution of vegetation types on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -1042,7 +1042,7 @@ abline(h=0, lty = 2)
 
 ```
 
-The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity - both distributions have slightly increasingly positive effects over the course of model run (Figure S\@ref(fig:veg-diversity-regression_1_4)).
+The underlying distribution of resource potential, or maximum vegetation type value, also do not have different effects on vegetation diversity - both distributions have slightly increasingly positive effects over the course of model run (Figure \@ref(fig:veg-diversity-regression_1_4)).
 
 ```{r veg-diversity-regression_1_5, fig.cap="Effect through time of burn cost on vegetation diversity", echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
@@ -1056,7 +1056,7 @@ plot(rw.gam2, select=8, shade=T)
 abline(h=0, lty = 2)
 ```
 
-Having a cost associated with burning introduces a larger effect on vegetation diversity than no or low costs of burning (Figure S\@ref(fig:veg-diversity-regression_1_5)). This is likely related to the fact that a burning cost reduces the amount of burning over the course of model run, allowing for a landscape that is not dominated by burnt patches.
+Having a cost associated with burning introduces a larger effect on vegetation diversity than no or low costs of burning (Figure \@ref(fig:veg-diversity-regression_1_5)). This is likely related to the fact that a burning cost reduces the amount of burning over the course of model run, allowing for a landscape that is not dominated by burnt patches.
 
 ```{r veg-diversity-regression_1_6, fig.cap="Effect through time of limits on vegetation types that can be burned on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -1066,7 +1066,7 @@ plot(rw.gam2, select=10, shade=T)
 abline(h=0, lty = 2)
 ```
 
-Similarly, stricter limits on what types of vegetation can be burned also allows for more vegetation diversity by the end of model run (Figure S\@ref(fig:veg-diversity-regression_1_6)).
+Similarly, stricter limits on what types of vegetation can be burned also allows for more vegetation diversity by the end of model run (Figure \@ref(fig:veg-diversity-regression_1_6)).
 
 ```{r veg-diversity-regression_1_7, fig.cap="Effect through time of limits on burning with adjacent burnt neighbors on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
@@ -1078,7 +1078,7 @@ plot(rw.gam2, select=13, shade=T)
 abline(h=0, lty = 2)
 ```
 
-This same pattern is seen even more distinctly with the stricter burnt neighbor limits. When agents can burn patches with 8 burnt neighbors, vegetation diversity declines much more by the end of model run as the number of burnt patches increases (Figure S\@ref(fig:veg-diversity-regression_1_7)).
+This same pattern is seen even more distinctly with the stricter burnt neighbor limits. When agents can burn patches with 8 burnt neighbors, vegetation diversity declines much more by the end of model run as the number of burnt patches increases (Figure \@ref(fig:veg-diversity-regression_1_7)).
 
 ```{r veg-diversity-regression_1_8, fig.cap="Effect through time of climatic cycle duration on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -1088,7 +1088,7 @@ plot(rw.gam2, select=15, shade=T)
 abline(h=0, lty = 2)
 ```
 
-Both values of cycle duration have similar effects (Figure S\@ref(fig:veg-diversity-regression_1_8)).
+Both values of cycle duration have similar effects (Figure \@ref(fig:veg-diversity-regression_1_8)).
 
 ## Vegetation diversity under directed walks
 We fit a second GAM to vegetation type diversity for model runs with directed walks.
@@ -1147,7 +1147,7 @@ abline(h=0, lty = 2)
 
 ```
 
-We again see similar effects of both starting vegetation conditions on vegetation diversity across model run (Figure S\@ref(fig:veg-diversity-regression_2_3)).
+We again see similar effects of both starting vegetation conditions on vegetation diversity across model run (Figure \@ref(fig:veg-diversity-regression_2_3)).
 
 ```{r veg-diversity-regression_2_4, fig.cap="Effect through time of underlying distribution of vegetation types on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -1158,7 +1158,7 @@ abline(h=0, lty = 2)
 
 ```
 
-The underlying distribution of resource potential, or maximum vegetation type value, have essentially no effect on vegetation diversity with directed walks (Figure S\@ref(fig:veg-diversity-regression_2_4)). This means that the human behavior is more important for structuring the environment with this movement model.  
+The underlying distribution of resource potential, or maximum vegetation type value, have essentially no effect on vegetation diversity with directed walks (Figure \@ref(fig:veg-diversity-regression_2_4)). This means that the human behavior is more important for structuring the environment with this movement model.  
 
 ```{r veg-diversity-regression_2_5, fig.cap="Effect through time of burn cost on vegetation diversity", echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
@@ -1173,7 +1173,7 @@ abline(h=0, lty = 2)
 
 ```
 
-With directed walks, we can see that low and medium costs for burning behaviors have similar effects (Figure S\@ref(fig:veg-diversity-regression_2_5)): at first negative, since burning is required to introduce new vegetation types, but then becoming positive as more burning is allowed to occur. We see a similar initial pattern with no burning costs; however, by the end of model run, the huge amount of burning leads to too many burnt patches that decreases the overall diversity of vegetation on the landscape. Higher burning costs has the similar effect patterns, but a much more limited effect size. This is likely because high burning costs severely limits burning behaviors and therefore does not have a substantial impact on what vegetation types are available on the landscape. 
+With directed walks, we can see that low and medium costs for burning behaviors have similar effects (Figure \@ref(fig:veg-diversity-regression_2_5)): at first negative, since burning is required to introduce new vegetation types, but then becoming positive as more burning is allowed to occur. We see a similar initial pattern with no burning costs; however, by the end of model run, the huge amount of burning leads to too many burnt patches that decreases the overall diversity of vegetation on the landscape. Higher burning costs has the similar effect patterns, but a much more limited effect size. This is likely because high burning costs severely limits burning behaviors and therefore does not have a substantial impact on what vegetation types are available on the landscape. 
 
 ```{r veg-diversity-regression_2_6, fig.cap="Effect through time of limits on vegetation types that can be burned on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -1193,7 +1193,7 @@ plot(dw.gam2, select=13, shade=T)
 abline(h=0, lty = 2)
 ```
 
-The limits on burning behaviors have more exaggerated effects with directed walks (Figures S\@ref(fig:veg-diversity-regression_2_6) & S\@ref(fig:veg-diversity-regression_2_7)). We can again see clearly that more burning (with relaxed burning restrictions) reduces overall vegetation diversity by the end of model run.
+The limits on burning behaviors have more exaggerated effects with directed walks (Figures \@ref(fig:veg-diversity-regression_2_6) & \@ref(fig:veg-diversity-regression_2_7)). We can again see clearly that more burning (with relaxed burning restrictions) reduces overall vegetation diversity by the end of model run.
 
 ```{r veg-diversity-regression_2_8, fig.cap="Effect through time of climatic cycle duration on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
@@ -1203,7 +1203,7 @@ plot(dw.gam2, select=15, shade=T)
 abline(h=0, lty = 2)
 ```
 
-Cycle duration appears to have no effect on vegetation diversity with directed walks (Figure S\@ref(fig:veg-diversity-regression_2_8)).
+Cycle duration appears to have no effect on vegetation diversity with directed walks (Figure \@ref(fig:veg-diversity-regression_2_8)).
 
 ```{r veg-diversity-regression_3, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 rm(list = c("rw.fit1", "rw.gam1", "rw.gam2", 
@@ -1286,7 +1286,7 @@ plot_summs(fit1, fit2, scale = T,
            model.names = c("cycle = 100 ticks", "cycle = 250 ticks"))
 ```
 
-When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events (Figure S\@ref(fig:burning-events_2_1)). These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
+When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events (Figure \@ref(fig:burning-events_2_1)). These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
 
 ```{r burning-events_2_2_1, fig.cap="Trends of spatial autocorrelation of burning events across model run for model scenarios with random walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
 bn.labs = c("can burn with 1 burnt neighbor", 
@@ -1338,11 +1338,11 @@ plot(p2.2)
 
 ```
 
-Plotting the trends of burning event spatial autocorrelation through time by these significant parameters allows us to better visualize these patterns. Here, we split the data by movement model with trend lines for random walks (Figure S\@ref(fig:burning-events_2_2_1)) and trends for directed walks (Figure S\@ref(fig:burning-events_2_2_2)). 
+Plotting the trends of burning event spatial autocorrelation through time by these significant parameters allows us to better visualize these patterns. Here, we split the data by movement model with trend lines for random walks (Figure \@ref(fig:burning-events_2_2_1)) and trends for directed walks (Figure \@ref(fig:burning-events_2_2_2)). 
 
-First, it is clear that, under random walks, underlying distribution of vegetation potential has a significant impact on clustering or disperson of burning events (Figure S\@ref(fig:burning-events_2_2_1)). This is especially true when burning is limited to specific patches (can burn with fewer burnt neighbors and can only burn certain vegetation types) under low burning costs. As burning costs increase, and burning becomes more infrequent, bunring events are more likely to cluster despite limits on which patches can be burnt. 
+First, it is clear that, under random walks, underlying distribution of vegetation potential has a significant impact on clustering or disperson of burning events (Figure \@ref(fig:burning-events_2_2_1)). This is especially true when burning is limited to specific patches (can burn with fewer burnt neighbors and can only burn certain vegetation types) under low burning costs. As burning costs increase, and burning becomes more infrequent, bunring events are more likely to cluster despite limits on which patches can be burnt. 
 
-With directed walks, the effect of underlying vegetation potential is more varied (Figure S\@ref(fig:burning-events_2_2_2)). For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
+With directed walks, the effect of underlying vegetation potential is more varied (Figure \@ref(fig:burning-events_2_2_2)). For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
 
 ## Relationship between location of burning events and population density
 ```{r be-dispersion-and-pop, fig.cap = "Relationship between population density and spatial autocorrelation of burning events at the end of model run. Linear relationships shown with blue lines for clustered burning events (positive Moran's I values) and dispersed burning events (negative Moran's I values)", echo=FALSE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
@@ -1362,7 +1362,7 @@ ggplot(be.data %>% filter(signif == T)) +
               aes(y = morans.i, x = pop.dens), method = "lm")
 
 ```
-In Figure S\@ref(fig:be-dispersion-and-pop), we can see that increased population density is clearly associated with increased dispersion of burning events at the end of model run. The correlation between clustering and population density skews positive, but the graph shows that this is less consistent at the highest population densities. 
+In Figure \@ref(fig:be-dispersion-and-pop), we can see that increased population density is clearly associated with increased dispersion of burning events at the end of model run. The correlation between clustering and population density skews positive, but the graph shows that this is less consistent at the highest population densities. 
 
 # Forager mobility
 
@@ -1381,7 +1381,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 ```
 
-We can see in Figure S\@ref(fig:fm-viz) that there is a decrease in movement during productive periods and an increase in movement during unproductive periods of the model. This is more smoothed when cycle duration is shorter. 
+We can see in Figure \@ref(fig:fm-viz) that there is a decrease in movement during productive periods and an increase in movement during unproductive periods of the model. This is more smoothed when cycle duration is shorter. 
 
 ```{r fm-viz_2, fig.cap="Slope of linear relationship between steps per foraging bout and time for each climatic interval across model run", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=5}
 ggplot(rates %>% 
@@ -1397,7 +1397,7 @@ ggplot(rates %>%
         axis.text.x = element_text(angle = 45, size = 6))
 
 ```
-When we break this down by climatic interval, we can see that most of the change to mobility occurs during productive intervals (Figure S\@ref(fig:fm-viz_2)). Interestingly, across these productive intervals, it primarily at the beginning of model run when mobility decreases across the interval. By the end of model run, there is actually a slight increase in mobility across the climatic interval.
+When we break this down by climatic interval, we can see that most of the change to mobility occurs during productive intervals (Figure \@ref(fig:fm-viz_2)). Interestingly, across these productive intervals, it primarily at the beginning of model run when mobility decreases across the interval. By the end of model run, there is actually a slight increase in mobility across the climatic interval.
 
 ```{r fm-viz_3, fig.cap="Average number of steps per foraging bout at the beginning of each climatic interval across model run", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% 
@@ -1413,7 +1413,7 @@ ggplot(rates %>%
 
 ```
 
-The overall decrease in mobility across model run is primarily caused by steep dips in mobility at the beginning of each productive interval (Figure S\@ref(fig:fm-viz_3)). 
+The overall decrease in mobility across model run is primarily caused by steep dips in mobility at the beginning of each productive interval (Figure \@ref(fig:fm-viz_3)). 
 
 ## Effect of model parameters on forager mobility
 
@@ -1515,7 +1515,7 @@ ggpubr::ggarrange(
 )
 ```
 
-The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility (Figure S\@ref(fig:fm-mm-regs_3). Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted amount of mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the differential impact that low cost niche construction strategies can have on forager behaviors.
+The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility (Figure \@ref(fig:fm-mm-regs_3). Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted amount of mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the differential impact that low cost niche construction strategies can have on forager behaviors.
 
 ## Correlations between mobility and distributions of vegetation types
 
@@ -1580,7 +1580,7 @@ corrplot::corrplot(cor(data3500 %>%
 
 ```
 
-We can see this pattern exemplified when looking at correlations between forager movement (*mean.fm*) and the highest vegetation types (*veg_7*, *veg_6*, *veg_5*), that is those that provide the most resources. We generally see negative correlations with the high vegetation types (Figure S\@ref(fig:mobility-veg-correlations)), indicating that low forager mobility is significantly correlated with higher proportions of these vegetation types. 
+We can see this pattern exemplified when looking at correlations between forager movement (*mean.fm*) and the highest vegetation types (*veg_7*, *veg_6*, *veg_5*), that is those that provide the most resources. We generally see negative correlations with the high vegetation types (Figure \@ref(fig:mobility-veg-correlations)), indicating that low forager mobility is significantly correlated with higher proportions of these vegetation types. 
 
 We can also see that low forager mobility is highly correlated with dispersion of vegetation types, as is evidenced by the positive correlation between *mean.fm* and *veg_morans.i*. This indicates that local heterogeneity of the landscape affects how far the foragers need to move. 
 
@@ -1609,7 +1609,7 @@ ggplot(rates %>%
 
 ```
 
-Because there is relatively little change in forager steps within climatic intervals, we looked at the relationship between the starting number of steps during a climatic interval and the resulting population density at the end of that interval. Throughout model run, these outputs are highly negatively correlated (Figure S\@ref(fig:mobility-pop-correlations_1)). This suggests that lower amounts of mobility lead to higher population densities because each foraging group requires less room to meet their foraging needs.
+Because there is relatively little change in forager steps within climatic intervals, we looked at the relationship between the starting number of steps during a climatic interval and the resulting population density at the end of that interval. Throughout model run, these outputs are highly negatively correlated (Figure \@ref(fig:mobility-pop-correlations_1)). This suggests that lower amounts of mobility lead to higher population densities because each foraging group requires less room to meet their foraging needs.
 
 # Forager interactions
 
@@ -1627,7 +1627,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 ```
 
-When we visualize these differences (Figure S\@ref(fig:adj-fi-viz)), we can see that for random walks, there is a steep drop off in forager interactions within approximately the first 500 ticks of the model. This is likely because populations are relatively small at the beginning of model run, so each interaction will necessarily be a greater proportion. For the subsequent analyses, we look at the patterns occurring after the first 500 ticks to understand how the parameters affect interactions after a larger population has been established. 
+When we visualize these differences (Figure \@ref(fig:adj-fi-viz)), we can see that for random walks, there is a steep drop off in forager interactions within approximately the first 500 ticks of the model. This is likely because populations are relatively small at the beginning of model run, so each interaction will necessarily be a greater proportion. For the subsequent analyses, we look at the patterns occurring after the first 500 ticks to understand how the parameters affect interactions after a larger population has been established. 
 
 ```{r adj-fi-reg_1, fig.cap="Standardized regression coefficients for effect of model parameters and their interaction with time on average proportion of population foragers interact with across model run", echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5}
 fi.data = data %>% filter(ticks > 500)
@@ -1651,7 +1651,7 @@ plot_summs(fi.fit1, scale = T)
 
 ```
 
-By comparing standardized regression coefficients (Figure S\@ref(fig:adj-fi-reg_1)), we can see the greatest effect on forager interactions is movement models and burn cost. Because the shape of the trend lines is different enough between random walks and directed walks, we split the data by movement model to further investigate parameter effects.
+By comparing standardized regression coefficients (Figure \@ref(fig:adj-fi-reg_1)), we can see the greatest effect on forager interactions is movement models and burn cost. Because the shape of the trend lines is different enough between random walks and directed walks, we split the data by movement model to further investigate parameter effects.
 
 ```{r adj-fi-reg_2, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=3}
 rw.data = fi.data %>% filter(`movement-model` == "\"Random Walk\"") 
@@ -1700,7 +1700,7 @@ ggarrange(
 
 ```
 
-These two regressions demonstrate that restrictions/costs to burning behaviors impact forager interactions, but that these effects are much more prominent and diverging for directed walks (Figures S\@ref(fig:parameter-effects-adj-fi_1) & S\@ref(fig:parameter-effects-adj-fi_2)). This again indicates that the amount of burning has a significant impact on the evolution of human behaviors in the model. 
+These two regressions demonstrate that restrictions/costs to burning behaviors impact forager interactions, but that these effects are much more prominent and diverging for directed walks (Figures \@ref(fig:parameter-effects-adj-fi_1) & \@ref(fig:parameter-effects-adj-fi_2)). This again indicates that the amount of burning has a significant impact on the evolution of human behaviors in the model. 
 
 ## Change in forager interactions over time
 ```{r interaction-change-over-time, fig.cap="Change in proportion of the population foragers interact with across each climatic interval", out.width="100%", fig.height=6, echo=FALSE, message=FALSE, warning=FALSE}
@@ -1717,7 +1717,7 @@ ggplot(rates %>%
         legend.position = 'bottom')
 
 ```
-As is expected, when we look at how forager interactions changes over across climate intervals, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks and when burning costs are lower (Figure S\@ref(fig:interaction-change-over-time). 
+As is expected, when we look at how forager interactions changes over across climate intervals, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks and when burning costs are lower (Figure \@ref(fig:interaction-change-over-time). 
 
 ## Relationship between forager interactions and: forager mobility and population density
 Therefore, we investigate how interaction rates over time are related to mobility and population density only with directed walks. 
@@ -1741,7 +1741,7 @@ ggplot(rates %>%
         strip.text = element_text(size = 7))
 
 ```
-Interactions are highly positively correlated with mobility throughout model run (Figure S\@ref(fig:interactions-mobility)), meaning that more mobility allows for more interactions with directed walks. 
+Interactions are highly positively correlated with mobility throughout model run (Figure \@ref(fig:interactions-mobility)), meaning that more mobility allows for more interactions with directed walks. 
 
 ```{r interactions-mobility_2, fig.cap="Relationship between proportion of the population foragers interact with and number of steps per foraging bout for a climatic period at the middle of model run. Relationship visualized by model scenarios with different burning costs", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
@@ -1761,7 +1761,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
 
 ```
 
-The strength of these correlations is impacted by burning costs. For example, if we take a productive climate interval in the middle of model run (Figure S\@ref(fig:interactions-mobility_2)), we see significant and stronger correlations only when burning costs are low, so when burning is more frequent. 
+The strength of these correlations is impacted by burning costs. For example, if we take a productive climate interval in the middle of model run (Figure \@ref(fig:interactions-mobility_2)), we see significant and stronger correlations only when burning costs are low, so when burning is more frequent. 
 
 ```{r interactions-population, fig.cap="Relationship between proportion of the population foragers interact with and population density for a climatic period at the middle of model run. Relationship visualized by model scenarios with different burning costs", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
@@ -1779,7 +1779,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
   scale_color_brewer(palette = "Set2") +
   theme(axis.text = element_text(size = 6), legend.position = "bottom")
 ```
-The same is true for negative correlations between interactions and population density, although here the strongest relationship is when there is no burning cost (Figure S\@ref(fig:interactions-population)). 
+The same is true for negative correlations between interactions and population density, although here the strongest relationship is when there is no burning cost (Figure \@ref(fig:interactions-population)). 
 
 These results are because there is minimal change in forager mobility and therefore interactions at the highest burning costs. 
 
@@ -1865,11 +1865,11 @@ ggplot(plot.data3) +
 
 ```
 
-When we plot the change in average proportion of interactions that are the same as the previous tick across model run by burn cost and movement model, we see that random walks result in overall higher proportions of agents interacting with the same people compared to directed walks (Figure S\@ref(fig:same-network_1)). This is driven primarily by high rates of similar interactions in unproductive periods, particularly when burning costs are high. 
+When we plot the change in average proportion of interactions that are the same as the previous tick across model run by burn cost and movement model, we see that random walks result in overall higher proportions of agents interacting with the same people compared to directed walks (Figure \@ref(fig:same-network_1)). This is driven primarily by high rates of similar interactions in unproductive periods, particularly when burning costs are high. 
 
 Conversely, with directed walks, we see an initial dip in the proportion of interactions that are with the same people as the population is establishing itself. This makes sense because the population is relatively unstable at this time, so there will be more new people on the landscape. 
 
-If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher as the population reaches equilibrium and carrying capacity (Figure S\@ref(fig:same-network_1)). Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of burning and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
+If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher as the population reaches equilibrium and carrying capacity (Figure \@ref(fig:same-network_1)). Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of burning and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
 
 # References
 
