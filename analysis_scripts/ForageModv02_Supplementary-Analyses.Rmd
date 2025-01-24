@@ -323,7 +323,7 @@ corrplot::corrplot(cor(data.mid %>% select_at(outputs),
 
 rm(list = c("data.mid", "pvalue.mid"))
 ```
-When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types, that is patches that have a high resource value (Figure S\@ref(fig:pop-density-correlations-1). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
+When we look at the correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types, that is patches that have a high resource value (Figure S\@ref(fig:pop-density-correlations-1)). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
 
 
 # Forager probability of burning patches
