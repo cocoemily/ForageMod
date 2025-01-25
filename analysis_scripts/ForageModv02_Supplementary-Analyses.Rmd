@@ -288,7 +288,7 @@ ggplot(rates %>%
 ```
 When climatic periods are longer (Figure S\@ref(fig:pop-dens-forageable-2)), the significant and strong relationship between change in population density and proportions of unforageable patches is reduced or disappears in productive periods until the end of model run. This suggests that with longer climatic cycling, a different aspect of the environment is controlling population density initially.
 
-```{r pop-density-correlations-1, fig.cap="Correlation between population density, change in population density, and counts of high value resource types (veg_7, veg_6, veg_5) at the middle of model run during a productive climatic interval", echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop-density-correlations-1, fig.cap="Correlation between population density, change in population density, and counts of high value resource types at the middle of model run during a productive climatic interval", fig.width=6, fig.height=5, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 outputs = c(
   "pop.dens", #pop count/world size
   "pop.dens.slope",
