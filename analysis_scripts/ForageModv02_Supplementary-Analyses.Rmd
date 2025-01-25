@@ -614,7 +614,7 @@ ggarrange(
 
 ```
 
-```{r veg_0-regressions-1, eval=FALSE, fig.height=4, message=FALSE, warning=FALSE, include=FALSE, out.width="100%"}
+```{r veg-0-regressions-1, eval=FALSE, fig.height=4, message=FALSE, warning=FALSE, include=FALSE, out.width="100%"}
 ggplot(data) +
   geom_density(aes(x = burnt, color = `burn-cost`)) +
   ggokabeito::scale_color_okabe_ito() +
@@ -623,7 +623,7 @@ ggplot(data) +
 
 We used regressions on the proportions of burnt landscape to look at the effects of each parameter. We compared Beta regression and logistic regressions, which are often used for modeling proportion data, and linear regressions using AIC.
 
-```{r veg_0-regressions-2, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
+```{r veg-0-regressions-2, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
 beta.data = data %>% 
   mutate(burnt = ifelse(burnt == 0, burnt + 0.00001, burnt)) %>% 
   mutate(burnt = ifelse(burnt == 1, burnt - 0.00001, burnt))
@@ -667,7 +667,7 @@ AIC(beta.fit1) < AIC(lin.fit1)
 ```
 Comparison of AIC shows that the Beta regression performs best.
 
-```{r veg_0-regressions-3, fig.cap="Predicted proportions of landscape that are burnt across model run for different model parameters", echo=FALSE, fig.height=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-0-regressions-3, fig.cap="Predicted proportions of landscape that are burnt across model run for different model parameters", echo=FALSE, fig.height=8, fig.width=7, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
   # ggeffects::ggpredict(beta.fit1, terms = c("ticks", "natural-ignition")) %>%
   #   plot(show_data = FALSE, show_ci = FALSE) +
@@ -722,9 +722,9 @@ ggarrange(
 
 ```
 
-The predicted proportions of burnt landscape from the best fit Beta regression model show that increasing limits on location of burning or increasing cost to burning significantly affect the amount of burnt landscape (Figure S\@ref(fig:veg_0-regressions-3)). This matches the results above for the effect of these parameters on mean burning probability. This is also consistent with the high positive correlation between proportion of burnt landscape and burning probability through time. 
+The predicted proportions of burnt landscape from the best fit Beta regression model show that increasing limits on location of burning or increasing cost to burning significantly affect the amount of burnt landscape (Figure S\@ref(fig:veg-0-regressions-3)). This matches the results above for the effect of these parameters on mean burning probability. This is also consistent with the high positive correlation between proportion of burnt landscape and burning probability through time. 
 
-```{r veg_0-regressions-clean, echo=FALSE, fig.height=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-0-regressions-clean, echo=FALSE, fig.height=8, message=FALSE, warning=FALSE, out.width='100%'}
 
 rm(list=c("beta.fit1", "log.fit1", "lin.fit1", "beta.data"))
 
