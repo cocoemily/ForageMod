@@ -92,8 +92,8 @@ outputs = c(
   "be_morans.i"
 )
 
-par(mfrow = c(1,3))
-par(mar=c(0,1,0,1))
+# par(mfrow = c(1,3))
+# par(mar=c(0,1,0,1))
 #plot at 250
 data250 = data %>% dplyr::filter(ticks == 250) %>% 
   left_join(veg.data %>% 
@@ -470,8 +470,8 @@ ggplot(data %>% filter(ticks > 0)) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, 
              labeller = labeller(`burn-cost` = bc.labs, 
-                                `cycle-duration` = cycle.labs, 
-                                `veg-cycle-start` = start.labs)) +
+                                 `cycle-duration` = cycle.labs, 
+                                 `veg-cycle-start` = start.labs)) +
   labs(y = "proportion of burning benefits for self", 
        x = "ticks", 
        color = "cost of burning") +
@@ -842,11 +842,11 @@ plot_summs(veg.100.prod.fit1,
            veg.250.prod.fit1, 
            veg.250.unprod.fit1, 
            model.names = c(
-  "start = productive, cycle = 100", 
-  "start = unproductive, cycle = 100", 
-  "start = productive, cycle = 250", 
-  "start = unproductive, cycle = 250"
-), scale = T)
+             "start = productive, cycle = 100", 
+             "start = unproductive, cycle = 100", 
+             "start = productive, cycle = 250", 
+             "start = unproductive, cycle = 250"
+           ), scale = T)
 
 ```
 
@@ -919,7 +919,7 @@ plot.data = veg.data %>%
   filter(veg_cycle_start == "\"productive\"")
 plot.data$burn_cost = as.factor(plot.data$burn_cost)
 
- ggplot(plot.data) +
+ggplot(plot.data) +
   geom_jitter(data = plot.data %>% filter(burn_cost == 0), 
               mapping = aes(x = ticks, y = morans.i, group = ticks, 
                             color = burn_cost), alpha = 0.1, size = 0.25) +
@@ -935,8 +935,8 @@ plot.data$burn_cost = as.factor(plot.data$burn_cost)
   geom_smooth(mapping = aes(x = ticks, y = morans.i, color = burn_cost)) +
   facet_grid(movement_model ~ burnt_neighbor_limit + burn_veg_type_threshold, 
              labeller = labeller(burnt_neighbor_limit = bn.labs,
-                        burn_veg_type_threshold = bt.labs,
-                        movement_model = move.labs)) +
+                                 burn_veg_type_threshold = bt.labs,
+                                 movement_model = move.labs)) +
   labs(color = "", y = "Global Moran's I of vegetation types") +
   scale_color_brewer(palette = "Set2",
                      labels = c("no disturbance cost (0)", 
@@ -949,8 +949,8 @@ plot.data$burn_cost = as.factor(plot.data$burn_cost)
         strip.text = element_text(size = 6), 
         axis.title = element_text(size = 6), 
         legend.text = element_text(size =6))
- 
- rm(list = "plot.data")
+
+rm(list = "plot.data")
 ```
 
 There are also differing trends based on spatial limits and vegetation limits on burning behaviors. When patches can only be burnt with 4 or less burnt neighbors, spatial clustering of vegetation types is much more decreased (Figure S\@ref(fig:morans-i-by-burn-limits)), particularly for lower disturbance costs that allow for more burning. 
@@ -1523,62 +1523,63 @@ The regression model demonstrate that burning restrictions and burning costs hav
 These mobility patterns due to different limits on burning behaviors occur because burning controls the energy available in the environment such that less burning means less overall energy, so agents need to move further to meet their energy needs.
 
 ```{r mobility-veg-correlations, fig.cap="Correlations between forager mobility (mean.fm), vegetation diversity (shannon.div), vegetation spatial autocorrelation (veg_morans.i), and high value vegetation types (veg_7, veg_6, veg_5) at beginning, middle, and end of model run from left to right", fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
-par(mfrow = c(1,3))
-par(mar=c(0,1,0,1))
+# par(mfrow = c(1,3))
+# par(mar=c(0,1,0,1))
 #plot at 250
 pvalue250 = psych::corr.test(data250 %>% 
                                select(mean.fm, shannon.div, 
                                       veg_morans.i, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data250 %>% 
-                         select(mean.fm, shannon.div, 
-                                veg_morans.i, veg_7, veg_6, veg_5), 
-                       use = "pairwise.complete.obs"),
-                   method = "square", 
-                   addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue250, 
-                   insig="blank", 
-                   sig.level=0.1, 
-                   type = "lower", 
-                   number.cex = 0.5, 
-                   diag=F)
+p1 = corrplot::corrplot(cor(data250 %>% 
+                              select(mean.fm, shannon.div, 
+                                     veg_morans.i, veg_7, veg_6, veg_5), 
+                            use = "pairwise.complete.obs"),
+                        method = "square", 
+                        addCoef.col = "black", 
+                        col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                        p.mat = pvalue250, 
+                        insig="blank", 
+                        sig.level=0.1, 
+                        type = "lower", 
+                        number.cex = 0.5, 
+                        diag=F)
 
 #plot at 2000
 pvalue2000 = psych::corr.test(data2000 %>% 
                                 select(mean.fm, shannon.div, 
                                        veg_morans.i, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data2000 %>% 
-                         select(mean.fm, shannon.div, 
-                                veg_morans.i, veg_7, veg_6, veg_5), 
-                       use = "pairwise.complete.obs"),
-                   method = "square", 
-                   addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue2000, 
-                   insig="blank", 
-                   sig.level=0.1, 
-                   type = "lower", 
-                   number.cex = 0.5, 
-                   diag=F)
+p2 = corrplot::corrplot(cor(data2000 %>% 
+                              select(mean.fm, shannon.div, 
+                                     veg_morans.i, veg_7, veg_6, veg_5), 
+                            use = "pairwise.complete.obs"),
+                        method = "square", 
+                        addCoef.col = "black", 
+                        col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                        p.mat = pvalue2000, 
+                        insig="blank", 
+                        sig.level=0.1, 
+                        type = "lower", 
+                        number.cex = 0.5, 
+                        diag=F)
 
 #plot at 3500
 pvalue3500 = psych::corr.test(data3500 %>% 
                                 select(mean.fm, shannon.div, 
                                        veg_morans.i, veg_7, veg_6, veg_5))$p
-corrplot::corrplot(cor(data3500 %>% 
-                         select(mean.fm, shannon.div, 
-                                veg_morans.i, veg_7, veg_6, veg_5), 
-                       use = "pairwise.complete.obs"),
-                   method = "square", 
-                   addCoef.col = "black", 
-                   col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
-                   p.mat = pvalue3500, 
-                   insig="blank", 
-                   sig.level=0.1, 
-                   type = "lower", 
-                   number.cex = 0.5, 
-                   diag=F)
+p3 = corrplot::corrplot(cor(data3500 %>% 
+                              select(mean.fm, shannon.div, 
+                                     veg_morans.i, veg_7, veg_6, veg_5), 
+                            use = "pairwise.complete.obs"),
+                        method = "square", 
+                        addCoef.col = "black", 
+                        col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                        p.mat = pvalue3500, 
+                        insig="blank", 
+                        sig.level=0.1, 
+                        type = "lower", 
+                        number.cex = 0.5, 
+                        diag=F)
 
+ggarrange(p1, p2, p3, labels = "AUTO", nrow = 1, ncol = 3)
 ```
 
 We can see this pattern exemplified when looking at correlations between forager movement (*mean.fm*) and the highest vegetation types (*veg_7*, *veg_6*, *veg_5*), that is those that provide the most resources. We generally see negative correlations with the high vegetation types (Figure S\@ref(fig:mobility-veg-correlations)), indicating that low forager mobility is significantly correlated with higher proportions of these vegetation types. 
@@ -1666,10 +1667,13 @@ rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>%
                filter(ticks > 0) %>% 
                select_at(c("ticks", "adj.fi", parameters[-7])))
 
-par(mfrow = c(1,2))
-par(mar=c(1,1,1,1))
-plot(dw.fit1, which = 2)
-plot(rw.fit1, which = 2)
+# par(mfrow = c(1,2))
+# par(mar=c(1,1,1,1))
+ggarrange(
+  plot(dw.fit1, which = 2), 
+  plot(rw.fit1, which = 2), 
+  ncol = 2, nrow = 1
+  )
 
 ```
 
