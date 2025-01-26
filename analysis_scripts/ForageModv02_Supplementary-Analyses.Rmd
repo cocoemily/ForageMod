@@ -1655,7 +1655,7 @@ plot_summs(fi.fit1, scale = T)
 
 By comparing standardized regression coefficients (Figure S\@ref(fig:adj-fi-reg-1)), we can see the greatest effect on forager interactions is movement models and burn cost. Because the shape of the trend lines is different enough between random walks and directed walks, we split the data by movement model to further investigate parameter effects.
 
-```{r adj-fi-reg-2, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=3}
+```{r adj-fi-reg-2, echo=TRUE, message=FALSE, warning=FALSE, fig.show="hold", out.width='50%', fig.height=3}
 rw.data = fi.data %>% filter(`movement-model` == "\"Random Walk\"") 
 dw.data = fi.data %>% filter(`movement-model` == "\"Directed Walk\"") 
 
@@ -1667,14 +1667,10 @@ rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>%
                filter(ticks > 0) %>% 
                select_at(c("ticks", "adj.fi", parameters[-7])))
 
-# par(mfrow = c(1,2))
-# par(mar=c(1,1,1,1))
-ggarrange(
-  plot(dw.fit1, which = 2), 
-  plot(rw.fit1, which = 2), 
-  ncol = 2, nrow = 1
-  )
-
+par(mfrow = c(1,2))
+par(mar=c(1,1,1,1))
+plot(dw.fit1, which = 2)
+plot(rw.fit1, which = 2)
 ```
 
 The QQ plots show relatively good model performance.
