@@ -1522,7 +1522,7 @@ The regression model demonstrate that burning restrictions and burning costs hav
 
 These mobility patterns due to different limits on burning behaviors occur because burning controls the energy available in the environment such that less burning means less overall energy, so agents need to move further to meet their energy needs.
 
-```{r mobility-veg-correlations, fig.cap="Correlations between forager mobility (mean.fm), vegetation diversity (shannon.div), vegetation spatial autocorrelation (veg_morans.i), and high value vegetation types (veg_7, veg_6, veg_5) at beginning, middle, and end of model run from left to right", fig.show="hold", fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r mobility-veg-correlations, fig.cap="Correlations between forager mobility, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='33%'}
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
