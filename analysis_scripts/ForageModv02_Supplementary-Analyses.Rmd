@@ -327,7 +327,7 @@ corrplot::corrplot(cor(data.mid %>% select_at(outputs),
                    method = "square", addCoef.col = "black", 
                    col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
                    p.mat = pvalue.mid, insig="blank", sig.level=0.1, 
-                   type = "lower", number.cex = 0.5, diag=F)
+                   type = "lower", number.cex = 0.75, diag=F)
 
 
 rm(list = c("data.mid", "pvalue.mid"))
@@ -1227,158 +1227,91 @@ rm(list = c("rw.fit1", "rw.gam1", "rw.gam2",
             "veg.data.r", "veg.data.d"))
 ```
 
-Overall, vegetation diversity is closely tied to proportion of burnt landscape and average burning probability, which are themselves primarily controlled by the restrictions and cost of burning behaviors. By the end of model run we see a strong negative correlation between these two outputs, showing that increasing burning results in less diversity due to the dominating proportion of burnt patches on the landscape when burning is very frequent.
+# Burning behaviors and resource distributions
 
+The above results demonstrate that vegetation spatial autocorrelation and vegetation diversity primarily controlled by the restrictions and cost of burning behaviors; these parameters also have significant impacts on the evolution of burning behaviors across model run.
 
-# Spatial distribution of burning events
+```{r burn-veg-correlations-1, fig.cap="Correlations between burning probabilities, burnt landscape proportions, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+par(mfrow = c(1,3))
+par(mar=c(0,1,0,1))
+#plot at 250
+pvalue250 = psych::corr.test(data250 %>% 
+                               select(mean.burn.prob, burnt,
+                                      shannon.div, veg_morans.i, 
+                                      veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data250 %>% 
+                               select(mean.burn.prob, burnt,
+                                      shannon.div, veg_morans.i, 
+                                      veg_7, veg_6, veg_5), 
+                            use = "pairwise.complete.obs"),
+                        method = "square", 
+                        addCoef.col = "black", 
+                        col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                        p.mat = pvalue250, 
+                        insig="blank", 
+                        sig.level=0.1, 
+                        type = "lower", 
+                        number.cex = 0.75, 
+                        diag=F)
 
-Because burning behaviors have such a significant impact on the structure of the vegetation in the environment, we were curious if this is caused by differential use of space. To examine this, we looked at the spatial autocorrelation of where burning events occur within the landscape to assess land use by the agents. This analysis is split *cycle-duration.* We first use linear regressions to assess how the parameters and time affect the spatial autocorrelation of burning events. For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
+#plot at 2000
+pvalue2000 = psych::corr.test(data2000 %>% 
+                               select(mean.burn.prob, burnt,
+                                      shannon.div, veg_morans.i, 
+                                      veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data2000 %>% 
+                               select(mean.burn.prob, burnt,
+                                      shannon.div, veg_morans.i, 
+                                      veg_7, veg_6, veg_5), 
+                            use = "pairwise.complete.obs"),
+                        method = "square", 
+                        addCoef.col = "black", 
+                        col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                        p.mat = pvalue2000, 
+                        insig="blank", 
+                        sig.level=0.1, 
+                        type = "lower", 
+                        number.cex = 0.75, 
+                        diag=F)
 
-```{r burning-events-1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
-parameters = c(
-  "cycle_duration",  # 100, 250
-  "veg_cycle_start", # productive, unproductive
-  "veg_distribution", # random, clustered
-  "burnt_neighbor_limit", # 1, 4, 8
-  "burn_cost", # 0, 50
-  "burn_veg_type_threshold", # 4, 7
-  "movement_model" #Random, Directed
-)
-
-be.morans.100 <- readRDS("../results/outputs/be_morans.i_cycle.100.rds")
-be.morans.100[,parameters[-1]] = lapply(be.morans.100[,parameters[-1]] , as.factor)
-be.morans.250 <- readRDS("../results/outputs/be_morans.i_cycle.250.rds")
-be.morans.250[,parameters[-1]] = lapply(be.morans.250[,parameters[-1]] , as.factor)
-
-be.morans.100$veg_distribution = factor(be.morans.100$veg_distribution, 
-                                        levels = c("\"random\"", 
-                                                   "\"clustered\""))
-be.morans.250$veg_distribution = factor(be.morans.250$veg_distribution, 
-                                        levels = c("\"random\"", 
-                                                   "\"clustered\""))
-
-be.morans.100$movement_model = factor(be.morans.100$movement_model, 
-                                      levels = c("\"Random Walk\"", 
-                                                 "\"Directed Walk\""))
-be.morans.250$movement_model = factor(be.morans.250$movement_model, 
-                                      levels = c("\"Random Walk\"", 
-                                                 "\"Directed Walk\""))
-
-be.morans.100 = be.morans.100 %>% filter(exp %in% finished.exp)
-be.morans.250 = be.morans.250 %>% filter(exp %in% finished.exp)
-
-#be.morans.100 = be.morans.100 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-#be.morans.250 = be.morans.250 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
-
-# hist(be.morans.100$morans.i)
-# hist(be.morans.250$morans.i)
-
-fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% 
-            filter(signif == T) %>% 
-            select_at(c("ticks", parameters[-1], "morans.i")))
-
-fit2 = lm(morans.i ~ ticks*(.), data = be.morans.250 %>% 
-            filter(signif == T) %>% 
-            select_at(c("ticks", parameters[-1], "morans.i")))
-
-par(mfrow = c(1,2))
-plot(fit1, which = 2)
-title(main = "cycle = 100 ticks")
-plot(fit2, which = 2)
-title(main = "cycle = 250 ticks")
-```
-
-The QQ plots show relatively good model performance.
-
-```{r burning-events-1-1, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
-fit1$coefficients[1:2] #cycle = 100 ticks
-fit2$coefficients[1:2] #cycle = 250 ticks
-```
-
-The intercept values of the linear regressions show that, on average, burning events are on average marginally clustered on the landscape. This spatial autocorrelation is then significantly affected by time and, on average, decreases as model run progresses. 
-
-```{r burning-events-2-1, fig.cap = "Standardized regression coefficients for effects of model parameters and their interactions with time on spatial autocorrelation of burning events", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
-plot_summs(fit1, fit2, scale = T, 
-           model.names = c("cycle = 100 ticks", "cycle = 250 ticks"))
-```
-
-When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events (Figure S\@ref(fig:burning-events-2-1)). These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
-
-```{r burning-events-2-2-1, fig.cap="Trends of spatial autocorrelation of burning events across model run for model scenarios with random walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
-bn.labs = c("can burn with 1 burnt neighbor", 
-            "can burn with 4 burnt neighbors", 
-            "can burn with 8 burnt neighbors")
-names(bn.labs) = c(1, 4, 8)
-
-p1.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
-                filter(movement_model == "\"Random Walk\"")) +
-  geom_point(mapping = aes(x = ticks, y = morans.i, 
-                           color = as.factor(veg_distribution)), alpha = 0.1) +
-  geom_smooth(mapping = aes(x = ticks, y = morans.i, 
-                            color = as.factor(veg_distribution), 
-                            group = as.factor(veg_distribution)), 
-              method = "lm") +
-  geom_hline(aes(yintercept = 0)) +
-  facet_grid(burn_veg_type_threshold + burnt_neighbor_limit ~ burn_cost, 
-             scales = "free", 
-             labeller = labeller(burn_cost = bc.labs, 
-                                 burn_veg_type_threshold = bt.labs, 
-                                 burnt_neighbor_limit = bn.labs)) +
-  theme(axis.text = element_text(size = 5), 
-        strip.text = element_text(size = 6), 
-        legend.position = "bottom")
-
-plot(p1.2)
-```
-
-```{r burning-events-2-2-2, fig.cap="Trends of spatial autocorrelation of burning events across model run for model scenarios with directed walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
-p2.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
-                filter(movement_model == "\"Directed Walk\"")) +
-  geom_point(mapping = aes(x = ticks, y = morans.i, 
-                           color = as.factor(veg_distribution)), alpha = 0.1) +
-  geom_smooth(mapping = aes(x = ticks, y = morans.i, 
-                            color = as.factor(veg_distribution), 
-                            group = as.factor(veg_distribution)), 
-              method = "lm") +
-  geom_hline(aes(yintercept = 0)) +
-  facet_grid(burn_veg_type_threshold + burnt_neighbor_limit ~ burn_cost, 
-             scales = "free", 
-             labeller = labeller(burn_cost = bc.labs, 
-                                 burn_veg_type_threshold = bt.labs, 
-                                 burnt_neighbor_limit = bn.labs)) +
-  theme(axis.text = element_text(size = 5), 
-        strip.text = element_text(size = 6), 
-        legend.position = "bottom")
-
-plot(p2.2)
+#plot at 3500
+pvalue3500 = psych::corr.test(data3500 %>% 
+                               select(mean.burn.prob, burnt,
+                                      shannon.div, veg_morans.i, 
+                                      veg_7, veg_6, veg_5))$p
+corrplot::corrplot(cor(data3500 %>% 
+                               select(mean.burn.prob, burnt,
+                                      shannon.div, veg_morans.i, 
+                                      veg_7, veg_6, veg_5), 
+                            use = "pairwise.complete.obs"),
+                        method = "square", 
+                        addCoef.col = "black", 
+                        col = scales::alpha(corrplot::COL2("RdBu"), alpha = 0.85),
+                        p.mat = pvalue3500, 
+                        insig="blank", 
+                        sig.level=0.1, 
+                        type = "lower", 
+                        number.cex = 0.75, 
+                        diag=F)
 
 ```
 
-Plotting the trends of burning event spatial autocorrelation through time by these significant parameters allows us to better visualize these patterns. Here, we split the data by movement model with trend lines for random walks (Figure S\@ref(fig:burning-events-2-2-1)) and trends for directed walks (Figure S\@ref(fig:burning-events-2-2-2)). 
+By the end of model run we see a strong negative correlation between vegetation Moran's I and Shannon Diversity (Figure S\@ref(fig:burn-veg-correlations-1)). Increasing burning results in less diversity because of dominating proportion of burnt patches on the landscape when burning is very frequent. The negative correlation with vegetation spatial autocorrelation demonstrates that the landscape becomes more locally heterogeneous as burning becomes more frequent. Interestingly, however, there does not appear to be a significant correlation between average burning probabilities and the number of high yield patches on the landscape. 
 
-First, it is clear that, under random walks, underlying distribution of vegetation potential has a significant impact on clustering or disperson of burning events (Figure S\@ref(fig:burning-events-2-2-1)). This is especially true when burning is limited to specific patches (can burn with fewer burnt neighbors and can only burn certain vegetation types) under low burning costs. As burning costs increase, and burning becomes more infrequent, bunring events are more likely to cluster despite limits on which patches can be burnt. 
+```{r high-yield-veg, fig.cap="Proportions of high yield vegetation proportions throughout model run", fig.height=5, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 
-With directed walks, the effect of underlying vegetation potential is more varied (Figure S\@ref(fig:burning-events-2-2-2)). For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
+high.veg = data %>%
+  select(ticks, `cycle-duration`, `veg-cycle-start`, veg_7, veg_6, veg_5) %>%
+  pivot_longer(veg_7:veg_5, names_to = "high_yield_veg", values_to = "proportion")
 
-## Relationship between location of burning events and population density
-```{r be-dispersion-and-pop, fig.cap = "Relationship between population density and spatial autocorrelation of burning events at the end of model run. Linear relationships shown with blue lines for clustered burning events (positive Moran's I values) and dispersed burning events (negative Moran's I values)", echo=FALSE, fig.height=4, fig.width=4, message=FALSE, warning=FALSE, out.width='100%'}
-be.data = bind_rows(be.morans.100, be.morans.250) %>% 
-  filter(ticks == 3500) %>%
-  left_join(data, by = c("exp", "ticks"))
+ggplot(high.veg) +
+  geom_line(aes(x = ticks, y = proportion, 
+                group = high_yield_veg, color = high_yield_veg)) +
+  facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both)
 
-ggplot(be.data %>% filter(signif == T)) +
-  geom_point(aes(y = morans.i, x = pop.dens)) +
-  geom_smooth(data = be.data %>% 
-                filter(signif == T) %>% 
-                filter(morans.i < 0), 
-              aes(y = morans.i, x = pop.dens), method = "lm") +
-  geom_smooth(data = be.data %>% 
-                filter(signif == T) %>% 
-                filter(morans.i > 0), 
-              aes(y = morans.i, x = pop.dens), method = "lm")
 
 ```
-In Figure S\@ref(fig:be-dispersion-and-pop), we can see that increased population density is clearly associated with increased dispersion of burning events at the end of model run. The correlation between clustering and population density skews positive, but the graph shows that this is less consistent at the highest population densities. 
+However, we can see that the proportion of high yield patches increases over the course of model run (Figure S\@ref(fig:high-yield-veg)). This means that as burning behaviors become more frequent with time, there will be more high yield patches on the landscape.
 
 # Forager mobility
 
@@ -1544,7 +1477,7 @@ corrplot::corrplot(cor(data250 %>%
                         insig="blank", 
                         sig.level=0.1, 
                         type = "lower", 
-                        number.cex = 0.5, 
+                        number.cex = 0.75,  
                         diag=F)
 
 #plot at 2000
@@ -1562,7 +1495,7 @@ corrplot::corrplot(cor(data2000 %>%
                         insig="blank", 
                         sig.level=0.1, 
                         type = "lower", 
-                        number.cex = 0.5, 
+                        number.cex = 0.75,  
                         diag=F)
 
 #plot at 3500
@@ -1580,7 +1513,7 @@ corrplot::corrplot(cor(data3500 %>%
                         insig="blank", 
                         sig.level=0.1, 
                         type = "lower", 
-                        number.cex = 0.5, 
+                        number.cex = 0.75,  
                         diag=F)
 ```
 
@@ -1873,6 +1806,156 @@ When we plot the change in average proportion of interactions that are the same 
 Conversely, with directed walks, we see an initial dip in the proportion of interactions that are with the same people as the population is establishing itself. This makes sense because the population is relatively unstable at this time, so there will be more new people on the landscape. 
 
 If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher as the population reaches equilibrium and carrying capacity (Figure S\@ref(fig:same-network-1)). Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of burning and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
+
+# Spatial distribution of burning events
+
+Because burning behaviors have such a significant impact on the structure of the vegetation in the environment, we were curious if this is caused by differential use of space. To examine this, we looked at the spatial autocorrelation of where burning events occur within the landscape to assess land use by the agents. This analysis is split *cycle-duration.* We first use linear regressions to assess how the parameters and time affect the spatial autocorrelation of burning events. For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
+
+```{r burning-events-1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
+parameters = c(
+  "cycle_duration",  # 100, 250
+  "veg_cycle_start", # productive, unproductive
+  "veg_distribution", # random, clustered
+  "burnt_neighbor_limit", # 1, 4, 8
+  "burn_cost", # 0, 50
+  "burn_veg_type_threshold", # 4, 7
+  "movement_model" #Random, Directed
+)
+
+be.morans.100 <- readRDS("../results/outputs/be_morans.i_cycle.100.rds")
+be.morans.100[,parameters[-1]] = lapply(be.morans.100[,parameters[-1]] , as.factor)
+be.morans.250 <- readRDS("../results/outputs/be_morans.i_cycle.250.rds")
+be.morans.250[,parameters[-1]] = lapply(be.morans.250[,parameters[-1]] , as.factor)
+
+be.morans.100$veg_distribution = factor(be.morans.100$veg_distribution, 
+                                        levels = c("\"random\"", 
+                                                   "\"clustered\""))
+be.morans.250$veg_distribution = factor(be.morans.250$veg_distribution, 
+                                        levels = c("\"random\"", 
+                                                   "\"clustered\""))
+
+be.morans.100$movement_model = factor(be.morans.100$movement_model, 
+                                      levels = c("\"Random Walk\"", 
+                                                 "\"Directed Walk\""))
+be.morans.250$movement_model = factor(be.morans.250$movement_model, 
+                                      levels = c("\"Random Walk\"", 
+                                                 "\"Directed Walk\""))
+
+be.morans.100 = be.morans.100 %>% filter(exp %in% finished.exp)
+be.morans.250 = be.morans.250 %>% filter(exp %in% finished.exp)
+
+#be.morans.100 = be.morans.100 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+#be.morans.250 = be.morans.250 %>% filter(ticks != 1000) %>% filter(ticks != 2000)
+
+# hist(be.morans.100$morans.i)
+# hist(be.morans.250$morans.i)
+
+fit1 = lm(morans.i ~ ticks*(.), data = be.morans.100 %>% 
+            filter(signif == T) %>% 
+            select_at(c("ticks", parameters[-1], "morans.i")))
+
+fit2 = lm(morans.i ~ ticks*(.), data = be.morans.250 %>% 
+            filter(signif == T) %>% 
+            select_at(c("ticks", parameters[-1], "morans.i")))
+
+par(mfrow = c(1,2))
+plot(fit1, which = 2)
+title(main = "cycle = 100 ticks")
+plot(fit2, which = 2)
+title(main = "cycle = 250 ticks")
+```
+
+The QQ plots show relatively good model performance.
+
+```{r burning-events-1-1, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
+fit1$coefficients[1:2] #cycle = 100 ticks
+fit2$coefficients[1:2] #cycle = 250 ticks
+```
+
+The intercept values of the linear regressions show that, on average, burning events are on average marginally clustered on the landscape. This spatial autocorrelation is then significantly affected by time and, on average, decreases as model run progresses. 
+
+```{r burning-events-2-1, fig.cap = "Standardized regression coefficients for effects of model parameters and their interactions with time on spatial autocorrelation of burning events", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+plot_summs(fit1, fit2, scale = T, 
+           model.names = c("cycle = 100 ticks", "cycle = 250 ticks"))
+```
+
+When looking at scaled regression coefficients, we can see that underlying distribution of resource potential (maximum veg type), burning limits, and movement models have the strongest effects on the spatial clustering of burning events (Figure S\@ref(fig:burning-events-2-1)). These strong effects are also maintained over time, as evidence by the high standardized regression coefficients for the interaction variables between these parameters and time). Importantly, time increase the effect size of these parameters in the same direction. For example, directed walks reduce the clustering of burning events on average and this effect is more negative with time.
+
+```{r burning-events-2-2-2, fig.cap="Trends of spatial autocorrelation of burning events across model run for model scenarios with directed walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
+p2.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
+                filter(movement_model == "\"Directed Walk\"")) +
+  geom_point(mapping = aes(x = ticks, y = morans.i, 
+                           color = as.factor(veg_distribution)), alpha = 0.1) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, 
+                            color = as.factor(veg_distribution), 
+                            group = as.factor(veg_distribution)), 
+              method = "lm") +
+  geom_hline(aes(yintercept = 0)) +
+  facet_grid(burn_veg_type_threshold + burnt_neighbor_limit ~ burn_cost, 
+             scales = "free", 
+             labeller = labeller(burn_cost = bc.labs, 
+                                 burn_veg_type_threshold = bt.labs, 
+                                 burnt_neighbor_limit = bn.labs)) +
+  theme(axis.text = element_text(size = 5), 
+        strip.text = element_text(size = 6), 
+        legend.position = "bottom")
+
+plot(p2.2)
+
+```
+
+```{r burning-events-2-2-1, fig.cap="Trends of spatial autocorrelation of burning events across model run for model scenarios with random walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
+bn.labs = c("can burn with 1 burnt neighbor", 
+            "can burn with 4 burnt neighbors", 
+            "can burn with 8 burnt neighbors")
+names(bn.labs) = c(1, 4, 8)
+
+p1.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
+                filter(movement_model == "\"Random Walk\"")) +
+  geom_point(mapping = aes(x = ticks, y = morans.i, 
+                           color = as.factor(veg_distribution)), alpha = 0.1) +
+  geom_smooth(mapping = aes(x = ticks, y = morans.i, 
+                            color = as.factor(veg_distribution), 
+                            group = as.factor(veg_distribution)), 
+              method = "lm") +
+  geom_hline(aes(yintercept = 0)) +
+  facet_grid(burn_veg_type_threshold + burnt_neighbor_limit ~ burn_cost, 
+             scales = "free", 
+             labeller = labeller(burn_cost = bc.labs, 
+                                 burn_veg_type_threshold = bt.labs, 
+                                 burnt_neighbor_limit = bn.labs)) +
+  theme(axis.text = element_text(size = 5), 
+        strip.text = element_text(size = 6), 
+        legend.position = "bottom")
+
+plot(p1.2)
+```
+
+Plotting the trends of burning event spatial autocorrelation through time by these significant parameters allows us to better visualize these patterns. Here, we split the data by movement model with trends for directed walks (Figure S\@ref(fig:burning-events-2-2-2)) and trend lines for random walks (Figure S\@ref(fig:burning-events-2-2-1)). 
+
+First, it is clear that, under random walks, underlying distribution of vegetation potential has a significant impact on clustering or disperson of burning events (Figure S\@ref(fig:burning-events-2-2-1)). This is especially true when burning is limited to specific patches (can burn with fewer burnt neighbors and can only burn certain vegetation types) under low burning costs. As burning costs increase, and burning becomes more infrequent, bunring events are more likely to cluster despite limits on which patches can be burnt. 
+
+With directed walks, the effect of underlying vegetation potential is more varied (Figure S\@ref(fig:burning-events-2-2-2)). For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
+
+## Relationship between location of burning events and population density
+```{r be-dispersion-and-pop, fig.cap = "Relationship between population density and spatial autocorrelation of burning events at the end of model run. Linear relationships shown with blue lines for clustered burning events (positive Moran's I values) and dispersed burning events (negative Moran's I values)", echo=FALSE, fig.height=4, fig.width=4, message=FALSE, warning=FALSE, out.width='100%'}
+be.data = bind_rows(be.morans.100, be.morans.250) %>% 
+  filter(ticks == 3500) %>%
+  left_join(data, by = c("exp", "ticks"))
+
+ggplot(be.data %>% filter(signif == T)) +
+  geom_point(aes(y = morans.i, x = pop.dens)) +
+  geom_smooth(data = be.data %>% 
+                filter(signif == T) %>% 
+                filter(morans.i < 0), 
+              aes(y = morans.i, x = pop.dens), method = "lm") +
+  geom_smooth(data = be.data %>% 
+                filter(signif == T) %>% 
+                filter(morans.i > 0), 
+              aes(y = morans.i, x = pop.dens), method = "lm")
+
+```
+In Figure S\@ref(fig:be-dispersion-and-pop), we can see that increased population density is clearly associated with increased dispersion of burning events at the end of model run. The correlation between clustering and population density skews positive, but the graph shows that this is less consistent at the highest population densities. 
 
 # References
 
