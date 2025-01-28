@@ -1309,7 +1309,7 @@ ggplot(high.veg) +
                 group = high_yield_veg, color = high_yield_veg)) +
   facet_grid(`cycle-duration` ~ `veg-cycle-start`, labeller = label_both)
 
-
+rm(list = c("high.veg"))
 ```
 However, we can see that the proportion of high yield patches increases over the course of model run (Figure S\@ref(fig:high-yield-veg)). This means that as burning behaviors become more frequent with time, there will be more high yield patches on the landscape.
 
