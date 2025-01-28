@@ -19,6 +19,7 @@ header-includes:
   - \makeatletter
   - \def\fnum@figure{\figurename\thefigure}
   - \makeatother
+  - \usepackage{float}
 ---
 
 ```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
