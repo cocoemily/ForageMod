@@ -8,6 +8,7 @@ output:
     toc_depth: 2
     number_sections: true
     dev: png
+    citation_package: grateful
     extra_dependecies: ["flafter"]
 bibliography: grateful-refs.bib
 csl: pnas.csl
@@ -38,8 +39,8 @@ theme_set(theme_bw())
 
 knitr::opts_chunk$set(dpi=300,
                       fig.width=8, 
-                      fig.align = "center")
-
+                      fig.align = "center", 
+                      fig.pos = "H")
 options(tinytex.verbose = TRUE)
 
 data = readRDS("../results/bb-data.rds")
@@ -293,7 +294,7 @@ ggplot(rates %>%
 ```
 When climatic periods are longer (Figure S\@ref(fig:pop-dens-forageable-2)), the significant and strong relationship between change in population density and proportions of unforageable patches is reduced or disappears in productive periods until the end of model run. This suggests that with longer climatic cycling, a different aspect of the environment is controlling population density initially.
 
-```{r pop-density-correlations-1, fig.cap="Correlation between population density, change in population density, and counts of high value resource types at the middle of model run during a productive climatic interval", fig.width=6, fig.height=5, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r pop-density-correlations-1, fig.cap="Correlation between population density, change in population density, and counts of high value resource types at the middle of model run during a productive climatic interval", fig.width=4, fig.height=4, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 outputs = c(
   "pop.dens", #pop count/world size
   "pop.dens.slope",
@@ -318,6 +319,7 @@ data.mid = data %>% dplyr::filter(`cycle-duration`== 250) %>%
               dplyr::select(exp, pop.dens.slope), 
             by = c("exp"))
 
+par(mar=c(0,1,0,1))
 pvalue.mid = psych::corr.test(data.mid %>% select_at(outputs))$p
 corrplot::corrplot(cor(data.mid %>% select_at(outputs), 
                        use = "pairwise.complete.obs"),
@@ -336,7 +338,7 @@ When we look at the correlations between the slope of change in population densi
 
 We examined the effects of all model parameters on burning probability across model run using linear regressions. We model the effect of the different parameter settings on model behavior. We also model change over model run by including "ticks" as a independent variable. Finally, we investigate the interaction between time and model parameters.
 
-```{r burning-probability-regression, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="QQ plot of linear regression on burning probability"}
+```{r burning-probability-regression, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 #hist(data$mean.burn.prob)
 
 mbp.fit1 = lm(mean.burn.prob ~ ticks + (.), data = data %>% 
@@ -351,6 +353,8 @@ rm(list = c("mbp.fit1", "mbp.fit2"))
 
 plot(mbp.fit3, which = 2)
 ```
+
+The QQ plot shows relatively good model fit. 
 
 ```{r burning-probability-regression-2, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Standardized regression coefficients for effect of model parameters and their interactions with time (ticks) on burning probabilities"}
 plot_summs(mbp.fit3, scale = T)
@@ -429,7 +433,7 @@ These occur when burning costs are 300, greater than the benefit gained from bur
 rm(list = c("neg.bprate"))
 ```
 
-```{r rate-of-bp-increase-4, fig.cap="QQ plot of linear regression on rate of change of burning probability across model run", echo=TRUE, message=FALSE, warning=FALSE, fig.height=4, out.width='100%'}
+```{r rate-of-bp-increase-4, echo=TRUE, message=FALSE, warning=FALSE, fig.height=4, out.width='100%'}
 rate.fit1= lm(slope ~ ., data = bp.rates %>% 
                 select_at(c("slope", parameters)))
 rate.fit2 = lm(slope ~ .:., data = bp.rates %>% 
@@ -438,17 +442,11 @@ anova(rate.fit1, rate.fit2)
 
 plot(rate.fit2, which = 2)
 
-rate.fit.df = rate.fit2 %>% broom::tidy() %>%
-  mutate(p.signif = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  filter(p.signif == F)
-
-plot_summs(rate.fit2, scale = T, 
-           omit.coefs = c("(Intercept)", rate.fit.df$term))
-
 ```
 
+The QQ plot shows good model fit. 
 
-```{r rate-of-bp-increase-5, fig.cap="Standardized regression coefficients for effect of model parameters and their interactions on rate of change of burning probability across model run", echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
+```{r rate-of-bp-increase-5, fig.cap="Standardized regression coefficients for effect of model parameters and their interactions on rate of change of burning probability across model run", echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, out.width='100%'}
 rate.fit.df = rate.fit2 %>% broom::tidy() %>%
   mutate(p.signif = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
   filter(p.signif == F)
@@ -489,7 +487,9 @@ ggplot(data %>% filter(ticks > 0)) +
 ```
 
 Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased burning behaviors (Figure S\@ref(fig:bp-and-other-outputs-1)).  
+
 ### Effect of model parameters on self benefit
+
 ```{r bp-and-other-outputs-2, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%', fig.cap="Average proportion of foraging events where benefit of burning is recouped by agent that last performed the burning behavior at a given patch at the start of each climatic interval during model run"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = start.bself, 
@@ -527,7 +527,7 @@ plot_summs(fit1, fit2, scale = T,
 
 ```
 
-This self benefit is significantly affected by forager mobility, population density, and proportion of unforageable land, as these will impact the number of patches agents have access to for foraging (Figure S\@ref(fig:bp-and-other-outputs-3).  
+This self benefit is significantly affected by forager mobility, population density, and proportion of unforageable land, as these will impact the number of patches agents have access to for foraging (Figure S\@ref(fig:bp-and-other-outputs-3)).  
 
 ### Relationship between self benefit and burning behaviors over time
 ```{r bp-and-other-outputs-4, fig.cap="Relationship between proportion of self benefit and burning probability at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
@@ -548,7 +548,7 @@ ggplot(rates %>%
 
 ```
 
-When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs-4). We can also see that, within each climatic interval, low burning probabilities cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
+When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs-4)). We can also see that, within each climatic interval, low burning probabilities cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
 
 ```{r bp-and-other-outputs-5, fig.cap="Relationship between proportion of other benefit (inverse of self benefit) and burning probability at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% 
@@ -1044,6 +1044,8 @@ The starting environmental conditions do not appear to have significantly differ
 
 ```{r veg-diversity-regression-1-4, fig.cap="Effect through time of underlying distribution of vegetation types on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(rw.gam2, select=3, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=4, shade=T)
@@ -1055,6 +1057,8 @@ The underlying distribution of resource potential, or maximum vegetation type va
 
 ```{r veg-diversity-regression-1-5, fig.cap="Effect through time of burn cost on vegetation diversity", echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(rw.gam2, select=5, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=6, shade=T)
@@ -1069,6 +1073,8 @@ Having a cost associated with burning introduces a larger effect on vegetation d
 
 ```{r veg-diversity-regression-1-6, fig.cap="Effect through time of limits on vegetation types that can be burned on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(rw.gam2, select=9, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=10, shade=T)
@@ -1079,6 +1085,8 @@ Similarly, stricter limits on what types of vegetation can be burned also allows
 
 ```{r veg-diversity-regression-1-7, fig.cap="Effect through time of limits on burning with adjacent burnt neighbors on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(rw.gam2, select=11, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=12, shade=T)
@@ -1091,6 +1099,8 @@ This same pattern is seen even more distinctly with the stricter burnt neighbor 
 
 ```{r veg-diversity-regression-1-8, fig.cap="Effect through time of climatic cycle duration on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(rw.gam2, select=14, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=15, shade=T)
@@ -1155,6 +1165,8 @@ Overall with directed walks, we get very similar parameter effects through time 
 
 ```{r veg-diversity-regression-2-3, fig.cap="Effect through time of type of starting climatic period on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(dw.gam2, select=1, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=2, shade=T)
@@ -1166,6 +1178,8 @@ We again see similar effects of both starting vegetation conditions on vegetatio
 
 ```{r veg-diversity-regression-2-4, fig.cap="Effect through time of underlying distribution of vegetation types on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(dw.gam2, select=3, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=4, shade=T)
@@ -1177,6 +1191,8 @@ The underlying distribution of resource potential, or maximum vegetation type va
 
 ```{r veg-diversity-regression-2-5, fig.cap="Effect through time of burn cost on vegetation diversity", echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(dw.gam2, select=5, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=6, shade=T)
@@ -1192,6 +1208,8 @@ With directed walks, we can see that low and medium costs for burning behaviors 
 
 ```{r veg-diversity-regression-2-6, fig.cap="Effect through time of limits on vegetation types that can be burned on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(dw.gam2, select=9, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=10, shade=T)
@@ -1200,6 +1218,8 @@ abline(h=0, lty = 2)
 
 ```{r veg-diversity-regression-2-7, fig.cap="Effect through time of limits on burning with adjacent burnt neighbors on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(dw.gam2, select=11, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=12, shade=T)
@@ -1212,6 +1232,8 @@ The limits on burning behaviors have more exaggerated effects with directed walk
 
 ```{r veg-diversity-regression-2-8, fig.cap="Effect through time of climatic cycle duration on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
+par(mar=c(0,1,0,1))
+
 plot(dw.gam2, select=14, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=15, shade=T)
@@ -1233,7 +1255,7 @@ Overall, vegetation diversity is closely tied to proportion of burnt landscape a
 
 Because burning behaviors have such a significant impact on the structure of the vegetation in the environment, we were curious if this is caused by differential use of space. To examine this, we looked at the spatial autocorrelation of where burning events occur within the landscape to assess land use by the agents. This analysis is split *cycle-duration.* We first use linear regressions to assess how the parameters and time affect the spatial autocorrelation of burning events. For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
 
-```{r burning-events-1, fig.cap = "QQ plots for linear regressions on spatial autocorrelation of number of burning events for model scenarios with short cycles and long cycles", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
+```{r burning-events-1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
 parameters = c(
   "cycle_duration",  # 100, 250
   "veg_cycle_start", # productive, unproductive
@@ -1360,7 +1382,7 @@ First, it is clear that, under random walks, underlying distribution of vegetati
 With directed walks, the effect of underlying vegetation potential is more varied (Figure S\@ref(fig:burning-events-2-2-2)). For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
 
 ## Relationship between location of burning events and population density
-```{r be-dispersion-and-pop, fig.cap = "Relationship between population density and spatial autocorrelation of burning events at the end of model run. Linear relationships shown with blue lines for clustered burning events (positive Moran's I values) and dispersed burning events (negative Moran's I values)", echo=FALSE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
+```{r be-dispersion-and-pop, fig.cap = "Relationship between population density and spatial autocorrelation of burning events at the end of model run. Linear relationships shown with blue lines for clustered burning events (positive Moran's I values) and dispersed burning events (negative Moran's I values)", echo=FALSE, fig.height=4, fig.width=4, message=FALSE, warning=FALSE, out.width='100%'}
 be.data = bind_rows(be.morans.100, be.morans.250) %>% 
   filter(ticks == 3500) %>%
   left_join(data, by = c("exp", "ticks"))
@@ -1504,17 +1526,6 @@ ggpubr::ggarrange(
           legend.title = element_text(size = 6)), 
   legend = "bottom", nrow = 1
 )
-
-ggpubr::ggarrange(
-  ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "movement-model")) %>%
-    plot(show_data = FALSE, show_ci = FALSE) +
-    theme(title = element_text(size = 6), 
-          legend.title = element_text(size = 6)), 
-  # ggeffects::ggpredict(mm.fit1.3, terms = c("ticks", "natural-ignition")) %>%
-  #   plot(show_data = FALSE, show_ci = FALSE) +
-  #   theme(title = element_text(size = 6), legend.title = element_text(size = 6)), 
-  legend = "bottom", nrow = 1
-)
 ```
 
 ```{r fm-mm-regs-4, fig.cap="Predicted steps per foraging bout through time by movement model", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width="100%"}
@@ -1530,7 +1541,7 @@ ggpubr::ggarrange(
 )
 ```
 
-The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility (Figure S\@ref(fig:fm-mm-regs-3). Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted amount of mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the differential impact that low cost niche construction strategies can have on forager behaviors.
+The regression model demonstrate that burning restrictions and burning costs have the greatest difference in impact on forager mobility (Figure S\@ref(fig:fm-mm-regs-3)). Stricter limits on burning behaviors and higher costs result in higher levels of mobility over the course of model run. Interestingly, the predicted amount of mobility for the highest burning cost shows an increase in average moves per foraging bout. This pattern is impossible in the model because we cap mobility at a maximum value. The contrast of this with the other burning costs demonstrates the differential impact that low cost niche construction strategies can have on forager behaviors.
 
 ## Correlations between mobility and distributions of vegetation types
 
@@ -1643,7 +1654,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 When we visualize these differences (Figure S\@ref(fig:adj-fi-viz)), we can see that for random walks, there is a steep drop off in forager interactions within approximately the first 500 ticks of the model. This is likely because populations are relatively small at the beginning of model run, so each interaction will necessarily be a greater proportion. For the subsequent analyses, we look at the patterns occurring after the first 500 ticks to understand how the parameters affect interactions after a larger population has been established. 
 
-```{r adj-fi-reg-1, fig.cap="Standardized regression coefficients for effect of model parameters and their interaction with time on average proportion of population foragers interact with across model run", echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5}
+```{r adj-fi-reg-1, fig.cap="Standardized regression coefficients for effect of model parameters and their interaction with time on average proportion of population foragers interact with across model run", echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 fi.data = data %>% filter(ticks > 500)
 
 #plotNormalDensity(fi.data$adj.fi)
@@ -1680,7 +1691,7 @@ rw.fit1 = lm(adj.fi ~ ticks*(.), data = rw.data %>%
                select_at(c("ticks", "adj.fi", parameters[-7])))
 
 par(mfrow = c(1,2))
-par(mar=c(1,1,1,1))
+par(mar=c(2,2,2,2))
 plot(dw.fit1, which = 2)
 plot(rw.fit1, which = 2)
 ```
@@ -1891,5 +1902,6 @@ pkgs <- grateful::cite_packages(output = "table",
                                 citation.style = "pnas",
                                 out.dir = ".", 
                                 omit = c("QuantPsyc", "marginaleffects"))
-knitr::kable(pkgs, format = "latex")
+knitr::kable(pkgs, format = "latex") %>%
+  cat("\\adjustbox{valign=c}{\\includegraphics{table}}")
 ```
