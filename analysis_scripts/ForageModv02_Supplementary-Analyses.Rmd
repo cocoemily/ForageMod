@@ -8,7 +8,7 @@ output:
     toc_depth: 2
     number_sections: true
     dev: png
-    citation_package: grateful
+    citation_package: biblatex
     extra_dependecies: ["flafter"]
 bibliography: grateful-refs.bib
 csl: pnas.csl
