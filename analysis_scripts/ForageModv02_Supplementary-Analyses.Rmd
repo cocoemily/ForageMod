@@ -11,7 +11,7 @@ output:
     citation_package: biblatex
     extra_dependecies: ["flafter"]
 bibliography: grateful-refs.bib
-csl: pnas.csl
+csl: peerj.csl
 link-citations: yes
 
 header-includes:
@@ -1045,8 +1045,6 @@ The starting environmental conditions do not appear to have significantly differ
 
 ```{r veg-diversity-regression-1-4, fig.cap="Effect through time of underlying distribution of vegetation types on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(rw.gam2, select=3, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=4, shade=T)
@@ -1058,8 +1056,6 @@ The underlying distribution of resource potential, or maximum vegetation type va
 
 ```{r veg-diversity-regression-1-5, fig.cap="Effect through time of burn cost on vegetation diversity", echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(rw.gam2, select=5, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=6, shade=T)
@@ -1074,8 +1070,6 @@ Having a cost associated with burning introduces a larger effect on vegetation d
 
 ```{r veg-diversity-regression-1-6, fig.cap="Effect through time of limits on vegetation types that can be burned on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(rw.gam2, select=9, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=10, shade=T)
@@ -1086,8 +1080,6 @@ Similarly, stricter limits on what types of vegetation can be burned also allows
 
 ```{r veg-diversity-regression-1-7, fig.cap="Effect through time of limits on burning with adjacent burnt neighbors on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(rw.gam2, select=11, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=12, shade=T)
@@ -1100,8 +1092,6 @@ This same pattern is seen even more distinctly with the stricter burnt neighbor 
 
 ```{r veg-diversity-regression-1-8, fig.cap="Effect through time of climatic cycle duration on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(rw.gam2, select=14, shade=T)
 abline(h=0, lty = 2)
 plot(rw.gam2, select=15, shade=T)
@@ -1166,8 +1156,6 @@ Overall with directed walks, we get very similar parameter effects through time 
 
 ```{r veg-diversity-regression-2-3, fig.cap="Effect through time of type of starting climatic period on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(dw.gam2, select=1, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=2, shade=T)
@@ -1179,8 +1167,6 @@ We again see similar effects of both starting vegetation conditions on vegetatio
 
 ```{r veg-diversity-regression-2-4, fig.cap="Effect through time of underlying distribution of vegetation types on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(dw.gam2, select=3, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=4, shade=T)
@@ -1192,8 +1178,6 @@ The underlying distribution of resource potential, or maximum vegetation type va
 
 ```{r veg-diversity-regression-2-5, fig.cap="Effect through time of burn cost on vegetation diversity", echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(2,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(dw.gam2, select=5, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=6, shade=T)
@@ -1209,8 +1193,6 @@ With directed walks, we can see that low and medium costs for burning behaviors 
 
 ```{r veg-diversity-regression-2-6, fig.cap="Effect through time of limits on vegetation types that can be burned on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(dw.gam2, select=9, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=10, shade=T)
@@ -1219,8 +1201,6 @@ abline(h=0, lty = 2)
 
 ```{r veg-diversity-regression-2-7, fig.cap="Effect through time of limits on burning with adjacent burnt neighbors on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,3), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(dw.gam2, select=11, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=12, shade=T)
@@ -1233,8 +1213,6 @@ The limits on burning behaviors have more exaggerated effects with directed walk
 
 ```{r veg-diversity-regression-2-8, fig.cap="Effect through time of climatic cycle duration on vegetation diversity", echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow=c(1,2), cex=0.8)
-par(mar=c(0,1,0,1))
-
 plot(dw.gam2, select=14, shade=T)
 abline(h=0, lty = 2)
 plot(dw.gam2, select=15, shade=T)
@@ -1421,7 +1399,7 @@ ggplot(data %>% filter(ticks > 0)) +
 
 We can see in Figure S\@ref(fig:fm-viz) that there is a decrease in movement during productive periods and an increase in movement during unproductive periods of the model. This is more smoothed when cycle duration is shorter. 
 
-```{r fm-viz-2, fig.cap="Slope of linear relationship between steps per foraging bout and time for each climatic interval across model run", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=5}
+```{r fm-viz-2, fig.cap="Slope of linear relationship between steps per foraging bout and time for each climatic interval across model run", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=5.5}
 ggplot(rates %>% 
          filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = steps.slope, 
@@ -1437,7 +1415,7 @@ ggplot(rates %>%
 ```
 When we break this down by climatic interval, we can see that most of the change to mobility occurs during productive intervals (Figure S\@ref(fig:fm-viz-2)). Interestingly, across these productive intervals, it primarily at the beginning of model run when mobility decreases across the interval. By the end of model run, there is actually a slight increase in mobility across the climatic interval.
 
-```{r fm-viz-3, fig.cap="Average number of steps per foraging bout at the beginning of each climatic interval across model run", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+```{r fm-viz-3, fig.cap="Average number of steps per foraging bout at the beginning of each climatic interval across model run", echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", fig.height=5.5}
 ggplot(rates %>% 
          filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = start.steps, 
@@ -1899,10 +1877,9 @@ If we consider after that burn in period, we see that the proportion of interact
 # References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
-pkgs <- grateful::cite_packages(output = "table", 
-                                citation.style = "pnas",
+pkgs <- grateful::cite_packages(output = "table",
+                                out.format = "pdf",
                                 out.dir = ".", 
                                 omit = c("QuantPsyc", "marginaleffects"))
-knitr::kable(pkgs, format = "latex") %>%
-  cat("\\adjustbox{valign=c}{\\includegraphics{table}}")
+knitr::kable(pkgs)
 ```
