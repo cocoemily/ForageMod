@@ -5,11 +5,9 @@ subtitle: "Supplementary Analyses"
 output:
   bookdown::pdf_document2:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     number_sections: true
     dev: png
-    citation_package: biblatex
-    extra_dependecies: ["flafter"]
 bibliography: grateful-refs.bib
 csl: peerj.csl
 link-citations: yes
@@ -20,6 +18,8 @@ header-includes:
   - \def\fnum@figure{\figurename\thefigure}
   - \makeatother
   - \usepackage{float}
+  - \usepackage{caption}
+  - \captionsetup[figure]{font=small}
 ---
 
 ```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
@@ -1964,5 +1964,7 @@ pkgs <- grateful::cite_packages(output = "table",
                                 out.format = "pdf",
                                 out.dir = ".", 
                                 omit = c("QuantPsyc", "marginaleffects"))
-knitr::kable(pkgs)
+knitr::kable(pkgs) %>%
+  kableExtra::column_spec(3, width = "30em") %>%
+  kableExtra::kable_styling(latex_options=c("scale_down")) 
 ```
