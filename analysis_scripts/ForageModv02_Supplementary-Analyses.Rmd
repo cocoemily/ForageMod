@@ -919,7 +919,7 @@ ggarrange(
 
 ```
 
-When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs (Figure S\@ref(fig:morans-i-regression-3). When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
+When we look at how vegetation clustering changes over time with different burning costs (facets) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs (Figure S\@ref(fig:morans-i-regression-3)). When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
 
 ```{r morans-i-by-burn-limits, fig.cap="Trends in spatial autocorrelation of vegetation types across model run by parameters for burning costs, movement models and restrictions of burning behaviors", echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 plot.data = veg.data %>% 
