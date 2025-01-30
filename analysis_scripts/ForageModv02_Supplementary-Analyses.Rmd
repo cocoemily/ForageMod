@@ -8,6 +8,7 @@ output:
     toc_depth: 3
     number_sections: true
     dev: png
+    citation_package: biblatex
 bibliography: grateful-refs.bib
 csl: peerj.csl
 link-citations: yes
