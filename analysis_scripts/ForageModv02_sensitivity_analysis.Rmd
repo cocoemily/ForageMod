@@ -127,7 +127,7 @@ To capture information about the carrying capacity of the environment, we decide
 # Parameters
 We examined how foragers' disturbance likelihoods and forager movement was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs
 of non-disturbance forager behaviors. To do so, we allowed for
-essentially unlimited burning behaviors by holding *disturb-cost* (*burn-cost*),
+essentially unlimited disturbance behaviors by holding *disturb-cost* (*burn-cost*),
 *disturb-neighbor-limit* (*burnt-neighbor-limit*), and *disturb-veg-type-threshold* (*burn-veg-type-threshold*) constant. We also tested with one type of environmental scenario - starting in a productive environment and cycling the environment every 100 ticks - and one type of movement model - random walking. We tested the effects of the parameters listed below at a low, medium, and high value.
 
 ```{r read-parameter-data, echo=FALSE, message=FALSE, warning=FALSE}

@@ -58,9 +58,11 @@ bn.labs = c("burn with 8 burnt neighbors",
             "burn with 1 burnt neighbor")
 names(bn.labs) = c(8, 4, 1)
 
+hist(data$mean.burn.prob)
+
 mbp.plot = ggplot(data) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
+  geom_smooth(aes(x = ticks, y = mean.burn.prob), color = "black") +
   scale_color_brewer(palette = "Set2",
                      labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
