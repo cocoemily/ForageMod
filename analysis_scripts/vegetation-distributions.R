@@ -175,6 +175,8 @@ p1 = ggplot(plot.data) +
   theme(legend.position = "bottom", 
         strip.text = element_text(size = 7.5), 
         axis.title = element_text(size = 7.5))
+ggsave(filename = "preliminary_figures/veg_morans_i_fig2d.png", plot = p1, 
+       dpi = 300, width = 8, height = 4)
 
 all.plot =  ggarrange(
   ggarrange(img.plot1, img.plot2, img.plot3, labels = "AUTO", nrow = 1),
@@ -240,6 +242,8 @@ p2 = ggplot(plot.data2) +
         strip.text = element_text(size = 7), 
         axis.title = element_text(size = 7.5))
 plot(p2)
+ggsave(filename = "preliminary_figures/veg_diversity_fig3a.png", plot = p2, 
+       dpi = 300, width = 8, height = 4)
 
 # p3 = ggplot(plot.data) +
 #   geom_jitter(data = plot.data %>% filter(burn_cost == 0), mapping =

@@ -421,6 +421,11 @@ all.plot = ggarrange(
   interaction.plot, sfi.plot,
   ncol = 1, nrow = 2, common.legend = T, legend = "bottom", labels = "AUTO"
 )
+ggsave(filename = "preliminary_figures/interaction_fig5a.png", plot = interaction.plot, 
+       dpi = 300, width = 8, height = 3.5)
+ggsave(filename = "preliminary_figures/interaction_fig5b.png", plot = sfi.plot, 
+       dpi = 300, width = 8, height = 4)
+
 ggsave(filename = "figures/adjusted-interaction+social-network.png", plot = all.plot,
        dpi = 300, width = 8, height = 6)
 
