@@ -49,29 +49,29 @@ data$benefit.ratio2 = data$benefit_other/data$benefit_self
 
 
 ##### mean burn probability #####
-bc.labs = c("no burn cost (0)", "low burn cost (100)", "medium burn cost (200)", "high burn cost (300)")
-names(bc.labs) = c(0, 100, 200, 300)
-bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+dc.labs = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")
+names(dc.labs) = c(0, 100, 200, 300)
+bt.labs = c("can disturb limited resource types", "can disturb all resource types")
 names(bt.labs) = c(4, 7)
-bn.labs = c("burn with 8 burnt neighbors", 
-            "burn with 4 burnt neighbors", 
-            "burn with 1 burnt neighbor")
+bn.labs = c("disturb with 8 disturbed neighbors", 
+            "disturb with 4 disturbed neighbors", 
+            "disturb with 1 disturbed neighbor")
 names(bn.labs) = c(8, 4, 1)
 
 mbp.plot = ggplot(data) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+                     labels = dc.labs) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  facet_grid( ~ `burn-cost`, labeller = 
-               labeller(`burn-cost` = bc.labs, `burn-veg-type-threshold` = bt.labs, 
+  facet_grid(`movement-model` ~ `burn-cost`, labeller = 
+               labeller(`burn-cost` = dc.labs, `burn-veg-type-threshold` = bt.labs, 
                         `burnt-neighbor-limit` = bn.labs)) +
-  labs(y = "mean probability of burning", x = "ticks", color = "cost of burning") +
+  labs(y = "mean probability of disturbance", x = "ticks", color = "cost of burning") +
   theme(legend.position = "none", axis.title = element_text(size = 8))
 plot(mbp.plot)
 ggsave(filename = "preliminary_figures/all_burn-prob.png", plot = mbp.plot, 
-       dpi = 300, width = 8, height = 4)
+       dpi = 300, width = 8, height = 3.5)
 
 ###### effects of parameters on  over time ######
 # plotNormalHistogram(data$mean.burn.prob)
@@ -134,29 +134,15 @@ br.plot = ggplot(data %>% filter(ticks > 0)) +
   geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
   geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+                     labels = dc.labs) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
-                labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs, `veg-cycle-start` = vs.labs)) +
-  labs(y = "proportion of burning benefits for self", x = "ticks", color = "cost of burning") +
+  facet_grid( `movement-model` ~ `burn-cost`, labeller = 
+               labeller(`burn-cost` = dc.labs)) +
+  labs(y = "proportion of disturbance benefits for self", x = "ticks", color = "cost of burning") +
   theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
 #plot(br.plot)
 ggsave(filename = "preliminary_figures/all_self-benefit-proportion.png", plot = br.plot, 
-       dpi = 300, width = 8, height = 6)
-
-br.plot = ggplot(data %>% filter(ticks > 0)) +
-  geom_smooth(aes(x = ticks, y = bself.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
-  geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
-               labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs, `veg-cycle-start` = vs.labs)) +
-  labs(y = "proportion of burning benefits for self", x = "ticks", color = "cost of burning") +
-  theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
-#plot(br.plot)
-ggsave(filename = "preliminary_figures/all_self-benefit-proportion.png", plot = br.plot, 
-       dpi = 300, width = 8, height = 6)
+       dpi = 300, width = 8, height = 3.5)
 
 hist((data %>% filter(ticks > 0))$bself.prop)
 fit1.bself = glm(bself.prop ~ ticks*(.), data = data %>% select_at(c("ticks", parameters, "bself.prop"), family = "poisson"))
@@ -185,7 +171,7 @@ mbp.plot2 = ggplot(data) +
                      guide = "legend") +
   geom_hline(yintercept = 0, linetype = "dotted") +
   #facet_grid( ~ `burn-cost`, labeller = labeller(`burn-cost` = dc.labs)) +
-  labs(y = "mean probability of disturbance", x = "ticks", color = "") +
+  labs(y = "mean likelihood of disturbance", x = "ticks", color = "") +
   theme(axis.title = element_text(size = 8)) +
   guides(colour = guide_legend(override.aes = list(linewidth = 2)))
 #plot(mbp.plot2)
