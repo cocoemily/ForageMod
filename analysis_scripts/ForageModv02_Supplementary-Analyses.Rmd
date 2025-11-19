@@ -8,10 +8,10 @@ output:
     toc_depth: 3
     number_sections: true
     dev: png
-    citation_package: biblatex
 bibliography: grateful-refs.bib
 csl: pnas.csl
 link-citations: yes
+
 
 header-includes:
   - \renewcommand{\figurename}{Figure S}
@@ -22,6 +22,11 @@ header-includes:
   - \usepackage{caption}
   - \captionsetup[figure]{font=small}
 ---
+
+This document contains supplementary statistical analyses to support the results and conclusions presented in the manuscript. 
+
+#### Parameter names
+In the development of ForageMod ABM, we used variable names specific to simulating burning behaviors, but the behavior of the model can be generalized to any disturbance that temporarily improves local environment. In this document we use model parameter names, but we reiterate that the results are not only associated with anthropogenic burning regimes. 
 
 ```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
 library(knitr)
@@ -45,11 +50,10 @@ knitr::opts_chunk$set(
   dpi=300,
   fig.width=8, 
   fig.align = "center", 
-  fig.pos = "H", 
-  tidy=T
+  fig.pos = "H"
 )
 options(
-  width=80,
+  width=60,
   tinytex.verbose = TRUE
 )
 
@@ -156,14 +160,14 @@ names(cycle.labs) = c(250, 100)
 dist.labs = c("random environmental potential", 
               "clustered environmental potential")
 names(dist.labs) = c("\"random\"", "\"clustered\"")
-bc.labs = c("burn cost = 0", "burn cost = 100", 
-            "burn cost = 200", "burn cost = 300")
+bc.labs = c("disturb cost = 0", "disturb cost = 100", 
+            "disturb cost = 200", "disturb cost = 300")
 names(bc.labs) = c(0, 100, 200, 300)
-bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
+bt.labs = c("can disturb veg types 1-4", "can disturb veg types 1-7")
 names(bt.labs) = c(4, 7)
-bn.labs = c("can burn with 1 burnt neighbor", 
-            "can burn with 4 burnt neighbors", 
-            "can burn with 8 burnt neighbors")
+bn.labs = c("disturb with 1 disturbed neighbor", 
+            "disturb with 4 disturbed neighbors", 
+            "disturb with 8 disturbed neighbors")
 names(bn.labs) = c(1, 4, 8)
 move.labs = c("random walks", "directed walks")
 names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
@@ -222,7 +226,26 @@ ggplot(data) +
 
 As we can see in Figure S\@ref(fig:population-1), population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive (see below). However, the overall trend of population increase is evident across all modeled scenarios.
 
-We looked at linear rates of changes to population density within each climate period of the model to get a more detailed understanding of population change during model run. This was accomplished by separating the data into tick ranges based on the cycle duration of each individual model run. Within each tick range, a linear regression was fit to the output variable of interest, in this case population density, with tick as the explanatory variable. We then recorded the coefficient of the tick variable, as well as the estimated value of the dependent variable at the beginning and end of the tick range. We c 
+```{r population-2, echo=T, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
+reg.data = data %>% filter(ticks == 3000)
+
+# hist(reg.data$pop.dens)
+mean(reg.data$pop.dens)
+var(reg.data$pop.dens)
+
+model1 = glm(pop.dens ~ ., data = reg.data[,c("pop.dens", parameters)], family = "poisson")
+plot(model1)
+
+deviance(model1)/df.residual(model1)
+
+# summary(model1)
+plot_summs(model1, scale = T)
+
+```
+
+When we compare standardized regression coefficients to look at how parameter values affect the resulting population density at the end of model run, we can see that the highest disturbance costs (*burn-cost* = 200 & 300) have the strongest effect, significantly reducing the maximum population density achieved during model run. 
+
+We also looked at linear rates of changes to population density within each climate period of the model to get a more detailed understanding of population change during model run. This was accomplished by separating the data into tick ranges based on the cycle duration of each individual model run. Within each tick range, a linear regression was fit to the output variable of interest, in this case population density, with tick as the explanatory variable. We then recorded the coefficient of the tick variable, as well as the estimated value of the dependent variable at the beginning and end of the tick range.
 
 ```{r population-change-over-time-1, message=FALSE, warning=FALSE, include=FALSE}
 rates <- readRDS("../results/outputs/output-evolution-comparison.rds")
@@ -258,10 +281,10 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
 ```
 We see that, on average, with short climate cycles, unproductive periods see essentially no change in population, with slopes being essentially zero (Figure S\@ref(fig:population-change-over-time-2)). With longer climatic cycles, there is slight positive population change during unproductive periods at the beginning of model run. 
 
-Conversely, there is pretty consistent population growth during productive periods of the model until populations reach an equilibrium around 3000 ticks. The results show that population grows more quickly during productive periods at the beginning of model run, with rates of change decreasing toward zero by the end of the model, when population reaches equilibrium. This demonstrates the effect of a carrying capacity in the model.
+Conversely, there is pretty consistent population growth during productive periods of the model until populations reach an equilibrium around 3000 ticks. The results show that population grows more quickly during productive periods at the beginning of model run, with rates of change decreasing toward zero by the end of the model, when population reaches equilibrium. This demonstrates the effect of a carrying capacity in the model. 
 
 ## Impact of amount of forageable land on population density
-We can investigate this carrying capacity by looking at how many patches on the landscape are available to be foraged during a given time interval and how this is related to the change in population density over that same interval using a non-parametric Spearman's rank correlation. Here we use the population density slope value from each tick range and compare it to the average proportion of the modeled landscape that is either already foraged or burnt at a given tick.
+We can investigate this carrying capacity by looking at how many patches on the landscape are available to be foraged during a given time interval and how this is related to the change in population density over that same interval using a non-parametric Spearman's rank correlation. Here we use the population density slope value from each tick range and compare it to the average proportion of the modeled landscape that is either already foraged or disturbed (here, *burnt*) at a given tick.
 
 ```{r pop-dens-forageable-1, fig.cap="Relationship between change in population density within climatic interval and proportion of patches that are unforageable for short climatic intervals (100 time steps)", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 test_data = rates %>% 
@@ -367,8 +390,8 @@ rm(list = c("data.mid", "pvalue.mid"))
 When we look at the Kendall's Tau correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types, that is patches that have a high resource value (Figure S\@ref(fig:pop-density-correlations-1)). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
 
 
-# Forager likelihood of burning patches
-We examined the effects of all model parameters on the *burn-prob*, hereafter referred to as *burning probability*^[It is important to note that this variable is not actually a probability. It is a continuous variable that represents the likelihood of an agent to engage in disturbance behaviors in the model. When agents have the opportunity to perform these disturbance behaviors, this likelihood value is compared to a random number between 0 and 1 and so "burning probability" behaves like a probability when its value is between 0 and 1.], across model run by fitting logistic growth curves to each trajectory of burning probability over time for each model run. For each model run, we ascertain the carrying capacity (*K*), or the upper bound of burning probability, and the growth rate (*r*), or the speed of growth.
+# Forager likelihood of disturbing patches
+We examined the effects of all model parameters on the *mean.burn.prob* of the population, hereafter referred to as *disturbance likelihood*^[Despite the variable name, this is not actually a probability. It is a continuous variable that represents the likelihood of an agent to engage in disturbance behaviors in the model. When agents have the opportunity to perform these disturbance behaviors, this likelihood value is compared to a random number between 0 and 1 and so "burn-prob" behaves like a probability when its value is between 0 and 1.], across model run by fitting logistic growth curves to each trajectory of disturbance likelihood (*burn-prob*) over time for each model run. For each model run, we ascertain the carrying capacity (*K*), or the upper bound of disturbance likelihood, and the growth rate (*r*), or the speed of growth.
 
 
 ```{r burning-probability-fitting-curves, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Sample of logistic fits for average forager burning probability over time for individual model runs."}
@@ -407,7 +430,7 @@ ggplot(data = data %>% filter(exp %in% sample), aes(ticks, mean.burn.prob)) +
 
 fits = fits %>% left_join(data, by = "exp", multiple = "last") %>% ungroup()
 ```
-We then performed a non-parametric, full factorial ART ANOVA to assess which parameters and interactions between parameters significant affect both the upper bound of average burning probability across the population (*K*) and the growth rate of burning probabilities over model run (*r*). We compare the relative effect sizes by calculating $\eta^{2}$. 
+We then performed a non-parametric, full factorial ART ANOVA to assess which parameters and interactions between parameters significant affect both the upper bound of average disturbance likelihood across the population (*K*) and the growth rate of disturbance likelihoods over model run (*r*). We compare the relative effect sizes by calculating $\eta^{2}$. 
 
 ```{r burning-probability-art-anova-k, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 fits = fits %>%
@@ -430,16 +453,16 @@ anova_K = anova(art_K)
 sig_effects_K = subset(anova_K, `Pr(>F)` < 0.05)
 
 ```
-## Effects of parameters on upper bound of burning likelihood
+## Effects of parameters on upper bound of disturbance likelihood
 
 ```{r burning-probability-art-anova-k-2, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 es_K = effectsize::eta_squared(sig_effects_K, partial = T)
 es_ranked_K = es_K[order(-es_K$Eta2_partial), ]
-head(es_ranked_K, 6)
+knitr::kable(head(es_ranked_K, 6))
 
 ```
 
-By looking at the parameters with the highest $\eta^{2}$ values, we can see that for the upper bound of burning probabilities, the effect of burning cost is about twice as large as any other parameter or combination of parameters. The next largest effect is the interaction of burning cost and movement model. 
+By looking at the parameters with the highest $\eta^{2}$ values, we can see that for the upper bound of disturbance likelihoods, the effect of disturbance cost (*burn-cost*) is about twice as large as any other parameter or combination of parameters. The next largest effect is the interaction of burning cost and movement model. 
 
 ```{r burn-cost-comparisons-bp, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Comparison of fitted K values by burning cost and movement model."}
 ggplot(k.reg.data) +
@@ -448,11 +471,11 @@ ggplot(k.reg.data) +
 
 ```
 
-When we compare the effects of burning cost across the different cost levels (Figure S\@ref(fig:burn-cost-comparisons-bp)), we see that smaller costs to burning behaviors produce larger *K* values, meaning that the upper bound for burning behaviors is significantly higher when burning costs are low. We can also see that when the agents perform directed walks, this further depressed the maximum average burning probability that the population will reach. The other highly important parameter is the limit on how many burnt neighbors a patch can have and still allow burning. Similar to burn cost, we find that strict limits on where burning can occur depresses the upper bound of burning probabilities that the population can achieve.
+When we compare the effects of disturbance cost (*burn-cost*) across the different cost levels (Figure S\@ref(fig:burn-cost-comparisons-bp)), we see that smaller costs to disturbance behaviors produce larger *K* values, meaning that the upper bound for disturbance likelihood is significantly higher when disturbance costs are low. We can also see that when the agents perform directed walks, this further depressed the maximum average disturbance likelihood that the population will reach. The other highly important parameter is the limit on how many disturbed neighbors a patch can have and still allow disturbance (*burnt-neighbor-limit*). Similar to disturbance cost, we find that strict limits on where disturbances can occur depresses the upper bound of disturbance likelihood that the population can achieve.
 
-## Effects of parameters on growth rate of burning likelihood
+## Effects of parameters on growth rate of disturbance likelihood
 
-```{r burning-probability-art-anova-r, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Comparison of fitted r values by burning cost and burnt neighbor limits."}
+```{r burning-probability-art-anova-r, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Comparison of fitted r values by disturbance cost and disturbed neighbor limits."}
 
 outliers = boxplot(fits$r, plot =F)$out
 r.reg.data = fits %>% filter(!(r %in% outliers)) %>% dplyr::select(c("r", "exp", reg.parameters)) %>% na.omit()
@@ -463,53 +486,53 @@ sig_effects_r = subset(anova_r, `Pr(>F)` < 0.05)
 
 es_r = effectsize::eta_squared(sig_effects_r, partial = T)
 es_ranked_r = es_r[order(-es_r$Eta2_partial), ]
-head(es_ranked_r, 5)
+knitr::kable(head(es_ranked_r, 5))
 
 ggplot(r.reg.data) +
   geom_boxplot(aes(x = burn_cost, y = r)) +
   facet_wrap(~burnt_neighbor_limit, labeller = labeller(burnt_neighbor_limit = bn.labs))
 
 ```
-We get similar results for the growth of burning probabilities over model run, where cost and limits to burning behaviors have the largest significant effects. Again we see that when burning is the most unlimited (i.e., low burning cost and more freedom to burn whatever patches), *r* values are higher, meaning that population burning probabilities quickly increase to the upper bound *K*. 
+We get similar results for the growth of disturbance likelihood (*mean.burn.prob*) over model run, where cost and limits to disturbance behaviors have the largest significant effects. Again we see that when disturbance is the most unlimited (i.e., low disturbance cost and more freedom to disturb whatever patches), *r* values are higher, meaning that population disturbance likelihoods quickly increase to the upper bound *K*. 
 
-## Negative burning likelihood
+## Negative disturbance likelihood
 
-As shown in Figure 2A in the manuscript, there are model runs that result in a decrease of burning likelihood among foragers to values below 0. This means that foragers never perform burning behaviors even when there are opportunities available.
+As shown in Figure 2A in the manuscript, there are model runs that result in a decrease of disturbance likelihood among foragers to values below 0. This means that foragers never perform disturbance behaviors even when there are opportunities available.
 
 ```{r negative-bp, echo=TRUE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
 length(unique((fits %>% filter(mean.burn.prob < 0))$exp))/length(unique(fits$exp))
 ```
 
-Approximately 12% of all model runs result in a negative burning probabilities by the end of model run. 
+Approximately 12% of all model runs result in a negative disturbance likelihood (*mean.burn.prob*) by the end of model run. 
 
 ```{r negative-bp2, echo=TRUE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
 table((fits %>% filter(mean.burn.prob < 0))$burn_cost)
 ```
 
-This only occurs when burning costs are 300, that is to say burning costs are greater than the benefit gained from burning. This leads to the question, what about high burning costs leads to negative selection on forager affinity for performing burning behaviors? 
+This only occurs when disturbance costs are 300 (*burn-cost* = 300), that is to say disturbance costs are greater than the benefit gained from disturbing the patch. This leads to the question, what about high disturbance costs leads to negative selection on forager affinity for performing disturbances? 
 
-## Effect of self benefit on burning behaviors
-Positive selection for burning behaviors across most of the model runs occurs because there is a consistent low benefit to self of these behaviors. Here, we measure benefit to self as the number of times an agent forages from a patch where they were the last agent to burn it as a proportion of the average total number of foraging events at each tick. 
+## Effect of self benefit on disturbance behaviors
+Positive selection for disturbance behaviors across most of the model runs occurs because there is a consistent low benefit to self of these behaviors. Here, we measure benefit to self as the number of times an agent forages from a patch where they were the last agent to disturb it as a proportion of the average total number of foraging events at each tick. 
 
-```{r bp-and-other-outputs-1, echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%', fig.cap="Proportion of foraging events where benefit of burning is recouped by agent that last performed the burning behavior at a given patch"}
+```{r bp-and-other-outputs-1, echo=FALSE, fig.height=6, message=FALSE, warning=FALSE, out.width='100%', fig.cap="Proportion of foraging events where benefit of disturbance is recouped by agent that last performed the disturbance behavior at a given patch"}
 ggplot(data %>% filter(ticks > 0)) +
   geom_smooth(aes(x = ticks, y = bself.prop, group = exp, 
                   color = as.factor(`burn-cost`)), 
               alpha = 0.01, linewidth = 0.05) +
   geom_smooth(aes(x = ticks, y = bself.prop), se = F, color = "black") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", 
-                                "low burn cost (100)", 
-                                "high burn cost (200)", 
-                                "highest burn cost (300)")) +
+                     labels = c("no disturbance cost (0)", 
+                                "low disturbance cost (100)", 
+                                "high disturbance cost (200)", 
+                                "highest disturbance cost (300)")) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, 
              labeller = labeller(`burn-cost` = bc.labs, 
                                  `cycle-duration` = cycle.labs, 
                                  `veg-cycle-start` = start.labs)) +
-  labs(y = "proportion of burning benefits for self", 
+  labs(y = "proportion of disturbance benefits for self", 
        x = "ticks", 
-       color = "cost of burning") +
+       color = "disturbance cost") +
   theme(legend.position = "none", axis.title = element_text(size = 8), 
         strip.text = element_text(size = 6))
 
@@ -517,11 +540,11 @@ ggplot(data %>% filter(ticks > 0)) +
 
 ```
 
-Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased burning behaviors (Figure S\@ref(fig:bp-and-other-outputs-1)). However, it is also evident that some model runs with the highest burning cost result in essentially no self benefit of burning behaviors. This is presumably what leads to negative selection, resulting in foragers not performing burning behaviors.  
+Benefit to self consistently occurs at low levels across model run for most parameter settings, resulting in the evolution of increased disturbance behaviors (Figure S\@ref(fig:bp-and-other-outputs-1)). However, it is also evident that some model runs with the highest disturbance cost result in essentially no self benefit of disturbance behaviors. This is presumably what leads to negative selection, resulting in foragers not performing disturbance behaviors.  
 
 ### Effect of model parameters on self benefit
 
-```{r bp-and-other-outputs-2, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%', fig.cap="Average proportion of foraging events where benefit of burning is recouped by agent that last performed the burning behavior at a given patch at the start of each climatic interval during model run"}
+```{r bp-and-other-outputs-2, echo=FALSE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%', fig.cap="Average proportion of foraging events where benefit of disturbance is recouped by agent that last performed the disturbance behavior at a given patch at the start of each climatic interval during model run"}
 
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
   geom_boxplot(aes(x = tick.range, y = start.bself,
@@ -535,7 +558,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
 
 When we break this down by each climatic interval, we see higher proportions of self benefit during unproductive periods (Figure S\@ref(fig:bp-and-other-outputs-2)), in part due to reduced population density in these climatic intervals. To capture the overall trajectory of this variable over time, we fit a logistic function to it and also calculated the minimum and maximum values from the central 500 ticks of the model run.
 
-```{r bp-selfprop-fitting-curves, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5, fig.cap="Sample of logistic fits for average forager burning probability over time for individual model runs."}
+```{r bp-selfprop-fitting-curves, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5, fig.cap="Sample of logistic fits for average forager disturbance likelihood over time for individual model runs."}
 fits_bself = data %>%
   group_by(exp) %>%
   do({
@@ -606,7 +629,7 @@ sig_effects_K = subset(anova_K, `Pr(>F)` < 0.05)
 
 es_K = effectsize::eta_squared(sig_effects_K, partial = T)
 es_ranked_K = es_K[order(-es_K$Eta2_partial), ]
-head(es_ranked_K, 8)
+knitr::kable(head(es_ranked_K, 8))
 
 outliers = boxplot(fits_bself$r, plot =F)$out
 r.reg.data = fits_bself %>% filter(!(r %in% outliers)) %>% dplyr::select(c("r", "exp", reg.parameters)) %>% na.omit()
@@ -617,7 +640,7 @@ sig_effects_r = subset(anova_r, `Pr(>F)` < 0.05)
 
 es_r = effectsize::eta_squared(sig_effects_r, partial = T)
 es_ranked_r = es_r[order(-es_r$Eta2_partial), ]
-head(es_ranked_r, 8)
+knitr::kable(head(es_ranked_r, 8))
 
 outliers = boxplot(fits_bself$max_self_prop, plot =F)$out
 m.reg.data = fits_bself %>% filter(!(r %in% outliers)) %>% dplyr::select(c("max_self_prop", "exp", reg.parameters)) %>% na.omit()
@@ -628,15 +651,15 @@ sig_effects_m = subset(anova_m, `Pr(>F)` < 0.05)
 
 es_m = effectsize::eta_squared(sig_effects_m, partial = T)
 es_ranked_m = es_m[order(-es_m$Eta2_partial), ]
-head(es_ranked_m, 8)
+knitr::kable(head(es_ranked_m, 8))
 ```
-We find that similar parameters impact the shape of the trajectory of self benefit over model run as with the trajectory of burning probabilities. 
+We find that similar parameters impact the shape of the trajectory of self benefit over model run as with the trajectory of disturbance likelihood. 
 
-### Relationship between self benefit and burning behaviors over time
+### Relationship between self benefit and disturbance behaviors over time
 
-We looked at the relationship between self benefit (and conversely, benefit of burning to others) and burning behaviors by comparing the final value of each within each climatic cycle of the model using Spearman's rank correlations.
+We looked at the relationship between self benefit (and conversely, benefit of disturbance to others) and disturbance behaviors by comparing the final value of each within each climatic cycle of the model using Spearman's rank correlations.
 
-```{r bp-and-other-outputs-4, fig.cap="Relationship between proportion of self benefit and burning probability at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs-4, fig.cap="Relationship between proportion of self benefit and disturbance likelihood at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% 
          filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100")) +
@@ -654,9 +677,9 @@ ggplot(rates %>%
 
 ```
 
-When looking at how self benefit relates to burning probabilities within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs-4)). We can also see that, within each climatic interval, low burning probabilities cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
+When looking at how self benefit (*end.bself*) relates to disturbance likelihood (*end.burn.prob*) within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs-4)). We can also see that, within each climatic interval, low disturbance likelihood cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
 
-```{r bp-and-other-outputs-5, fig.cap="Relationship between proportion of other benefit (inverse of self benefit) and burning probability at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs-5, fig.cap="Relationship between proportion of other benefit (inverse of self benefit) and disturbance likelihood at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% 
          filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100")) +
@@ -675,12 +698,12 @@ ggplot(rates %>%
 
 ```
 
-By the end of model run, burning probabilities are more highly positively correlated with benefit to others (Figure S\@ref(fig:bp-and-other-outputs-5)), meaning that the highest probabilities of burning behaviors occur when agents besides the one that burned a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of burning allows for further positive selection of this behavior. 
+By the end of model run, disturbance likelihood (*end.burn.prob*) is more highly positively correlated with benefit to others (*end.bother*) (Figure S\@ref(fig:bp-and-other-outputs-5)), meaning that the highest likelihood of disturbance behaviors occur when agents besides the one that disturbed a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of disturbance allows for further positive selection of this behavior. 
 
-## Positive evolution of burning behaviors with high burning costs
-One interesting model result is the evolution of high probabilities of burning under conditions where this behavior has a high cost - that is a cost that outweighs the energetic benefits gained. 
+## Positive evolution of disturbance behaviors with high disturbance costs
+One interesting model result is the evolution of high likelihood of disturbance behaviors under conditions where this behavior has a high cost - that is a cost that outweighs the energetic benefits gained. 
 
-```{r high-cost-burning-1, fig.cap="Trends of burning probabilities over time for model runs with high burning costs", echo=FALSE, fig.height=3, fig.width=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r high-cost-burning-1, fig.cap="Trends of disturbance likelihood over time for model runs with high disturbance costs", echo=FALSE, fig.height=3, fig.width=6, message=FALSE, warning=FALSE, out.width='100%'}
 high.burn = data %>% filter(`burn-cost` == 300)
 
 ggplot(high.burn) +
@@ -697,9 +720,9 @@ ggplot(high.burn) +
 length(unique((fits %>% filter(burn_cost == 300) %>% filter(mean.burn.prob < 0))$exp))/length(unique((fits %>% filter(burn_cost == 300))$exp))
 ```
 
-Around 51% of these high cost scenarios result in negative likelihood of burning behaviors by the end of model run (Figure S\@ref(fig:high-cost-burning-1)). 
+Around 51% of these high cost scenarios result in negative likelihood of disturbance behaviors by the end of model run (Figure S\@ref(fig:high-cost-burning-1)). 
 
-```{r high-cost-burning-3, fig.cap="Burning probability at the end of the model run during high burn cost model scenarios", echo=FALSE, fig.height=3, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
+```{r high-cost-burning-3, fig.cap="Disturbance likelihood at the end of the model run during high disturbance cost model scenarios", echo=FALSE, fig.height=3, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
 #hist((high.burn %>% filter(ticks == 3500))$mean.burn.prob)
 
 ggplot(high.burn %>% filter(ticks == 3500)) +
@@ -709,10 +732,10 @@ ggplot(high.burn %>% filter(ticks == 3500)) +
 rm(list = c("high.burn"))
 ```
 
-The final burning probability of the model during these high burn cost scenarios appears to be primarily related to the movement model that agents employ (Figure S\@ref(fig:high-cost-burning-3)). Under random walks, agents are more likely to develop increased burning probabilities. Under directed walks, the high cost of burning keeps burning probabilities low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through burning behaviors. 
+The final disturbance likelihood of the model during these high disturbance cost scenarios appears to be primarily related to the movement model that agents employ (Figure S\@ref(fig:high-cost-burning-3)). Under random walks, agents are more likely to develop increased disturbance likelihood. Under directed walks, the high cost of disturbance keeps likelihoods low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through disturbance behaviors. 
 
-# Burnt landscape proportions
-```{r burnt-landscape-proportions-plots, fig.cap="Relationship between proportion of landscape that is burnt and population density (A) and burning probabilities (B)", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE, out.width='100%', fig.height=4}
+# Disturbed landscape proportions
+```{r burnt-landscape-proportions-plots, fig.cap="Relationship between proportion of landscape that is disturbed and population density (A) and disturbance probabilities (B)", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE, out.width='100%', fig.height=4}
 data$burnt = data$`veg_-1`
 
 ggarrange(
@@ -725,9 +748,9 @@ ggarrange(
 
 ```
 
-To understand how the different parameters affect the proportion of burnt landscape during model run, we look at the proportion of burnt landscape reached by the end of model run and also how much change in this proportion occurs in the second half of model run compared to the first half of model run.
+To understand how the different parameters affect the proportion of disturbed landscape (*burnt*) during model run, we look at the proportion of disturbed landscape reached by the end of model run and also how much change in this proportion occurs in the second half of model run compared to the first half of model run.
 
-Because we are considering the proportion of the total landscape that is burnt, we use a Beta regression to examine the effects of the model parameters and their interactions on this proportion. We examine up to three way interactions between the parameters, which explains approximately 91% of the variation in our response variable.
+Because we are considering the proportion of the total landscape that is disturbed, we use a Beta regression to examine the effects of the model parameters and their interactions on this proportion. We examine up to three way interactions between the parameters, which explains approximately 91% of the variation in our response variable.
 
 ```{r veg-0-regressions-2, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
 beta.data = data %>% filter(ticks == 3500) %>% 
@@ -764,11 +787,11 @@ drop_stats = map_df(terms, function(t) {
 
 #print(drop_stats %>% filter(p_value < 0.05))
 
-print(head(drop_stats[order(-drop_stats$delatLogLik), ] %>% select(term, delatLogLik), n = 10))
+knitr::kable(head(drop_stats[order(-drop_stats$delatLogLik), ] %>% select(term, delatLogLik), n = 10))
 
 ```
 
-We look at the explanatory power of each of the terms by determining which terms improve the model fit the most by comparing the pseudo-R squared values of models with individual terms dropped. The top terms are three-way interactions that include some type of limit on burning behavior typically with *cycle-duration* and *veg-cycle-start*. This is likely because the combination of these two parameters determines what type of vegetation cycle the model ends in; since we are considering the proportion of burnt landscape at the end of model run, these parameters will therefore be important. Furthermore, unsurprisingly, *burnt-neighbor-limit*, which controls how many patches in a neighborhood can be burnt at one time is an important term in these interactions. 
+We look at the explanatory power of each of the terms by determining which terms improve the model fit the most by comparing the pseudo-R squared values of models with individual terms dropped. The top terms are three-way interactions that include some type of limit on disturbance behavior typically with *cycle-duration* and *veg-cycle-start*. This is likely because the combination of these two parameters determines what type of vegetation cycle the model ends in; since we are considering the proportion of disturbed landscape at the end of model run, these parameters will therefore be important. Furthermore, unsurprisingly, *burnt-neighbor-limit*, which controls how many patches in a neighborhood can be disturbed at one time is an important term in these interactions. 
 
 ```{r veg-0-regressions-results-1, out.width = '100%', fig.height=4, echo=TRUE, message=FALSE, warning=FALSE}
 broom::tidy(beta.fit1) %>%
@@ -787,9 +810,9 @@ broom::tidy(beta.fit1) %>%
 ```
 
 
-When we look at the effects of these parameters, we see that the combination of long cycles and starting in an unproductive cycle reduces the proportion of burnt landscape, because model runs with long cycles always end in the same vegetation productivity state as they start in. As for the burning parameters, we see the same effects as the previous analyses, where increased costs result in less burnt landscape and relaxed limits result in more burnt landscape at the end of model run. We can also see that directed walks, compared to random walks slightly increase the proportion of burnt landscape, suggesting that directed walks allow for overall more burning events.
+When we look at the effects of these parameters, we see that the combination of long cycles and starting in an unproductive cycle reduces the proportion of disturbed landscape, because model runs with long cycles always end in the same vegetation productivity state as they start in. As for the disturbance cost/limit parameters, we see the same effects as the previous analyses, where increased costs result in less disturbed landscape and relaxed limits result in more disturbed landscape at the end of model run. We can also see that directed walks, compared to random walks slightly increase the proportion of disturbed landscape, suggesting that directed walks allow for overall more disturbance events.
 
-```{r veg-0-regressions-3, fig.cap="Proportions of landscape that are burnt across model run for different model parameters", echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
+```{r veg-0-regressions-3, fig.cap="Proportions of landscape that are disturbed across model run for different model parameters", echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
   ggplot(data) +
     geom_smooth(aes(x = ticks, y = burnt, color = `burn-cost`)) +
@@ -802,9 +825,9 @@ ggarrange(
 
 ```
 
-This is more obvious when we visualize it in Figure S\@ref(fig:veg-0-regressions-3). These results match those above for the effect of these parameters on mean burning probability. This is also consistent with the high positive correlation between proportion of burnt landscape and burning probability through time. 
+This is more obvious when we visualize it in Figure S\@ref(fig:veg-0-regressions-3). These results match those above for the effect of these parameters on average disturbance likelihoods. This is also consistent with the high positive correlation between proportion of disturbed landscape and likelihood of disturbance through time. 
 
-To look at change in different halves of model run, we calculate the slope between the proportion of burnt landscape at tick 0 and the mid-point of model run and the slope for the mid-point to the end of model run. We fit a linear regression to the difference in slopes between the beginning and end of model run with up to three way interactions between the parameters. We the performed another drop test to determine which parameters/interactions significantly improve model fit.
+To look at change in different halves of model run, we calculate the slope between the proportion of disturbed landscape at tick 0 and the mid-point of model run and the slope for the mid-point to the end of model run. We fit a linear regression to the difference in slopes between the beginning and end of model run with up to three way interactions between the parameters. We the performed another drop test to determine which parameters/interactions significantly improve model fit.
 
 ```{r calculate-trends-burnt-prop, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 fits_burnt = data %>%
@@ -834,7 +857,7 @@ rownames(subset(drop1(model1, test = "F"),`Pr(>F)` < 0.05))
 
 ```
 
-We get similar results as with the final proportion of burnt landscape. The parameters *cycle-duration* and *veg-cycle-start* are important interaction parameters because they control which vegetation state we are in when calculating these slopes. Then, the main parameters that are important are all of the burning parameters and movement model. 
+We get similar results as with the final proportion of disturbed landscape. The parameters *cycle-duration* and *veg-cycle-start* are important interaction parameters because they control which vegetation state we are in when calculating these slopes. Then, the main parameters that are important are all of the disturbance parameters and movement model. 
 
 ```{r visualize-trends-burnt-prop, fig.cap="Comparison of slopes between beginning of model run and end of model run by important parameter values for model runs with short cycle durations and starting in a productive cycle", echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
 plot_data = fits_burnt %>% filter(`cycle-duration` == 100) %>% filter(`veg-cycle-start` == "\"productive\"")
@@ -855,7 +878,7 @@ ggarrange(
   nrow = 2, ncol = 2
 )
 ```
-Looking at the difference in slopes by parameter values, we can see that on average most of the change in burnt landscape proportions occurs in the beginning of model run (the difference between beginning and end is positive on average). This is consistent with the curves shown above (Figure S\@ref(fig:veg-0-regressions-3)) that level off in the second half of model run. We also see that introducing an increasingly large burning cost results in similar amounts of change in both halves of model run, whereas without a burning cost the model quickly reaches a high proportion of burnt landscape. This is somewhat mirrored with the other burning parameters, although the average trend is not as different among the parameter values. We also see that directed walks result in slightly faster change at the beginning of model run compared to random walks. 
+Looking at the difference in slopes by parameter values, we can see that on average most of the change in disturbed landscape proportions occurs in the beginning of model run (the difference between beginning and end is positive on average). This is consistent with the curves shown above (Figure S\@ref(fig:veg-0-regressions-3)) that level off in the second half of model run. We also see that introducing an increasingly large disturbance cost results in similar amounts of change in both halves of model run, whereas without a disturbance cost the model quickly reaches a high proportion of disturbed landscape. This is somewhat mirrored with the other disturbance parameters, although the average trend is not as different among the parameter values. We also see that directed walks result in slightly faster change at the beginning of model run compared to random walks. 
 
 ```{r veg-0-regressions-clean, echo=FALSE, fig.height=8, message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -946,20 +969,20 @@ sig_effects_vc = subset(anova_vc, `Pr(>F)` < 0.05)
 
 es_vc = effectsize::eta_squared(sig_effects_vc, partial = T)
 es_ranked_vc = es_vc[order(-es_vc$Eta2_partial), ]
-head(es_ranked_vc, 11)
+knitr::kable(head(es_ranked_vc, 11))
 
 ```
 
-Performing an aligned ranks transformation ANOVA on the final Moran's I value of each model run, we can see that  cost of burning behaviors and movement model have the greatest effects on resulting clustering of vegetation types by the end of model run. Interestingly, the underlying distribution of maximum potential vegetation types for patches (*veg-distribution*) has essentially no impact on spatial clustering of vegetation types relative to the other parameters, and even the highest effect size scores are only when this underlying distribution is included in an interaction term. 
+Performing an aligned ranks transformation ANOVA on the final Moran's I value of each model run, we can see that  cost of disturbance behaviors and movement model have the greatest effects on resulting clustering of vegetation types by the end of model run. Interestingly, the underlying distribution of maximum potential vegetation types for patches (*veg-distribution*) has essentially no impact on spatial clustering of vegetation types relative to the other parameters, and even the highest effect size scores are only when this underlying distribution is included in an interaction term. 
 
 ```{r morans-i-regression-2,  echo=TRUE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
 
-ARTool::art.con(art_vc, "burn_cost:movement_model", adjust = "tukey")
+knitr::kable(ARTool::art.con(art_vc, "burn_cost:movement_model", adjust = "tukey"))
 ```
 
-With post-hoc Tukey comparisons, we can see that there are significant differences in the final clustering of vegetation types across all the different combinations of the movement model and burning cost parameters.
+With post-hoc Tukey comparisons, we can see that there are significant differences in the final clustering of vegetation types across all the different combinations of the movement model and disturbance cost parameters.
 
-```{r morans-i-regression-3, fig.cap="Spatial autocorrelation of vegetation types over model run by burning cost and movement models", echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
+```{r morans-i-regression-3, fig.cap="Spatial autocorrelation of vegetation types over model run by disturbance cost and movement models", echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE,out.width="100%"}
 ggplot(veg_data) +
   geom_jitter(aes(x = ticks, y = morans.i, group = ticks, 
                   color = burn_cost), alpha = 0.1, size = 0.25) +
@@ -973,9 +996,9 @@ ggplot(veg_data) +
 
 ```
 
-When we look at how vegetation clustering changes over time with different burning costs  and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all burning costs (Figure S\@ref(fig:morans-i-regression-3)). When burning costs are low/none, this decrease is even steeper as more burning occurs, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in burning probabilities and more burnt patches over time.
+When we look at how vegetation clustering changes over time with different disturbance costs (*burn-cost*) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all disturbance costs (Figure S\@ref(fig:morans-i-regression-3)). When disturbance costs are low/none, this decrease is even steeper as more disturbances occur, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in disturbance likelihood and more disturbed patches over time.
 
-```{r morans-i-by-burn-limits, fig.cap="Trends in spatial autocorrelation of vegetation types across model run by parameters for burning costs, movement models and restrictions of burning behaviors", echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r morans-i-by-burn-limits, fig.cap="Trends in spatial autocorrelation of vegetation types across model run by parameters for disturbance costs, movement models and restrictions of disturbance behaviors", echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 plot.data = veg.data %>% 
   filter(signif == T) %>% 
   filter(cycle_duration == 100) %>% 
@@ -1016,7 +1039,7 @@ ggplot(plot.data) +
 rm(list = c("plot.data", "veg_data"))
 ```
 
-There are also differing trends based on spatial limits and vegetation limits on burning behaviors. When patches can only be burnt with 4 or less burnt neighbors, spatial clustering of vegetation types is much more decreased (Figure S\@ref(fig:morans-i-by-burn-limits)), particularly for lower disturbance costs that allow for more burning. 
+There are also differing trends based on spatial limits and vegetation limits on disturbance behaviors. When patches can only be disturbed with 4 or less burnt neighbors (*burnt-neighbor-limit*), spatial clustering of vegetation types is much more decreased (Figure S\@ref(fig:morans-i-by-burn-limits)), particularly for lower disturbance costs that allow for more disturbances to occur. 
 
 # Vegetation diversity
 
@@ -1075,7 +1098,7 @@ sig_effects_vd = subset(anova_vd, `Pr(>F)` < 0.05)
 
 es_vd = effectsize::eta_squared(sig_effects_vd, partial = T)
 es_ranked_vd = es_vd[order(-es_vd$Eta2_partial), ]
-head(es_ranked_vd, 5)
+knitr::kable(head(es_ranked_vd, 5))
 
 art_pv = ARTool::art(peak_value ~ cycle_duration * veg_distribution * burn_cost * burn_veg_type_threshold * burnt_neighbor_limit, data = fits_rw)
 anova_pv = anova(art_pv)
@@ -1083,7 +1106,7 @@ sig_effects_pv = subset(anova_pv, `Pr(>F)` < 0.05)
 
 es_pv = effectsize::eta_squared(sig_effects_pv, partial = T)
 es_ranked_pv = es_pv[order(-es_pv$Eta2_partial), ]
-head(es_ranked_pv, 5)
+knitr::kable(head(es_ranked_pv, 5))
 
 art_ev = ARTool::art(end_value ~ cycle_duration * veg_distribution * burn_cost * burn_veg_type_threshold * burnt_neighbor_limit, data = fits_rw)
 anova_ev = anova(art_ev)
@@ -1091,17 +1114,17 @@ sig_effects_ev = subset(anova_ev, `Pr(>F)` < 0.05)
 
 es_ev = effectsize::eta_squared(sig_effects_ev, partial = T)
 es_ranked_ev = es_ev[order(-es_ev$Eta2_partial), ]
-head(es_ranked_ev, 7)
+knitr::kable(head(es_ranked_ev, 7))
 
 
 ```
 
-The results of the ART ANOVA analyses demonstrate that the parameters that control burning behaviors have the largest effects on vegetation diversity when agents perform random walks. 
+The results of the ART ANOVA analyses demonstrate that the parameters that control disturbance behaviors have the largest effects on vegetation diversity when agents perform random walks. 
 
 
-```{r veg-diversity-art-anova-post-hoc-1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of tick where vegetation diversity peaks in model run by burning costs and limits."}
-ARTool::art.con(art_vd, "burn_cost", adjust = "tukey")
-ARTool::art.con(art_vd, "burnt_neighbor_limit", adjust = "tukey")
+```{r veg-diversity-art-anova-post-hoc-1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of tick where vegetation diversity peaks in model run by disturbance costs and limits."}
+knitr::kable(ARTool::art.con(art_vd, "burn_cost", adjust = "tukey"))
+knitr::kable(ARTool::art.con(art_vd, "burnt_neighbor_limit", adjust = "tukey"))
 
 
 ggplot(fits_rw) +
@@ -1110,11 +1133,11 @@ ggplot(fits_rw) +
 
 ```
 
-Post-hoc Tukey tests show that increasing burning costs increases the time to peak diversity, whereas relaxing burning limits and costs causes vegetation diversity to peak early and then decline as seen in the graph above (Figure S\@ref(fig:veg-diversity-viz)). This is likely related to the fact that a burning cost or burning limits reduce the amount of burning over the course of model run, allowing for a landscape that is not dominated by burnt patches.
+Post-hoc Tukey tests show that increasing disturbance costs increases the time to peak diversity, whereas relaxing disturbance limits and costs causes vegetation diversity to peak early and then decline as seen in the graph above (Figure S\@ref(fig:veg-diversity-viz)). This is likely related to the fact that a disturbance cost or disturbance limits reduce the amount of disturbances that occur over the course of model run, allowing for a landscape that is not dominated by disturbed patches.
 
-```{r veg-diversity-art-anova-post-hoc-2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at its peak in model run by burning costs and limits."}
-ARTool::art.con(art_pv, "burn_cost", adjust = "tukey")
-ARTool::art.con(art_pv, "burnt_neighbor_limit", adjust = "tukey")
+```{r veg-diversity-art-anova-post-hoc-2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at its peak in model run by disturbance costs and limits."}
+knitr::kable(ARTool::art.con(art_pv, "burn_cost", adjust = "tukey"))
+knitr::kable(ARTool::art.con(art_pv, "burnt_neighbor_limit", adjust = "tukey"))
 
 
 ggplot(fits_rw) +
@@ -1122,11 +1145,11 @@ ggplot(fits_rw) +
   facet_wrap(~ burnt_neighbor_limit, labeller = label_both)
 
 ```
-Interestingly, when we compare peak values across burning costs/limits, it is the different values of burning cost that produce the most significant differences. We can also see that high burning costs limit the peak value that diversity can achieve (Figure S\@ref(fig:veg-diversity-art-anova-post-hoc-2)), likely because not much burning is occurring to introduce variation in the vegetation types available on the landscape.
+Interestingly, when we compare peak values across disturbance costs/limits, it is the different values of disturbance cost that produce the most significant differences. We can also see that high disturbance costs limit the peak value that diversity can achieve (Figure S\@ref(fig:veg-diversity-art-anova-post-hoc-2)), likely because not many disturbances are occurring to introduce variation in the vegetation types available on the landscape.
 
-```{r veg-diversity-art-anova-post-hoc-3, echo=TRUE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at end of model run by burning costs and limits."}
-ARTool::art.con(art_ev, "burn_cost", adjust = "tukey")
-ARTool::art.con(art_ev, "burnt_neighbor_limit", adjust = "tukey")
+```{r veg-diversity-art-anova-post-hoc-3, echo=TRUE, fig.height=4, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at end of model run by disturbance costs and limits."}
+knitr::kable(ARTool::art.con(art_ev, "burn_cost", adjust = "tukey"))
+knitr::kable(ARTool::art.con(art_ev, "burnt_neighbor_limit", adjust = "tukey"))
 
 
 ggplot(fits_rw) +
@@ -1134,7 +1157,7 @@ ggplot(fits_rw) +
   facet_wrap(~ burn_cost, labeller = label_both)
 
 ```
-Despite the peak limit, high burning costs allow the model to achieve higher end values of vegetation diversity (Figure S\@ref(fig:veg-diversity-art-anova-post-hoc-3)) because these model runs do not experience the steep drop in diversity as more of the landscape becomes burnt. 
+Despite the peak limit, high disturbance costs allow the model to achieve higher end values of vegetation diversity (Figure S\@ref(fig:veg-diversity-art-anova-post-hoc-3)) because these model runs do not experience the steep drop in diversity as more of the landscape becomes disturbed. 
 
 ## Vegetation diversity under directed walks
 
@@ -1176,7 +1199,7 @@ sig_effects_vd = subset(anova_vd, `Pr(>F)` < 0.05)
 
 es_vd = effectsize::eta_squared(sig_effects_vd, partial = T)
 es_ranked_vd = es_vd[order(-es_vd$Eta2_partial), ]
-head(es_ranked_vd, 5)
+knitr::kable(head(es_ranked_vd, 5))
 
 art_pv = ARTool::art(peak_value ~ cycle_duration * veg_distribution * burn_cost * burn_veg_type_threshold * burnt_neighbor_limit, data = fits_dw)
 anova_pv = anova(art_pv)
@@ -1184,7 +1207,7 @@ sig_effects_pv = subset(anova_pv, `Pr(>F)` < 0.05)
 
 es_pv = effectsize::eta_squared(sig_effects_pv, partial = T)
 es_ranked_pv = es_pv[order(-es_pv$Eta2_partial), ]
-head(es_ranked_pv, 9)
+knitr::kable(head(es_ranked_pv, 9))
 
 art_ev = ARTool::art(end_value ~ cycle_duration * veg_distribution * burn_cost * burn_veg_type_threshold * burnt_neighbor_limit, data = fits_dw)
 anova_ev = anova(art_ev)
@@ -1192,26 +1215,26 @@ sig_effects_ev = subset(anova_ev, `Pr(>F)` < 0.05)
 
 es_ev = effectsize::eta_squared(sig_effects_ev, partial = T)
 es_ranked_ev = es_ev[order(-es_ev$Eta2_partial), ]
-head(es_ranked_ev, 9)
+knitr::kable(head(es_ranked_ev, 9))
 
 
 ```
 
 
-Overall with directed walks, we get very similar relative effect sizes for most of the parameters, with burning costs/limits coming out at the most impactful. 
+Overall with directed walks, we get very similar relative effect sizes for most of the parameters, with disturbance costs/limits coming out as the most impactful. 
 
-```{r veg-diversity-dw-art-anova-post-hoc-1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of tick where vegetation diversity peaks in model run by burning costs and limits."}
-ARTool::art.con(art_vd, "burn_cost", adjust = "tukey")
+```{r veg-diversity-dw-art-anova-post-hoc-1, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of tick where vegetation diversity peaks in model run by disturbance costs and limits."}
+knitr::kable(ARTool::art.con(art_vd, "burn_cost", adjust = "tukey"))
 
 ggplot(fits_dw) +
   geom_boxplot(aes(x = burn_cost, y = peak_tick, group = burn_cost))
 
 ```
-For directed walks, we again see that low burning costs results in early peaks in diversity followed by declines (Figure S\@ref(fig:veg-diversity-dw-art-anova-post-hoc-1)). Interestingly, high burning costs do not follow the pattern as would be expected, but this is likely just an artifact of peak identification on a trend line that have little variation.
+For directed walks, we again see that low disturbance costs results in early peaks in diversity followed by declines (Figure S\@ref(fig:veg-diversity-dw-art-anova-post-hoc-1)). Interestingly, high disturbance costs do not follow the pattern as would be expected, but this is likely just an artifact of peak identification on a trend line that have little variation.
 
-```{r veg-diversity-d-art-anova-post-hoc-2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at its peak in model run by burning costs and limits."}
-ARTool::art.con(art_pv, "burn_cost", adjust = "tukey")
-ARTool::art.con(art_pv, "burnt_neighbor_limit", adjust = "tukey")
+```{r veg-diversity-d-art-anova-post-hoc-2, echo=TRUE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at its peak in model run by disturbance costs and limits."}
+knitr::kable(ARTool::art.con(art_pv, "burn_cost", adjust = "tukey"))
+knitr::kable(ARTool::art.con(art_pv, "burnt_neighbor_limit", adjust = "tukey"))
 
 
 ggplot(fits_rw) +
@@ -1221,9 +1244,9 @@ ggplot(fits_rw) +
 ```
 Comparison of peak values of vegetation diversity have the same patterns as with random walks.
 
-```{r veg-diversity-d-art-anova-post-hoc-3, echo=TRUE, fig.height=4.5, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at end of model run by burning costs and limits."}
-ARTool::art.con(art_ev, "burn_cost:burnt_neighbor_limit", adjust = "tukey")
-ARTool::art.con(art_ev, "burn_veg_type_threshold:burnt_neighbor_limit", adjust = "tukey")
+```{r veg-diversity-d-art-anova-post-hoc-3, echo=TRUE, fig.height=4.5, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Comparison of vegetation diversity value at end of model run by disturbance costs and limits."}
+knitr::kable(ARTool::art.con(art_ev, "burn_cost:burnt_neighbor_limit", adjust = "tukey"))
+knitr::kable(ARTool::art.con(art_ev, "burn_veg_type_threshold:burnt_neighbor_limit", adjust = "tukey"))
 
 
 ggplot(fits_rw) +
@@ -1231,7 +1254,7 @@ ggplot(fits_rw) +
   facet_grid(burn_veg_type_threshold~ burnt_neighbor_limit, labeller = label_both)
 
 ```
-The limits on burning behaviors have more exaggerated effects with directed walks (Figures S\@ref(fig:veg-diversity-d-art-anova-post-hoc-3)). We can again see clearly that more burning (with relaxed burning restrictions) significantly reduces overall vegetation diversity by the end of model run.
+The limits on disturbance behaviors have more exaggerated effects with directed walks (Figures S\@ref(fig:veg-diversity-d-art-anova-post-hoc-3)). We can again see clearly that more disturbances (with relaxed disturbance restrictions) significantly reduces overall vegetation diversity by the end of model run.
 
 
 ```{r veg-diversity-regression-3, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE, out.width='100%'}
@@ -1239,11 +1262,11 @@ rm(list = c("fits_dw", "fits_rw",
             "veg.data.r", "veg.data.d"))
 ```
 
-# Burning behaviors and resource distributions
+# Disturbance behaviors and resource distributions
 
-The above results demonstrate that vegetation spatial autocorrelation and vegetation diversity primarily controlled by the restrictions and cost of burning behaviors; we have also shown that these parameters also control the evolution of burning behaviors across model run. For this reason, we were interested in how burning behaviors, as measured by average burning probabilities, are related to resource distributions during model run. We assessed these with non-parametric Kendall's tau correlations.
+The above results demonstrate that vegetation spatial autocorrelation and vegetation diversity primarily controlled by the restrictions and cost of disturbance behaviors; we have also shown that these parameters also control the evolution of disturbance behaviors across model run. For this reason, we were interested in how disturbance behaviors, as measured by average disturbance likelihoods, are related to resource distributions during model run. We assessed these with non-parametric Kendall's tau correlations.
 
-```{r burn-veg-correlations-1, fig.cap="Correlations between burning probabilities, burnt landscape proportions, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burn-veg-correlations-1, fig.cap="Correlations between disturbance likelihoods, disturbed landscape proportions, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
@@ -1317,7 +1340,7 @@ corrplot::corrplot(
 
 ```
 
-By the end of model run we see a stronger negative correlation of burning probabilities with vegetation Moran's I and Shannon Diversity (Figure S\@ref(fig:burn-veg-correlations-1)). Increasing burning results in less diversity because of dominating proportion of burnt patches on the landscape when burning is very frequent. The negative correlation with vegetation spatial autocorrelation demonstrates that the landscape becomes more locally heterogeneous as burning becomes more frequent. Interestingly, however, there does not appear to be a strong correlation between average burning probabilities and the number of high yield patches on the landscape, despite the fact that burning behaviors are required to create these high yield patches. 
+By the end of model run we see a stronger negative correlation of disturbance likelihoods (*mean.burn.prob*) with vegetation Moran's I and Shannon Diversity (Figure S\@ref(fig:burn-veg-correlations-1)). Increasing disturbance events result in less diversity because of dominating proportion of disturbed patches on the landscape when disturbances are very frequent. The negative correlation with vegetation spatial autocorrelation demonstrates that the landscape becomes more locally heterogeneous as disturbances become more frequent. Interestingly, however, there does not appear to be a strong correlation between average disturbance likelihood and the number of high yield patches on the landscape, despite the fact that disturbance behaviors are required to create these high yield patches. 
 
 ```{r high-yield-veg, fig.cap="Proportions of high yield vegetation proportions throughout model run", fig.height=5, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -1332,7 +1355,7 @@ ggplot(high.veg) +
 
 rm(list = c("high.veg"))
 ```
-However, we can see that the proportion of high yield patches increases over the course of model run (Figure S\@ref(fig:high-yield-veg)). This means that as burning behaviors become more frequent with time, there will be more high yield patches on the landscape.
+However, we can see that the proportion of high yield patches increases over the course of model run (Figure S\@ref(fig:high-yield-veg)). This means that as disturbance behaviors become more frequent with time, there will be more high yield patches on the landscape.
 
 # Forager mobility
 
@@ -1418,19 +1441,19 @@ sim <- DHARMa::simulateResiduals(mm.fit1, n=200)
 DHARMa::testDispersion(sim)
 DHARMa::testZeroInflation(sim)
 
-summary(mm.fit1)
+#summary(mm.fit1)
 
-
+knitr::kable(tidy(mm.fit1) %>% select(-group), digits = 3)
 ```
 
-First, we consider the effects on the zero inflation model, that is the model parameters that result in no change from the maximum number of steps by the end of model run. We can see that most models see some reduction in forager mobility by the end of model run. However, this is affected by burning costs and the vegetation productivity state the model ends in. If the model ends in an unproductive state (cycle duration = 250 and veg cycle stat = productive or cycle duration = 100 and veg cycle start = unproductive), then the final average number of steps the agents are taking will be closer to maximum mobility. If the model finishes in a productive state, that reduction in mobility is evident. 
+First, we consider the effects on the zero inflation model, that is the model parameters that result in no change from the maximum number of steps by the end of model run. We can see that most models see some reduction in forager mobility by the end of model run. However, this is affected by disturbance costs and the vegetation productivity state the model ends in. If the model ends in an unproductive state (cycle duration = 250 and veg cycle stat = productive or cycle duration = 100 and veg cycle start = unproductive), then the final average number of steps the agents are taking will be closer to maximum mobility. If the model finishes in a productive state, that reduction in mobility is evident. 
 
-When looking at the fixed effects of the parameters, we get confirmation that there is typically a reduction in forager mobility by the end model run (intercept term). The other parameters significantly affecting forager mobility at the end of model run are the burning costs/limits and the movement model. As with most other things in the model, relaxing burning costs and limits leads to more reduction of steps because it leads to more burning and therefore increased resource availability within a local neighborhood. Directed walks also result in more reduction of steps because agents are able to target high value patches and therefore do not need to spend as much time "searching" to reach their energy needs. 
+When looking at the fixed effects of the parameters, we get confirmation that there is typically a reduction in forager mobility by the end model run (intercept term). The other parameters significantly affecting forager mobility at the end of model run are the disturbance costs/limits and the movement model. As with most other things in the model, relaxing disturbance costs and limits leads to more reduction of steps because it leads to more disturbances and therefore increased resource availability within a local neighborhood. Directed walks also result in more reduction of steps because agents are able to target high value patches and therefore do not need to spend as much time "searching" to reach their energy needs. 
 
 
 ## Correlations between mobility and distributions of vegetation types
 
-These mobility patterns due to different limits on burning behaviors occur because burning controls the energy available in the environment such that less burning means less overall energy, so agents need to move further to meet their energy needs. To confirm this, we look at the Kendall's tau correlations between forager mobility and vegetation distribution/types.
+These mobility patterns due to different limits on disturbance behaviors occur because disturbances control the energy available in the environment such that fewer disturbances means less overall energy, so agents need to move further to meet their energy needs. To confirm this, we look at the Kendall's tau correlations between forager mobility and vegetation distribution/types.
 
 ```{r mobility-veg-correlations, fig.cap="Correlations between forager mobility, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,3))
@@ -1533,6 +1556,28 @@ ggplot(rates %>%
 
 Throughout model run, these outputs are highly negatively correlated (Figure S\@ref(fig:mobility-pop-correlations-1)). This suggests that lower amounts of mobility allow higher population densities because each foraging group requires less room to meet their foraging needs.
 
+```{r mobility-pop-correlations-2, fig.cap="Relationship between average steps per foraging bout and the resulting population density by disturbance cost values for model scenarios with short climatic cycles (100 ticks)", echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+ggplot(rates %>% 
+         filter(`veg-cycle-start` == "\"productive\"") %>% 
+         filter(`cycle-duration` == "100") %>%
+         filter(`movement-model` == "\"Directed Walk\"")) +
+  geom_point(aes(y = end.pop.density, x = start.steps, 
+                 color = climate.condition)) +
+  # geom_smooth(aes(y = end.pop.density, x = start.steps), 
+  #             method = "lm") +
+  stat_cor(mapping = aes(y = end.pop.density, x = start.steps), 
+           method = "spearman", p.accuracy = 0.01, r.accuracy = 0.01, 
+           size = 3) +
+  facet_grid(climate.condition ~ `burn-cost`, labeller = label_both) +
+  scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "bottom") +
+  theme(axis.text = element_text(size = 7), 
+        legend.position = "bottom", 
+        strip.text = element_text(size = 8))
+
+```
+Because disturbance costs can result in significantly different population densities during model run, we also looked at this relationship between mobility and population density separated by disturbance costs (*burn-cost*). As shown in Figure S\@ref(fig:mobility-pop-correlations-2), there are still strong negative correlations between population density and the number of steps foragers are taking per foraging bout regardless of disturbance costs. This suggests that, despite the carrying capacity limits introduced by disturbance costs (which exerts most of the control over the number of available high value patches), there is a separate relationship where reduced mobility allows for higher population density. 
+
 # Forager interactions
 
 When looking at forager interactions, we have to consider them in relation to populations since more foragers on the landscape will necessarily mean more possible interactions. The model outputs interaction counts averaged across all agents and we divided this by the population count to get the average proportion of the population that an individual agent interacts with each tick.
@@ -1598,7 +1643,7 @@ drop_stats = map_df(terms, function(t) {
   )
 })
 
-print(drop_stats %>% filter(p_value < 0.05))
+knitr::kable(drop_stats %>% filter(p_value < 0.05))
 
 
 ```
@@ -1607,20 +1652,20 @@ We can see that, for the early parts of model run (tick = 1000), there are only 
 
 ```{r parameter-effects-adj-fi-1,  out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
 
-print(head(drop_stats[order(-drop_stats$delatLogLik), ] %>% select(term, delatLogLik), n = 10))
+knitr::kable(head(drop_stats[order(-drop_stats$delatLogLik), ] %>% select(term, delatLogLik), n = 10))
 
 ```
 
-When we order by the raw improvement in likelihood, we can see that the interactions between burning costs/limits and movement models contribute the most to explaining the variation in the response (have a stronger impact on model fit). 
+When we order by the raw improvement in likelihood, we can see that the interactions between disturbance costs/limits and movement models contribute the most to explaining the variation in the response (have a stronger impact on model fit). 
 
 ```{r parameter-effects-adj-fi-2,  out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
 
-as.data.frame(emmeans(beta.fit1, ~ `burn-cost`:`movement-model`) %>%
-                pairs(adjust = "tukey")) %>% filter(p.value < 0.05) %>% select(contrast, estimate)
+knitr::kable(as.data.frame(emmeans(beta.fit1, ~ `burn-cost`:`movement-model`) %>%
+                pairs(adjust = "tukey")) %>% filter(p.value < 0.05) %>% select(contrast, estimate))
 
 ```
 
-When we do pairwise comparisons among the parameter values with Tukey adjustment we can see that most of the significant differences occur with directed walks, where directed walks result in more interaction than random walks. These effect sizes are very small, likely because the interaction proportions themselves are small. We also see that increased burning costs within a particular movement model (here only directed walks) also increase the interaction proportions at the beginning of model run.
+When we do pairwise comparisons among the parameter values with Tukey adjustment we can see that most of the significant differences occur with directed walks, where directed walks result in more interaction than random walks. These effect sizes are very small, likely because the interaction proportions themselves are small. We also see that increased disturbance costs within a particular movement model (here only directed walks) also increase the interaction proportions at the beginning of model run.
 
 ## Forager interactions at the end of model run
 
@@ -1667,15 +1712,15 @@ drop_stats = map_df(terms, function(t) {
   )
 })
 
-print(head(drop_stats[order(-drop_stats$delatLogLik), ] %>% select(term, delatLogLik), n = 10))
+knitr::kable(head(drop_stats[order(-drop_stats$delatLogLik), ] %>% select(term, delatLogLik), n = 10))
 
 ```
-For forager interactions at the end of model run we again see that the interactions between movement models and burning rules are of high importance for explaining variation. We can also see that the ending vegetation productivity state (determined by the *cycle-duration* and *veg-cycle-start* interaction) affects forager interactions, likely because of the effect this has on mobility. Interestingly, we also see the underlying vegetation distribution included in these important interactions. 
+For forager interactions at the end of model run we again see that the interactions between movement models and disturbance limits are of high importance for explaining variation. We can also see that the ending vegetation productivity state (determined by the *cycle-duration* and *veg-cycle-start* interaction) affects forager interactions, likely because of the effect this has on mobility. Interestingly, we also see the underlying vegetation distribution included in these important interactions. 
 
 ```{r parameter-effects-adj-fi-3,  out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
 
-as.data.frame(emmeans(beta.fit1, ~ `veg-distribution`) %>%
-                pairs(adjust = "tukey")) %>% filter(p.value < 0.05) %>% select(contrast, estimate)
+knitr::kable(as.data.frame(emmeans(beta.fit1, ~ `veg-distribution`) %>%
+                pairs(adjust = "tukey")) %>% filter(p.value < 0.05) %>% select(contrast, estimate))
 
 ```
 
@@ -1684,12 +1729,12 @@ When we look at the pairwise comparisons on vegetation distribution, we see that
 
 ```{r parameter-effects-adj-fi-4,  out.width="100%", echo=FALSE, message=FALSE, warning=FALSE, fig.height = 4}
 
-as.data.frame(emmeans(beta.fit1, ~ `burn-cost`:`movement-model`) %>%
-                pairs(adjust = "tukey")) %>% filter(p.value < 0.05) %>% select(contrast, estimate)
+knitr::kable(as.data.frame(emmeans(beta.fit1, ~ `burn-cost`:`movement-model`) %>%
+                pairs(adjust = "tukey")) %>% filter(p.value < 0.05) %>% select(contrast, estimate))
 
 ```
 
-This vegetation distribution effect interacts with those of burning costs/limits and movement models as well. When we look at the two way interaction of burning costs and movement models, we see that directed walks result in more interaction unless burning costs are high. Increased burning costs also results in more interactions regardless of movement model.
+This vegetation distribution effect interacts with those of disturbance costs/limits and movement models as well. When we look at the two way interaction of disturbance costs and movement models, we see that directed walks result in more interaction unless disturbance costs are high. Increased disturbance costs also results in more interactions regardless of movement model.
 
 ## Change in forager interactions over time
 ```{r interaction-change-over-time, fig.cap="Change in proportion of the population foragers interact with across each climatic interval", out.width="100%", fig.height=6, echo=FALSE, message=FALSE, warning=FALSE}
@@ -1706,7 +1751,7 @@ ggplot(rates %>%
         legend.position = 'bottom')
 
 ```
-As is expected, when we look at how forager interactions change over across climate intervals, as measured by the linear slope, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks and when burning costs are lower (Figure S\@ref(fig:interaction-change-over-time). 
+As is expected, when we look at how forager interactions change over across climate intervals, as measured by the linear slope, there is very limited change except in the earliest intervals during which populations are being established. When changes does occur, it is primarily with agents performing directed walks and when disturbance costs are lower (Figure S\@ref(fig:interaction-change-over-time). 
 
 ## Relationship between forager interactions and: forager mobility and population density
 Therefore, we investigate how interaction rates over time are related to mobility and population density only with directed walks using Spearman's rank correlations. 
@@ -1732,7 +1777,7 @@ ggplot(rates %>%
 ```
 Interactions are highly positively correlated with mobility throughout model run (Figure S\@ref(fig:interactions-mobility)), meaning that more mobility allows for more interactions with directed walks. 
 
-```{r interactions-mobility-2, fig.cap="Relationship between proportion of the population foragers interact with and number of steps per foraging bout for a climatic period at the middle of model run. Relationship visualized by model scenarios with different burning costs", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
+```{r interactions-mobility-2, fig.cap="Relationship between proportion of the population foragers interact with and number of steps per foraging bout for a climatic period at the middle of model run. Relationship visualized by model scenarios with different disturbance costs", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100") %>% 
          filter(`movement-model` == "\"Directed Walk\"") %>%
@@ -1750,9 +1795,9 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
 
 ```
 
-The strength of these correlations is impacted by burning costs. For example, if we take a productive climate interval in the middle of model run (Figure S\@ref(fig:interactions-mobility-2)), we see significant and stronger correlations only when burning costs are low, so when burning is more frequent. 
+The strength of these correlations is impacted by disturbance costs. For example, if we take a productive climate interval in the middle of model run (Figure S\@ref(fig:interactions-mobility-2)), we see significant and stronger correlations only when disturbance costs are low, so when disturbances are more frequent. 
 
-```{r interactions-population, fig.cap="Relationship between proportion of the population foragers interact with and population density for a climatic period at the middle of model run. Relationship visualized by model scenarios with different burning costs", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
+```{r interactions-population, fig.cap="Relationship between proportion of the population foragers interact with and population density for a climatic period at the middle of model run. Relationship visualized by model scenarios with different disturbance costs", echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width="100%"}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100") %>% 
          filter(`movement-model` == "\"Directed Walk\"") %>%
@@ -1768,7 +1813,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"") %>%
   scale_color_brewer(palette = "Set2") +
   theme(axis.text = element_text(size = 6), legend.position = "bottom")
 ```
-The same is true for negative correlations between interactions and population density, although here the strongest relationship is when there is no burning cost (Figure S\@ref(fig:interactions-population)). These results occur because there is minimal change in forager mobility and therefore interactions at the highest burning costs. 
+The same is true for negative correlations between interactions and population density, although here the strongest relationship is when there is no disturbance cost (Figure S\@ref(fig:interactions-population)). These results occur because there is minimal change in forager mobility and therefore interactions at the highest disturbance costs. 
 
 ## Maintaining connections with the same foragers
 In addition to understanding overall forager interaction rates, we also loosely investigated the formation of social networks. To do so, we tracked how many of a forager's interactions during a given foraging bout overlapped with the interactions of the previous bout. Doing this provides insight into whether foragers are consistently interacting with new people or if there is incipient formation of social groups. If social groups were "forming", we would expect to see increased proportions of interactions being comprised of the same foragers. 
@@ -1852,11 +1897,11 @@ ggplot(plot.data3) +
 
 ```
 
-When we plot the change in average proportion of interactions that are the same as the previous tick across model run by burn cost and movement model, we see that random walks result in overall higher proportions of agents interacting with the same people compared to directed walks (Figure S\@ref(fig:same-network-1)). This is driven primarily by high rates of similar interactions in unproductive periods, particularly when burning costs are high. Conversely, with directed walks, we see an initial dip in the proportion of interactions that are with the same people as the population is establishing itself. This makes sense because the population is relatively unstable at this time, so there will be more new people on the landscape. If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher as the population reaches equilibrium and carrying capacity (Figure S\@ref(fig:same-network-1)). Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of burning and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
+When we plot the change in average proportion of interactions that are the same as the previous tick across model run by disturbance cost and movement model, we see that random walks result in overall higher proportions of agents interacting with the same people compared to directed walks (Figure S\@ref(fig:same-network-1)). This is driven primarily by high rates of similar interactions in unproductive periods, particularly when disturbance costs are high. Conversely, with directed walks, we see an initial dip in the proportion of interactions that are with the same people as the population is establishing itself. This makes sense because the population is relatively unstable at this time, so there will be more new people on the landscape. If we consider after that burn in period, we see that the proportion of interactions that are with the same people starts to increase again and remains higher as the population reaches equilibrium and carrying capacity (Figure S\@ref(fig:same-network-1)). Because directed walks also result in fewer interactions over the course of model run, this suggests that directed walks in landscapes with a long history of disturbances and stable population result in smaller social networks, with foragers frequently interacting with the same people.  
 
-# Spatial distribution of burning events  
+# Spatial distribution of disturbance events  
 
-Because burning behaviors have such a significant impact on the structure of the vegetation in the environment, we were curious if this is caused by differential use of space. To examine this, we looked at the spatial autocorrelation of where burning events occur within the landscape to assess land use by the agents.For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
+Because disturbance behaviors have such a significant impact on the structure of the vegetation in the environment, we were curious if this is caused by differential use of space. To examine this, we looked at the spatial autocorrelation of where disturbance events occur within the landscape to assess land use by the agents.For this, we only consider significant values of Moran's I to evaluate clustering (positive values) and dispersion (negative values).
 
 ```{r burning-events-1, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%",fig.height=5}
 parameters = c(
@@ -1901,7 +1946,7 @@ ggplot(be.morans %>%
 
 ```
 
-Preliminary observation of the data shows that the different parameters show different trends in the spatial autocorrelation of burning events. Specifically we can see a trend towards dispersion when the underlying vegetation distribution is random, particularly with directed walks. We also see a trend towards highly clustered burning events when the underlying vegetation distribution is clustered; however, this effect is dampened with directed walks. To more formally investigate this, we performed an aligned ranks transformation ANOVA to statistically assess the effects of the different parameters, and their two-way interactions, on the final value of Moran's I of burning events.
+Preliminary observation of the data shows that the different parameters show different trends in the spatial autocorrelation of disturbance events. Specifically we can see a trend towards dispersion when the underlying vegetation distribution is random, particularly with directed walks. We also see a trend towards highly clustered disturbance events when the underlying vegetation distribution is clustered; however, this effect is dampened with directed walks. To more formally investigate this, we performed an aligned ranks transformation ANOVA to statistically assess the effects of the different parameters, and their two-way interactions, on the final value of Moran's I of disturbance events.
 
 
 ```{r burning-events-1-1, echo=TRUE, message=FALSE, warning=FALSE, out.width="100%",fig.height=4}
@@ -1912,13 +1957,13 @@ sig_effects_be = subset(anova_be, `Pr(>F)` < 0.05)
 
 es_be = effectsize::eta_squared(sig_effects_be, partial = T)
 es_ranked_be = es_be[order(-es_be$Eta2_partial), ]
-head(es_ranked_be, 10)
+knitr::kable(head(es_ranked_be, 10))
 
 ```
 
-We can see that burning costs/limits still have the highest effect size on the clustering/dispersion of burning events, likely because they dictate how many burning events there will be, but after that it is underlying vegetation distribution and movement model that have the next highest effect sizes. 
+We can see that disturbance costs/limits still have the highest effect size on the clustering/dispersion of disturbance events, likely because they dictate how many disturbance events there will be, but after that it is underlying vegetation distribution and movement model that have the next highest effect sizes. 
 
-```{r burning-events-2-2-2, fig.cap="Trends of spatial autocorrelation of burning events across model run for model scenarios with directed walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
+```{r burning-events-2-2-2, fig.cap="Trends of spatial autocorrelation of disturbance events across model run for model scenarios with directed walks", echo=FALSE, message=FALSE, warning=FALSE, fig.height=7, out.width="100%"}
 p2.2 = ggplot(be.morans.100 %>% filter(signif == T) %>% 
                 filter(movement_model == "\"Directed Walk\"")) +
   geom_point(mapping = aes(x = ticks, y = morans.i, 
@@ -1961,20 +2006,30 @@ p1.2 = ggplot(be.morans.100 %>% filter(signif == T) %>%
 plot(p1.2)
 ```
 
-Plotting the trends of burning event spatial autocorrelation through time by these significant parameters allows us to better visualize these patterns. Here, we split the data by movement model with trends for directed walks (Figure S\@ref(fig:burning-events-2-2-2)) and trend lines for random walks (Figure S\@ref(fig:burning-events-2-2-1)). 
+Plotting the trends of disturbance event spatial autocorrelation through time by these significant parameters allows us to better visualize these patterns. Here, we split the data by movement model with trends for directed walks (Figure S\@ref(fig:burning-events-2-2-2)) and trend lines for random walks (Figure S\@ref(fig:burning-events-2-2-1)). 
 
-First, it is clear that, under random walks, underlying distribution of vegetation potential has a significant impact on clustering or disperson of burning events (Figure S\@ref(fig:burning-events-2-2-1)). This is especially true when burning is limited to specific patches under low burning costs. As burning costs increase, and burning becomes more infrequent, burning events are more likely to cluster despite limits on which patches can be burnt. 
+First, it is clear that, under random walks, underlying distribution of vegetation potential has a significant impact on clustering or disperson of disturbance events (Figure S\@ref(fig:burning-events-2-2-1)). This is especially true when disturbances are limited to specific patches under low disturbance costs. As disturbance costs increase, and disturbances become more infrequent, disturbance events are more likely to cluster despite limits on which patches can be disturbed 
 
-With directed walks, the effect of underlying vegetation potential is more varied (Figure S\@ref(fig:burning-events-2-2-2)). For example, when agents can burn any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of burning events. When agents can only burn specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more burnt neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of burning events.  
+With directed walks, the effect of underlying vegetation potential is more varied (Figure S\@ref(fig:burning-events-2-2-2)). For example, when agents can disturb any vegetation type, underlying vegetation potential does not change the trend towards spatial randomness or dispersion of disturbance events. When agents can only disturb specific vegetation types, underlying vegetation potential is more important, particularly in cases where patches can have more disturbed neighbors. In these cases, underlying clustering of vegetation type potential leads to more clustering of disturbance events.  
 
 # References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
-grateful::cite_packages(
-  output = "paragraph",
-  out.format = "pdf",
-  out.dir = ".",
-  omit = c("QuantPsyc", "marginaleffects")
+pkgs <- grateful::cite_packages(
+  output = "table",
+  out.dir = "."
 )
+
+bib_file = "grateful-refs.bib"
+
+if(file.exists(bib_file)) {
+  bib_text = readLines(bib_file)
+  bib_text = gsub("&", "\\\\&", bib_text)
+  writeLines(bib_text, bib_file)
+}
+
+
+pander::pander(pkgs, justify = "left")
+
 
 ```
