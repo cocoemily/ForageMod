@@ -173,7 +173,7 @@ mbp.plot2 = ggplot(data) +
                      guide = "legend") +
   geom_hline(yintercept = 0, linetype = "dotted") +
   #facet_grid( ~ `burn-cost`, labeller = labeller(`burn-cost` = dc.labs)) +
-  labs(y = "mean likelihood of disturbance", x = "ticks", color = "") +
+  labs(y = "mean disturbance preference", x = "ticks", color = "") +
   theme(axis.title = element_text(size = 8)) +
   guides(colour = guide_legend(override.aes = list(linewidth = 2)))
 #plot(mbp.plot2)
