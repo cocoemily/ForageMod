@@ -390,8 +390,8 @@ rm(list = c("data.mid", "pvalue.mid"))
 When we look at the Kendall's Tau correlations between the slope of change in population density for a middle productive period in model runs with longer climatic cycles, we see a significant positive correlation with proportions of high vegetation types, that is patches that have a high resource value (Figure S\@ref(fig:pop-density-correlations-1)). This suggests that, even if most of the landscape cannot be foraged, access to a few high value patches is enough to allow for population growth. If forageable patches have lower resource values, then populations will not grow.  
 
 
-# Forager likelihood of disturbing patches
-We examined the effects of all model parameters on the *mean.burn.prob* of the population, hereafter referred to as *disturbance likelihood*^[Despite the variable name, this is not actually a probability. It is a continuous variable that represents the likelihood of an agent to engage in disturbance behaviors in the model. When agents have the opportunity to perform these disturbance behaviors, this likelihood value is compared to a random number between 0 and 1 and so "burn-prob" behaves like a probability when its value is between 0 and 1.], across model run by fitting logistic growth curves to each trajectory of disturbance likelihood (*burn-prob*) over time for each model run. For each model run, we ascertain the carrying capacity (*K*), or the upper bound of disturbance likelihood, and the growth rate (*r*), or the speed of growth.
+# Forager preference for disturbing patches
+We examined the effects of all model parameters on the *mean.burn.prob* of the population, hereafter referred to as *disturbance preference*^[Despite the variable name, this is not actually a probability. It is a continuous variable that represents the preference of an agent for engaging in disturbance behaviors in the model. When agents have the opportunity to perform these disturbance behaviors, this preference value is compared to a random number between 0 and 1 and so "burn-prob" behaves like a probability when its value is between 0 and 1. When the preference value is 1 or greater, agents always perform disturbance behaviors. Conversely, when the preference value is 0 or less, agents never perform disturbance behaviors.], across model run by fitting logistic growth curves to each trajectory of disturbance preference (*burn-prob*) over time for each model run. For each model run, we ascertain the carrying capacity (*K*), or the upper bound of disturbance preference, and the growth rate (*r*), or the speed of growth.
 
 
 ```{r burning-probability-fitting-curves, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Sample of logistic fits for average forager burning probability over time for individual model runs."}
@@ -430,7 +430,7 @@ ggplot(data = data %>% filter(exp %in% sample), aes(ticks, mean.burn.prob)) +
 
 fits = fits %>% left_join(data, by = "exp", multiple = "last") %>% ungroup()
 ```
-We then performed a non-parametric, full factorial ART ANOVA to assess which parameters and interactions between parameters significant affect both the upper bound of average disturbance likelihood across the population (*K*) and the growth rate of disturbance likelihoods over model run (*r*). We compare the relative effect sizes by calculating $\eta^{2}$. 
+We then performed a non-parametric, full factorial ART ANOVA to assess which parameters and interactions between parameters significant affect both the upper bound of average disturbance preference across the population (*K*) and the growth rate of disturbance preferences over model run (*r*). We compare the relative effect sizes by calculating $\eta^{2}$. 
 
 ```{r burning-probability-art-anova-k, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 fits = fits %>%
@@ -453,7 +453,7 @@ anova_K = anova(art_K)
 sig_effects_K = subset(anova_K, `Pr(>F)` < 0.05)
 
 ```
-## Effects of parameters on upper bound of disturbance likelihood
+## Effects of parameters on upper bound of disturbance preference
 
 ```{r burning-probability-art-anova-k-2, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4}
 es_K = effectsize::eta_squared(sig_effects_K, partial = T)
@@ -462,7 +462,7 @@ knitr::kable(head(es_ranked_K, 6))
 
 ```
 
-By looking at the parameters with the highest $\eta^{2}$ values, we can see that for the upper bound of disturbance likelihoods, the effect of disturbance cost (*burn-cost*) is about twice as large as any other parameter or combination of parameters. The next largest effect is the interaction of burning cost and movement model. 
+By looking at the parameters with the highest $\eta^{2}$ values, we can see that for the upper bound of disturbance preferences, the effect of disturbance cost (*burn-cost*) is about twice as large as any other parameter or combination of parameters. The next largest effect is the interaction of burning cost and movement model. 
 
 ```{r burn-cost-comparisons-bp, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Comparison of fitted K values by burning cost and movement model."}
 ggplot(k.reg.data) +
@@ -471,9 +471,9 @@ ggplot(k.reg.data) +
 
 ```
 
-When we compare the effects of disturbance cost (*burn-cost*) across the different cost levels (Figure S\@ref(fig:burn-cost-comparisons-bp)), we see that smaller costs to disturbance behaviors produce larger *K* values, meaning that the upper bound for disturbance likelihood is significantly higher when disturbance costs are low. We can also see that when the agents perform directed walks, this further depressed the maximum average disturbance likelihood that the population will reach. The other highly important parameter is the limit on how many disturbed neighbors a patch can have and still allow disturbance (*burnt-neighbor-limit*). Similar to disturbance cost, we find that strict limits on where disturbances can occur depresses the upper bound of disturbance likelihood that the population can achieve.
+When we compare the effects of disturbance cost (*burn-cost*) across the different cost levels (Figure S\@ref(fig:burn-cost-comparisons-bp)), we see that smaller costs to disturbance behaviors produce larger *K* values, meaning that the upper bound for disturbance preference is significantly higher when disturbance costs are low. We can also see that when the agents perform directed walks, this further depressed the maximum average disturbance preference that the population will reach. The other highly important parameter is the limit on how many disturbed neighbors a patch can have and still allow disturbance (*burnt-neighbor-limit*). Similar to disturbance cost, we find that strict limits on where disturbances can occur depresses the upper bound of disturbance preference that the population can achieve.
 
-## Effects of parameters on growth rate of disturbance likelihood
+## Effects of parameters on growth rate of disturbance preference
 
 ```{r burning-probability-art-anova-r, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=4, fig.cap="Comparison of fitted r values by disturbance cost and disturbed neighbor limits."}
 
@@ -493,17 +493,17 @@ ggplot(r.reg.data) +
   facet_wrap(~burnt_neighbor_limit, labeller = labeller(burnt_neighbor_limit = bn.labs))
 
 ```
-We get similar results for the growth of disturbance likelihood (*mean.burn.prob*) over model run, where cost and limits to disturbance behaviors have the largest significant effects. Again we see that when disturbance is the most unlimited (i.e., low disturbance cost and more freedom to disturb whatever patches), *r* values are higher, meaning that population disturbance likelihoods quickly increase to the upper bound *K*. 
+We get similar results for the growth of disturbance preference (*mean.burn.prob*) over model run, where cost and limits to disturbance behaviors have the largest significant effects. Again we see that when disturbance is the most unlimited (i.e., low disturbance cost and more freedom to disturb whatever patches), *r* values are higher, meaning that population disturbance preferences quickly increase to the upper bound *K*. 
 
-## Negative disturbance likelihood
+## Negative disturbance preference
 
-As shown in Figure 2A in the manuscript, there are model runs that result in a decrease of disturbance likelihood among foragers to values below 0. This means that foragers never perform disturbance behaviors even when there are opportunities available.
+As shown in Figure 2A in the manuscript, there are model runs that result in a decrease of disturbance preference among foragers to values below 0. This means that foragers never perform disturbance behaviors even when there are opportunities available.
 
 ```{r negative-bp, echo=TRUE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
 length(unique((fits %>% filter(mean.burn.prob < 0))$exp))/length(unique(fits$exp))
 ```
 
-Approximately 12% of all model runs result in a negative disturbance likelihood (*mean.burn.prob*) by the end of model run. 
+Approximately 12% of all model runs result in a negative disturbance preference (*mean.burn.prob*) by the end of model run. 
 
 ```{r negative-bp2, echo=TRUE, message=FALSE, warning=FALSE, fig.height=6, out.width='100%'}
 table((fits %>% filter(mean.burn.prob < 0))$burn_cost)
@@ -558,7 +558,7 @@ ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
 
 When we break this down by each climatic interval, we see higher proportions of self benefit during unproductive periods (Figure S\@ref(fig:bp-and-other-outputs-2)), in part due to reduced population density in these climatic intervals. To capture the overall trajectory of this variable over time, we fit a logistic function to it and also calculated the minimum and maximum values from the central 500 ticks of the model run.
 
-```{r bp-selfprop-fitting-curves, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5, fig.cap="Sample of logistic fits for average forager disturbance likelihood over time for individual model runs."}
+```{r bp-selfprop-fitting-curves, echo=TRUE, message=FALSE, warning=FALSE, out.width='100%', fig.height=5, fig.cap="Sample of logistic fits for average forager disturbance preference over time for individual model runs."}
 fits_bself = data %>%
   group_by(exp) %>%
   do({
@@ -653,13 +653,13 @@ es_m = effectsize::eta_squared(sig_effects_m, partial = T)
 es_ranked_m = es_m[order(-es_m$Eta2_partial), ]
 knitr::kable(head(es_ranked_m, 8))
 ```
-We find that similar parameters impact the shape of the trajectory of self benefit over model run as with the trajectory of disturbance likelihood. 
+We find that similar parameters impact the shape of the trajectory of self benefit over model run as with the trajectory of disturbance preference. 
 
 ### Relationship between self benefit and disturbance behaviors over time
 
 We looked at the relationship between self benefit (and conversely, benefit of disturbance to others) and disturbance behaviors by comparing the final value of each within each climatic cycle of the model using Spearman's rank correlations.
 
-```{r bp-and-other-outputs-4, fig.cap="Relationship between proportion of self benefit and disturbance likelihood at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs-4, fig.cap="Relationship between proportion of self benefit and disturbance preference at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% 
          filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100")) +
@@ -677,9 +677,9 @@ ggplot(rates %>%
 
 ```
 
-When looking at how self benefit (*end.bself*) relates to disturbance likelihood (*end.burn.prob*) within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs-4)). We can also see that, within each climatic interval, low disturbance likelihood cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
+When looking at how self benefit (*end.bself*) relates to disturbance preference (*end.burn.prob*) within climatic intervals, these outputs are fairly strongly correlated at the beginning of model run (Figure S\@ref(fig:bp-and-other-outputs-4)). We can also see that, within each climatic interval, low disturbance preferences cluster very tightly with low proportions of self benefit. This supports the claim that benefit to self drives positive selection for this behavior.
 
-```{r bp-and-other-outputs-5, fig.cap="Relationship between proportion of other benefit (inverse of self benefit) and disturbance likelihood at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+```{r bp-and-other-outputs-5, fig.cap="Relationship between proportion of other benefit (inverse of self benefit) and disturbance preference at the end of a climatic interval. Results shown for model runs that start in productive periods and have short climatic intervals (100 time steps).", echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% 
          filter(`veg-cycle-start` == "\"productive\"") %>% 
          filter(`cycle-duration` == "100")) +
@@ -698,12 +698,12 @@ ggplot(rates %>%
 
 ```
 
-By the end of model run, disturbance likelihood (*end.burn.prob*) is more highly positively correlated with benefit to others (*end.bother*) (Figure S\@ref(fig:bp-and-other-outputs-5)), meaning that the highest likelihood of disturbance behaviors occur when agents besides the one that disturbed a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of disturbance allows for further positive selection of this behavior. 
+By the end of model run, disturbance preference (*end.burn.prob*) is more highly positively correlated with benefit to others (*end.bother*) (Figure S\@ref(fig:bp-and-other-outputs-5)), meaning that the highest preference for disturbance behaviors occur when agents besides the one that disturbed a patch are benefiting from the increased resource productivity. This suggests that there is a the collective benefit of disturbance allows for further positive selection of this behavior. 
 
 ## Positive evolution of disturbance behaviors with high disturbance costs
-One interesting model result is the evolution of high likelihood of disturbance behaviors under conditions where this behavior has a high cost - that is a cost that outweighs the energetic benefits gained. 
+One interesting model result is the evolution of high preference for disturbance behaviors under conditions where this behavior has a high cost - that is a cost that outweighs the energetic benefits gained. 
 
-```{r high-cost-burning-1, fig.cap="Trends of disturbance likelihood over time for model runs with high disturbance costs", echo=FALSE, fig.height=3, fig.width=6, message=FALSE, warning=FALSE, out.width='100%'}
+```{r high-cost-burning-1, fig.cap="Trends of disturbance preference over time for model runs with high disturbance costs", echo=FALSE, fig.height=3, fig.width=6, message=FALSE, warning=FALSE, out.width='100%'}
 high.burn = data %>% filter(`burn-cost` == 300)
 
 ggplot(high.burn) +
@@ -720,9 +720,9 @@ ggplot(high.burn) +
 length(unique((fits %>% filter(burn_cost == 300) %>% filter(mean.burn.prob < 0))$exp))/length(unique((fits %>% filter(burn_cost == 300))$exp))
 ```
 
-Around 51% of these high cost scenarios result in negative likelihood of disturbance behaviors by the end of model run (Figure S\@ref(fig:high-cost-burning-1)). 
+Around 51% of these high cost scenarios result in negative preference for disturbance behaviors by the end of model run (Figure S\@ref(fig:high-cost-burning-1)). 
 
-```{r high-cost-burning-3, fig.cap="Disturbance likelihood at the end of the model run during high disturbance cost model scenarios", echo=FALSE, fig.height=3, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
+```{r high-cost-burning-3, fig.cap="Disturbance preference at the end of the model run during high disturbance cost model scenarios", echo=FALSE, fig.height=3, fig.width=5, message=FALSE, warning=FALSE, out.width='100%'}
 #hist((high.burn %>% filter(ticks == 3500))$mean.burn.prob)
 
 ggplot(high.burn %>% filter(ticks == 3500)) +
@@ -732,7 +732,7 @@ ggplot(high.burn %>% filter(ticks == 3500)) +
 rm(list = c("high.burn"))
 ```
 
-The final disturbance likelihood of the model during these high disturbance cost scenarios appears to be primarily related to the movement model that agents employ (Figure S\@ref(fig:high-cost-burning-3)). Under random walks, agents are more likely to develop increased disturbance likelihood. Under directed walks, the high cost of disturbance keeps likelihoods low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through disturbance behaviors. 
+The final disturbance preference of the model during these high disturbance cost scenarios appears to be primarily related to the movement model that agents employ (Figure S\@ref(fig:high-cost-burning-3)). Under random walks, agents are more likely to develop increased disturbance preference. Under directed walks, the high cost of disturbance keeps preferences low or even negative. This is likely because the targeting of high yield patches allows agents to access enough energy without needing to engage in high cost behaviors. When agents have to rely on randomly encountering high value patches, it is more useful to put energy into creating an environment with more high value patches through disturbance behaviors. 
 
 # Disturbed landscape proportions
 ```{r burnt-landscape-proportions-plots, fig.cap="Relationship between proportion of landscape that is disturbed and population density (A) and disturbance probabilities (B)", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE, out.width='100%', fig.height=4}
@@ -825,7 +825,7 @@ ggarrange(
 
 ```
 
-This is more obvious when we visualize it in Figure S\@ref(fig:veg-0-regressions-3). These results match those above for the effect of these parameters on average disturbance likelihoods. This is also consistent with the high positive correlation between proportion of disturbed landscape and likelihood of disturbance through time. 
+This is more obvious when we visualize it in Figure S\@ref(fig:veg-0-regressions-3). These results match those above for the effect of these parameters on average disturbance preferences. This is also consistent with the high positive correlation between proportion of disturbed landscape and preference for disturbance through time. 
 
 To look at change in different halves of model run, we calculate the slope between the proportion of disturbed landscape at tick 0 and the mid-point of model run and the slope for the mid-point to the end of model run. We fit a linear regression to the difference in slopes between the beginning and end of model run with up to three way interactions between the parameters. We the performed another drop test to determine which parameters/interactions significantly improve model fit.
 
@@ -996,7 +996,7 @@ ggplot(veg_data) +
 
 ```
 
-When we look at how vegetation clustering changes over time with different disturbance costs (*burn-cost*) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all disturbance costs (Figure S\@ref(fig:morans-i-regression-3)). When disturbance costs are low/none, this decrease is even steeper as more disturbances occur, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in disturbance likelihood and more disturbed patches over time.
+When we look at how vegetation clustering changes over time with different disturbance costs (*burn-cost*) and different movement models, it is clear that directed walks result in a faster rate of decline in spatial clustering than random walks across all disturbance costs (Figure S\@ref(fig:morans-i-regression-3)). When disturbance costs are low/none, this decrease is even steeper as more disturbances occur, with spatial autocorrelation becoming more dispersed, at negative values, by the end of model run. This is consistent with above results that directed walk result in faster rates of increase in disturbance preference and more disturbed patches over time.
 
 ```{r morans-i-by-burn-limits, fig.cap="Trends in spatial autocorrelation of vegetation types across model run by parameters for disturbance costs, movement models and restrictions of disturbance behaviors", echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 plot.data = veg.data %>% 
@@ -1264,9 +1264,9 @@ rm(list = c("fits_dw", "fits_rw",
 
 # Disturbance behaviors and resource distributions
 
-The above results demonstrate that vegetation spatial autocorrelation and vegetation diversity primarily controlled by the restrictions and cost of disturbance behaviors; we have also shown that these parameters also control the evolution of disturbance behaviors across model run. For this reason, we were interested in how disturbance behaviors, as measured by average disturbance likelihoods, are related to resource distributions during model run. We assessed these with non-parametric Kendall's tau correlations.
+The above results demonstrate that vegetation spatial autocorrelation and vegetation diversity primarily controlled by the restrictions and cost of disturbance behaviors; we have also shown that these parameters also control the evolution of disturbance behaviors across model run. For this reason, we were interested in how disturbance behaviors, as measured by average disturbance preferences, are related to resource distributions during model run. We assessed these with non-parametric Kendall's tau correlations.
 
-```{r burn-veg-correlations-1, fig.cap="Correlations between disturbance likelihoods, disturbed landscape proportions, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
+```{r burn-veg-correlations-1, fig.cap="Correlations between disturbance preferences, disturbed landscape proportions, vegetation diversity, vegetation spatial autocorrelation, and high value vegetation types at beginning, middle, and end of model run from left to right", fig.show="hold", fig.height=6, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 par(mfrow = c(1,3))
 par(mar=c(0,1,0,1))
 #plot at 250
@@ -1340,7 +1340,7 @@ corrplot::corrplot(
 
 ```
 
-By the end of model run we see a stronger negative correlation of disturbance likelihoods (*mean.burn.prob*) with vegetation Moran's I and Shannon Diversity (Figure S\@ref(fig:burn-veg-correlations-1)). Increasing disturbance events result in less diversity because of dominating proportion of disturbed patches on the landscape when disturbances are very frequent. The negative correlation with vegetation spatial autocorrelation demonstrates that the landscape becomes more locally heterogeneous as disturbances become more frequent. Interestingly, however, there does not appear to be a strong correlation between average disturbance likelihood and the number of high yield patches on the landscape, despite the fact that disturbance behaviors are required to create these high yield patches. 
+By the end of model run we see a stronger negative correlation of disturbance preferences (*mean.burn.prob*) with vegetation Moran's I and Shannon Diversity (Figure S\@ref(fig:burn-veg-correlations-1)). Increasing disturbance events result in less diversity because of dominating proportion of disturbed patches on the landscape when disturbances are very frequent. The negative correlation with vegetation spatial autocorrelation demonstrates that the landscape becomes more locally heterogeneous as disturbances become more frequent. Interestingly, however, there does not appear to be a strong correlation between average disturbance preference and the number of high yield patches on the landscape, despite the fact that disturbance behaviors are required to create these high yield patches. 
 
 ```{r high-yield-veg, fig.cap="Proportions of high yield vegetation proportions throughout model run", fig.height=5, fig.width=8, echo=FALSE, message=FALSE, warning=FALSE, out.width='100%'}
 

@@ -35,7 +35,7 @@ opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 In the development of ForageMod ABM, we used variable names specific to simulating burning behaviors, but the behavior of the model can be generalized to any disturbance that temporarily improves local environment. For this reason, we alias some of the parameter names below to avoid association with only anthropogenic burning regimes. 
 
 # Time
-We explored how long to run the model for by testing how long it took the model to reach 100% likelihood of disturbance behaviors for forager agents and how long it took the model to reach population equilibrium. We tested this at different values for the parameters that control disturbance costs and movement models, while holding all other parameters constant. We limited the model to 6000 ticks.
+We explored how long to run the model for by testing how long it took the model to reach an average preference for disturbance behaviors of 1 across all forager agents and how long it took the model to reach population equilibrium. We tested this at different values for the parameters that control disturbance costs and movement models, while holding all other parameters constant. We limited the model to 6000 ticks.
 
 ```{r load-time-data, echo=FALSE, message=FALSE, warning=FALSE}
 data = readRDS("../sensitivity-analysis_time/SA-data_time.rds")
@@ -101,7 +101,7 @@ ggplot(max.ticks %>% filter(disturb_neighbor_limit %in% c(1, 8))) +
   theme(strip.text = element_text(size = 6), axis.text = element_text(size = 6))
 
 ```
-We can see that at the lowest restrictions and costs to disturbance behaviors, the model reaches 100% average likelihood of disturbance across all agents by approximately 2000 model ticks or 2000 foraging bouts (upper right facet). Imposing limits on disturbance behaviors increases the time to achieving a population with an average disturbance likelihood of 100%.  
+We can see that at the lowest restrictions and costs to disturbance behaviors, the model reaches an average preference for disturbance of 1 across all agents by approximately 2000 model ticks or 2000 foraging bouts (upper right facet). Imposing limits on disturbance behaviors increases the time to achieving a population with an average disturbance preference of 1.  
 
 ```{r population-over-time, echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 data$pop.density = data$pop.count/(51*51)
@@ -122,10 +122,10 @@ ggplot(data) +
 
 When looking at population growth over time, we see that unlimited disturbances allows populations to reach equilibrium quickly. More limited disturbances see slower population growth at the beginning of model run, allowing the population to grow more steadily. We can also see in this graph that different disturbance restriction parameters create different population thresholds. This indicates that carrying capacity of the model is affected by how many patches can be disturbed in a single time step. 
 
-To capture information about the carrying capacity of the environment, we decided to run the model for 3500 ticks. Although this will likely result in populations that evolve disturbance likelihoods greater than 100%, it will allow us to examine what behavioral and environmental factors influence or are influenced by population stasis. 
+To capture information about the carrying capacity of the environment, we decided to run the model for 3500 ticks. Although this will likely result in populations that evolve disturbance preferences greater than 1, it will allow us to examine what behavioral and environmental factors influence or are influenced by population stasis. 
 
 # Parameters
-We examined how foragers' disturbance likelihoods and forager movement was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs
+We examined how foragers' disturbance preference and forager movement was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs
 of non-disturbance forager behaviors. To do so, we allowed for
 essentially unlimited disturbance behaviors by holding *disturb-cost* (*burn-cost*),
 *disturb-neighbor-limit* (*burnt-neighbor-limit*), and *disturb-veg-type-threshold* (*burn-veg-type-threshold*) constant. We also tested with one type of environmental scenario - starting in a productive environment and cycling the environment every 100 ticks - and one type of movement model - random walking. We tested the effects of the parameters listed below at a low, medium, and high value.
@@ -324,7 +324,7 @@ ggarrange(
 
 High amounts of energy in the environment (*veg_type_modifier* = 300) and low foraging and low reproduction costs result in very large populations, which in turn have high computing requirements for the model. For this reason, we intentionally chose some values for the final experiments that keep the population smaller.
 
-## How do the parameters affect disturbance likelihoods of foragers?
+## How do the parameters affect disturbance preference values of foragers?
 
 ```{r burning-probabilities_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -367,7 +367,7 @@ ggarrange(
 )
 ```
 
-Across all parameters, when populations are maintained, disturbance likelihood increases. We look at the final average disturbance likelihood to compare parameter effects. Specifically, we test for significant differences using Mann-Whitney (two-sample Wilcoxon) tests. For all tests, we look at the differences separated out by foraging costs (*forager-energy-requirement*) and energy required for reproduction (*reproduction-threshold*).
+Across all parameters, when populations are maintained, disturbance preference increases. We look at the final average disturbance preference to compare parameter effects. Specifically, we test for significant differences using Mann-Whitney (two-sample Wilcoxon) tests. For all tests, we look at the differences separated out by foraging costs (*forager-energy-requirement*) and energy required for reproduction (*reproduction-threshold*).
 
 ```{r burning-probabilities_2, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 
@@ -409,7 +409,7 @@ ggboxplot(end.data,
 ```
 
 An alternative population maintenance strategy to enough energy
-availability in the environment is that agents must be able to move more to access more resources (*forager-moves*). Again, here we see smaller significant differences in final disturbance likelihoods between the middle and high value of *forager-moves* across all energy requirements/thresholds.
+availability in the environment is that agents must be able to move more to access more resources (*forager-moves*). Again, here we see smaller significant differences in final disturbance preference values between the middle and high value of *forager-moves* across all energy requirements/thresholds.
 
 ```{r burning-probabilities_3_5, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggboxplot(end.data, 
@@ -463,7 +463,7 @@ ggboxplot(end.data,
         legend.position = "none")
 
 ```
-We see reduced disturbance likelihood with natural ignition because foragers are able to reap benefits of natural processes and avoid the need to quickly develop a strategy to force the environment to produce more energy. However, high rates of natural ignition still lead to increased disturbance behaviors suggesting that this parameter does not impact trends in forager behavior, just magnitude. For this reason, we include a small amount of natural ignition in the model to approximate natural disturbances, but we do not test multiple values.
+We see reduced disturbance preference values with natural ignition because foragers are able to reap benefits of natural processes and avoid the need to quickly develop a strategy to force the environment to produce more energy. However, high rates of natural ignition still lead to increased disturbance behaviors suggesting that this parameter does not impact trends in forager behavior, just magnitude. For this reason, we include a small amount of natural ignition in the model to approximate natural disturbances, but we do not test multiple values.
 
 ```{r burning-probabilities_5, echo=FALSE, fig.height=4, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggarrange(
@@ -498,9 +498,9 @@ ggarrange(
 
 ```
 
-Finally, when comparing across different values for forager energy requirements or reproduction threshold, we see significant differences. Final disturbance likelihood increases with higher energy requirements and decreases with higher reproduction thresholds.
+Finally, when comparing across different values for forager energy requirements or reproduction threshold, we see significant differences. Final disturbance preference increases with higher energy requirements and decreases with higher reproduction thresholds.
 
-While altering these parameters do change the rate of increase of disturbance likelihood in the model, all parameter settings result in increasing disturbance likelihood, meaning that final result of the model will always be the same: 100%+ disturbance likelihood. This means that choosing the parameters for the final experiments could take into consideration other factors beside their effect on disturbance likelihood.
+While altering these parameters do change the rate of increase of disturbance preference in the model, all parameter settings result in increasing disturbance preference, meaning that final result of the model will always be the same: 1+ disturbance preference. This means that choosing the parameters for the final experiments could take into consideration other factors beside their effect on disturbance preference.
 
 ## How do the parameters affect forager movement?
 
@@ -646,7 +646,7 @@ For all of the reasons outlined in the above sensitivity analysis, we use the mi
 -   *reproduction-cost* = 1000
 
 These values allow the model to maintain a reasonable population that does not significantly hinder model performance (i.e., does not drastically increase run time or memory requirements).
-Additionally, these parameters do meaningfully affect our variables of interest - disturbance likelihood and forager movement. The effects of the other model parameters are discussed in the manuscript and the supplementary material.
+Additionally, these parameters do meaningfully affect our variables of interest - disturbance preference and forager movement. The effects of the other model parameters are discussed in the manuscript and the supplementary material.
 
 ## References
 
