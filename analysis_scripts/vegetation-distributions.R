@@ -270,4 +270,4 @@ ggsave(filename = "preliminary_figures/veg_diversity_fig3a.png", plot = p2,
 bprop.plot = readRDS("preliminary_figures/proportion-burnt-landscape.rds")
 all.plot2 = ggpubr::ggarrange(p2, bprop.plot + theme(legend.position = "none"), nrow = 2, labels = "AUTO")
 ggsave(filename = "figures/veg-type-diversity.png", plot = all.plot2,
-       dpi = 300, width = 8, height = 8)
+       dpi = 300, width = 8, height = 8.5)
