@@ -62,7 +62,7 @@ hist(data$mean.burn.prob)
 
 mbp.plot = ggplot(data) +
   geom_smooth(aes(x = ticks, y = mean.burn.prob, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
-  geom_smooth(aes(x = ticks, y = mean.burn.prob), color = "black") +
+  geom_smooth (aes(x = ticks, y = mean.burn.prob), color = "black") +
   scale_color_brewer(palette = "Set2",
                      labels = dc.labs) +
   geom_hline(yintercept = 0, linetype = "dotted") +
@@ -150,16 +150,16 @@ hist((data %>% filter(ticks > 0))$bself.prop)
 fit1.bself = glm(bself.prop ~ ticks*(.), data = data %>% select_at(c("ticks", parameters, "bself.prop"), family = "poisson"))
 plot_summs(fit1.bself, scale = T)
 
-ggplot(data %>% filter(ticks > 0)) +
-  geom_smooth(aes(x = ticks, y = bother.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
-  geom_smooth(aes(x = ticks, y = bother.prop), se = F, color = "black") +
-  scale_color_brewer(palette = "Set2",
-                     labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
-               labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs)) +
-  labs(y = "proportion of burning benefits for others", x = "ticks", color = "cost of burning") +
-  theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
+# ggplot(data %>% filter(ticks > 0)) +
+#   geom_smooth(aes(x = ticks, y = bother.prop, group = exp, color = as.factor(`burn-cost`)), alpha = 0.01, linewidth = 0.05) +
+#   geom_smooth(aes(x = ticks, y = bother.prop), se = F, color = "black") +
+#   scale_color_brewer(palette = "Set2",
+#                      labels = c("no burn cost (0)", "low burn cost (100)", "high burn cost (200)", "highest burn cost (300)")) +
+#   geom_hline(yintercept = 0, linetype = "dotted") +
+#   facet_grid(`cycle-duration` + `veg-cycle-start` ~ `burn-cost`, labeller = 
+#                labeller(`burn-cost` = bc.labs, `cycle-duration` = cd.labs)) +
+#   labs(y = "proportion of burning benefits for others", x = "ticks", color = "cost of burning") +
+#   theme(legend.position = "none", axis.title = element_text(size = 8), strip.text = element_text(size = 6))
 
 #####all plots #####
 dc.labs = c("no disturbance cost", "low disturbance cost", "medium disturbance cost", "high disturbance cost")
