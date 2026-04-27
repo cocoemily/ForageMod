@@ -1,0 +1,2021 @@
+<?xml version="1.0" encoding="utf-8"?>
+<model version="NetLogo 7.0.3" snapToGrid="false">
+  <code><![CDATA[;;forageMOD v02 by Ben Davies, University of Utah
+;; modified by Emily Coco, Yale University
+;;08 February 2024
+
+extensions [
+  csv
+  profiler
+]
+
+breed [ foragers forager ]
+foragers-own [ moves move-tracker energy burn-prob age offspring interactions previous-interaction-list same-interactions cultural-traits]
+patches-own [ veg-type foraged? burnt? who-burned times-human-burned time-to-last-burn max-veg-type save-veg-type]
+links-own [ counter ]
+
+globals [ stamp1 file-path patch-burn-list patch-veg-list turtle-location-list available-forage forage-per-capita self-burn other-burn current-veg-regime current-max-veg ]
+
+to setup
+  clear-all
+  reset-timer
+
+  ;Set file path for the experiment
+  set stamp1 random-float 1
+  ifelse directory-name = "" [
+    set file-path (word "preliminary-results/experiment_" stamp1 "_" )
+  ][
+    set file-path (word directory-name "/experiment_" stamp1 "_" )
+  ]
+
+  set patch-burn-list []
+  set patch-veg-list []
+  set turtle-location-list []
+
+  ;Tracking for burn benefit
+  set self-burn 0
+  set other-burn 0
+
+  ;Set up initial distribution of max veg types on the landscape based on input parameter
+  if veg-distribution = "random" [
+    ask patches [
+      set save-veg-type one-of [3 5 7]
+    ]
+  ]
+
+  if veg-distribution = "clustered" [
+    ask patches [
+      set save-veg-type one-of [3 5 7]
+    ]
+    repeat 15 [
+      ask patches [
+        set save-veg-type [save-veg-type] of one-of neighbors4
+      ]
+    ]
+  ]
+
+  ask patches [
+    ifelse veg-cycle-start = "productive" [;productive environment
+      set max-veg-type save-veg-type
+      set current-max-veg 7
+    ][ ;unproductive environment
+      ifelse save-veg-type > 3 [
+        set max-veg-type (save-veg-type - 2)
+      ][set max-veg-type save-veg-type]
+      set current-max-veg 5
+    ]
+  ]
+
+
+ ;Set up all patches unburned, unforaged, at lowest productivity
+  ask patches [
+    set veg-type 1
+    ;set veg-type max-veg-type ;for visualization only
+    set pcolor scale-color green veg-type 10 1
+    set foraged? false
+    set burnt? false
+    set who-burned nobody
+  ]
+
+  set current-veg-regime veg-cycle-start
+
+  ;Create base population of 100 agents with randomly distributed ages and probability of burning
+  ask n-of 100 patches [
+    sprout-foragers 1 [
+      set energy forager-energy-requirement
+      set color (10 * (1 + random 14)) + 4
+      set shape "person"
+      set burn-prob -0.1 + random-float 0.2
+      set age random 50
+      set offspring 0
+      set interactions 0
+      set same-interactions 0
+      set previous-interaction-list []
+      set move-tracker 0
+      set moves 0
+      set cultural-traits n-values cultural-trait-count [ 1 ]
+    ]
+  ]
+  
+  ask n-of (count foragers / 2) foragers [
+    set cultural-traits n-values cultural-trait-count [ -1 ]
+  ]
+
+  output-print (word "start run " stamp1)
+
+  reset-ticks
+end
+
+to profile
+  setup
+  profiler:reset
+  profiler:start
+  repeat 200 [go]
+  profiler:stop
+  let _fname (word "report_" stamp1 ".txt")
+  carefully [file-delete _fname] []
+  file-open _fname
+  file-print profiler:report
+  file-close
+end
+
+to go
+
+  if ticks >= tick-limit [
+    if export? = true [
+      set patch-burn-list lput burn-grid patch-burn-list
+      set patch-veg-list lput veg-type-grid patch-veg-list
+      set turtle-location-list lput turtle-location turtle-location-list
+      export-data
+    ]
+
+    if export-limited? = true [
+      export-limited-data
+    ]
+    stop
+  ]
+
+  ;Reset trackers
+  set self-burn 0
+  set other-burn 0
+  ;if ticks mod (cycle-duration / 2) = 0 and ticks != 0 [
+  if ticks mod 50 = 0 and ticks != 0 [
+    set patch-burn-list lput burn-grid patch-burn-list
+    set patch-veg-list lput veg-type-grid patch-veg-list
+    set turtle-location-list lput turtle-location turtle-location-list
+  ]
+
+
+  ;Alternate between productive-unproductive environments
+  if ticks mod cycle-duration = 0 and ticks != 0 [
+    ;see 'Cycle maximum productivity of different patches'
+    cycle-veg
+  ]
+
+  ;see 'Update vegetation routine'
+  ask patches [ update-veg ]
+
+  ;Natural ignition
+  ask n-of ((count patches) * natural-ignition) patches [
+    set burnt? true
+    set who-burned nobody
+    set veg-type -1
+  ]
+
+  ;Update forage availability trackers
+  set available-forage sum [ veg-type * veg-type-modifier ] of patches ;total forage
+  set forage-per-capita  sum [ veg-type * veg-type-modifier ] of patches / count foragers ;per capita
+
+  ;Reset forager movement and assess how many moves to make
+  ask foragers [
+    set moves 0
+    set move-tracker 0
+    assess-movement
+  ]
+
+  ;Reset forager links and interaction count
+  ask foragers [
+    ask my-links [
+      die
+    ]
+    set interactions 0
+  ]
+
+  ;;after determining which agents need to move, accrue foraging cost
+  ask foragers with [moves > 0] [
+    set energy energy - forager-energy-requirement ;reduce energy
+  ]
+
+  ;foraging loop based on which agents still have moves to make
+  while [ any? foragers with [ moves > 0] ] [
+    ;Agents forage and move
+    ask foragers with [moves > 0] [
+      ifelse (([ burnt? ] of patch-here = false) and ([ foraged? ] of patch-here = false)) [
+        ;output-print (word "agent " who " is foraging and moving")
+        forage ;see 'Foraging routine'
+        move
+        ;set energy energy - movement-cost
+      ][
+        ;output-print (word "agent " who " is moving")
+        move
+      ]
+    ]
+    ask foragers [
+      check-interactions
+    ]
+  ]
+
+  ask foragers [
+    ;compare new interactions to previous-interaction-list
+    let same-interactions-count 0
+    let current-interactions-list sort [other-end] of my-links
+
+    if length current-interactions-list > 0 [
+      foreach current-interactions-list [ x ->
+        if member? x previous-interaction-list [
+          set same-interactions-count same-interactions-count + 1
+        ]
+      ]
+    ]
+
+    ;update tracking variables
+    set same-interactions same-interactions-count
+    set interactions count my-links
+    set previous-interaction-list current-interactions-list
+  ]
+
+  ;Agents check whether they are dead or reproducing, and age one time step
+  ask foragers [
+    if energy < 0 [ ;if agent doesn't meet energy, then die
+      die
+    ]
+    if energy >= reproduction-threshold [ reproduce ] ;if agent exceeds double energy needs, reproduce (see 'Reproduction routine')
+    set age age + 1 ;age
+    ;if age = 100 [ die ]  ;optional lifespan limit
+  ]
+
+  if count foragers = 0 [ ;if all the agents are dead, stop the model
+    if export? = true [
+      set patch-burn-list lput burn-grid patch-burn-list
+      set patch-veg-list lput veg-type-grid patch-veg-list
+      set turtle-location-list lput turtle-location turtle-location-list
+      export-data
+    ]
+
+    if export-limited? = true [
+      export-limited-data
+    ]
+    stop
+  ]
+  tick
+
+end
+
+;Foraging routine
+to forage
+  ;foraging behavior
+  set energy energy + (veg-type * veg-type-modifier)
+
+  ;check if space was previously burned
+  if veg-type > 1 [
+    ifelse who-burned = self [
+      set self-burn self-burn + 1
+    ][
+      if who-burned != nobody [set other-burn other-burn + 1]
+    ]
+  ]
+
+  ;set patch to foraged
+  let vt [veg-type] of patch-here
+  ask patch-here [
+    set foraged? true
+    set veg-type 0
+  ]
+
+  ;burning behavior
+  if vt <= burn-veg-type-threshold [ ;;set a limit on what type of vegetation agents are willing to burn
+    if foragers-burn? = true [
+      if count ([neighbors] of patch-here) with [burnt? = true] <= burnt-neighbor-limit [ ;;preference for burning areas surrounding by green areas
+        if (random-float 1.0) < burn-prob [
+          set energy energy - burn-cost
+          ask patch-here [
+            set burnt? true
+            set time-to-last-burn 0
+            set times-human-burned (times-human-burned + 1)
+            set pcolor black
+            set who-burned myself
+            set veg-type -1
+          ]
+        ;get a little extra energy from burning
+          set energy energy + veg-type-modifier
+        ]
+      ]
+    ]
+  ]
+
+end
+
+; 'Cycle maximum productivity of different patches'
+to cycle-veg
+  ifelse current-veg-regime = "productive" [
+    ask patches with [save-veg-type > 3] [
+      set max-veg-type save-veg-type - 2
+    ]
+    set current-max-veg 5
+    set current-veg-regime "unproductive"
+  ][
+    ask patches [
+      set max-veg-type save-veg-type
+    ]
+    set current-max-veg 7
+    set current-veg-regime "productive"
+  ]
+
+;  ask patches [ ;for testing
+;    set pcolor scale-color green max-veg-type 10 1
+;  ]
+
+end
+
+;'Update vegetation routine'
+to update-veg
+  set time-to-last-burn time-to-last-burn + 1
+
+  ;Burnt patches are restored to highest productivity
+  ifelse burnt? = true [
+;    if times-human-burned > regen-threshold [
+;      set max-veg-type 5
+;      set regenerating? true
+;    ]
+
+    set veg-type max-veg-type
+    set burnt? false
+    set foraged? false
+  ]
+  [
+   ;Unburnt patches that were foraged are now restored to lowest productivity level
+   ifelse veg-type > 1 [
+      ifelse foraged? = true [
+        set veg-type 1
+        set foraged? false
+      ]
+      [
+        ;Unburnt patches with productivity > 1 that were not foraged are reduced by one productivity
+        set veg-type veg-type - 1
+      ]
+    ]
+    [
+      ;Unburnt patches with productivity = 1 remain at lowest productivity
+      set veg-type 1
+       set foraged? false
+    ]
+  ]
+
+   ;Update patch color
+    set pcolor scale-color green veg-type 10 1
+
+end
+
+; 'Determine how many moves agent should make at each tick'
+to assess-movement
+  let required-moves 0
+  let possible-total-energy 0
+
+  ;agents check their local surroundings up to an input maximum number of moves
+  let checks forager-moves
+
+  let r 0.5
+
+  ;test possible available energy at increasingly large radii to determine how far to travel to meet energy requirements
+  while [checks > 0] [
+    let previous-patches patches in-radius r
+    set r r + 1
+    ;agents make their assessment based on maximum available energy to forage
+    let new-patches patches in-radius r with [ not member? self previous-patches]
+    let available veg-type-modifier * (max ([veg-type] of (new-patches)))
+    set possible-total-energy energy + available
+
+    ;agents add an additional move until they have enough energy to reproduce and do their next round of foraging
+    ifelse possible-total-energy < (reproduction-threshold + forager-energy-requirement) [
+      set required-moves required-moves + 1
+    ][
+      stop ;do not add additional move if energy needs would be satisified by one fewer moves
+    ]
+
+    set checks checks - 1
+  ]
+
+  ;set limit on number of movements each forager can make
+  set moves min (list forager-moves required-moves)
+  set move-tracker moves
+
+end
+
+
+to move
+  ;;movement
+  if movement-model = "Directed Walk" [
+    move-to max-one-of neighbors [ veg-type ]
+  ]
+  if movement-model = "Random Walk" [
+    move-to one-of neighbors
+  ]
+  set moves moves - 1
+
+end
+
+
+to check-interactions
+  ;create new links with foragers on neighboring patches
+  let nforagers turtles-on neighbors
+  create-links-with nforagers with [not link-neighbor? myself] [
+    set counter 0
+    hide-link
+  ]
+end
+
+
+to reproduce
+  let bp burn-prob
+  let mn moves
+  let c color
+  hatch 1 [
+    set color c
+    set energy forager-energy-requirement
+    set age 0
+    set offspring 0
+    if foragers-burn? = true [
+      ifelse random 2 = 0 [
+        set burn-prob bp + 0.01
+      ][
+        set burn-prob bp - 0.01
+      ]
+    ]
+  ]
+  set energy energy - reproduction-cost
+  set offspring offspring + 1
+end
+
+
+to-report turtle-location
+  let loc-list []
+  ask patches [
+    let tcount count turtles-here
+    set loc-list lput (list ([pxcor] of self) ([pycor] of self) tcount ticks) loc-list
+  ]
+  report loc-list
+end
+
+to-report veg-type-grid
+  let veg-list []
+  ask patches [
+    set veg-list lput (list ([pxcor] of self) ([pycor] of self) veg-type ticks) veg-list
+  ]
+  report veg-list
+end
+
+to-report burn-grid
+  let burn-list []
+  ask patches [
+    set burn-list lput (list ([pxcor] of self) ([pycor] of self) times-human-burned ticks) burn-list
+  ]
+  report burn-list
+end
+
+to export-data
+
+  output-print (word "exp " stamp1 " total run time: " timer "sec" )
+
+  set patch-burn-list reduce sentence patch-burn-list
+  file-open (word file-path "human-burning-amounts.csv")
+  csv:to-file (word file-path "human-burning-amounts.csv") patch-burn-list
+  file-close
+
+  set patch-veg-list reduce sentence patch-veg-list
+  file-open (word file-path "gridded-veg-types.csv")
+  csv:to-file (word file-path "gridded-veg-types.csv") patch-veg-list
+  file-close
+
+  set turtle-location-list reduce sentence turtle-location-list
+  file-open (word file-path "turtle-locations.csv")
+  csv:to-file (word file-path "turtle-locations.csv") turtle-location-list
+  file-close
+
+  export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
+  export-plot "Available Forage Per Capita" (word file-path "resources-per-capita.csv")
+  export-plot "Burning Behavior" (word file-path "burning-behavior.csv")
+  export-plot "Population" (word file-path "population.csv")
+  export-plot "Self vs Other Benefit" (word file-path "benefit-distribution.csv")
+  export-plot "Forager Interactions" (word file-path "forager-interactions.csv")
+  export-plot "Forager Moves" (word file-path "forager-moves.csv")
+
+end
+
+to export-limited-data ;for sensitivity analysis
+
+  output-print (word "exp " stamp1 " total run time: " timer "sec" )
+
+  export-plot "Population" (word file-path "population.csv")
+  export-plot "Burning Behavior" (word file-path "burning-behavior.csv")
+  export-plot "Forager Moves" (word file-path "forager-moves.csv")
+  export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
+
+end]]></code>
+  <widgets>
+    <view x="205" wrappingAllowedX="true" y="123" frameRate="30.0" minPycor="-25" height="417" showTickCounter="true" patchSize="8.0" fontSize="10" wrappingAllowedY="true" width="416" tickCounterLabel="ticks" maxPycor="25" updateMode="1" maxPxcor="25" minPxcor="-25"></view>
+    <button x="212" y="16" height="33" disableUntilTicks="false" forever="false" kind="Observer" width="63" sizeVersion="0">setup</button>
+    <slider x="17" step="0.001" y="13" max="0.01" display="natural-ignition" height="33" min="0" direction="Horizontal" default="0.005" variable="natural-ignition" width="164" sizeVersion="0"></slider>
+    <button x="282" y="16" height="33" disableUntilTicks="false" forever="true" kind="Observer" width="63" sizeVersion="0">go</button>
+    <plot x="633" autoPlotX="true" yMax="10.0" autoPlotY="true" y="77" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Population" width="186" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot count foragers</update>
+      </pen>
+    </plot>
+    <plot x="825" autoPlotX="true" yMax="1.0" autoPlotY="true" y="402" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="-1.0" display="Burning Behavior" width="187" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="mean_burn_prob" color="-16777216" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse foragers-burn? = true [
+  ifelse count foragers > 0 [ 
+    plot mean [ burn-prob ] of foragers 
+  ] 
+  [ 
+    plot 0 
+  ]
+ ]
+ [
+  plot 0  
+]
+  ]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="high.CI_burn_prob" color="-7500403" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse foragers-burn? = true [
+  ifelse count foragers > 2 [ 
+    plot mean [ burn-prob ] of foragers + standard-deviation [ burn-prob ] of foragers 
+  ] 
+  [ 
+    plot 0 
+  ]
+ ]
+ [
+  plot 0  
+]
+  ]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="low.CI_burn-prob" color="-7500403" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse foragers-burn? = true [
+  ifelse count foragers > 2 [ 
+    plot mean [ burn-prob ] of foragers - standard-deviation [ burn-prob ] of foragers 
+  ] 
+  [ 
+    plot 0 
+  ]
+ ]
+ [
+  plot 0  
+]
+  ]]></update>
+      </pen>
+    </plot>
+    <switch x="18" y="93" height="33" on="true" variable="foragers-burn?" display="foragers-burn?" width="139" sizeVersion="0"></switch>
+    <plot x="824" autoPlotX="true" yMax="10.0" autoPlotY="true" y="77" xMin="0.0" height="150" legend="false" xMax="120.0" yMin="0.0" display="Age Structure" width="186" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="1" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update>histogram [ age ] of foragers</update>
+      </pen>
+    </plot>
+    <plot x="1016" autoPlotX="true" yMax="10.0" autoPlotY="true" y="402" xMin="0.0" height="150" legend="true" xMax="10.0" yMin="0.0" display="Self vs Other Benefit" width="185" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Self" color="-955883" legend="true">
+        <setup></setup>
+        <update>plot self-burn</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Other" color="-13345367" legend="true">
+        <setup></setup>
+        <update>plot other-burn</update>
+      </pen>
+    </plot>
+    <chooser x="17" y="264" height="45" variable="movement-model" current="0" display="movement-model" width="138" sizeVersion="0">
+      <choice type="string" value="Directed Walk"></choice>
+      <choice type="string" value="Random Walk"></choice>
+    </chooser>
+    <slider x="17" step="1" y="226" max="15" display="forager-moves" height="33" min="5" direction="Horizontal" default="10.0" variable="forager-moves" width="172" sizeVersion="0"></slider>
+    <slider x="17" step="50" y="51" max="500" display="veg-type-modifier" height="33" min="50" direction="Horizontal" default="200.0" variable="veg-type-modifier" width="164" sizeVersion="0"></slider>
+    <button x="356" y="16" height="33" disableUntilTicks="false" forever="false" kind="Observer" display="go-once" width="85" sizeVersion="0">go</button>
+    <slider x="451" step="100" y="81" max="2000" display="cycle-duration" height="33" min="0" direction="Horizontal" default="100.0" variable="cycle-duration" units="ticks" width="154" sizeVersion="0"></slider>
+    <chooser x="207" y="70" height="45" variable="veg-cycle-start" current="0" display="veg-cycle-start" width="110" sizeVersion="0">
+      <choice type="string" value="productive"></choice>
+      <choice type="string" value="unproductive"></choice>
+    </chooser>
+    <plot x="634" autoPlotX="true" yMax="0.5" autoPlotY="true" y="239" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Vegetation Type Proportions" width="186" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="veg7" color="-15575016" legend="false">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 7]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg6" color="-15040220" legend="false">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 6]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg5" color="-14439633" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 5]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg4" color="-13840069" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 4]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg3" color="-11085214" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 3]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg2" color="-8330359" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 2]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg1" color="-5509967" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 1]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="veg0" color="-5987164" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [veg-type = 0]) / (count patches)</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="burnt" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot (count patches with [burnt? = true]) / (count patches)</update>
+      </pen>
+    </plot>
+    <slider x="17" step="1" y="131" max="8" display="burnt-neighbor-limit" height="33" min="0" direction="Horizontal" default="4.0" variable="burnt-neighbor-limit" width="164" sizeVersion="0"></slider>
+    <input x="467" multiline="false" y="10" height="60" variable="tick-limit" type="number" width="76" sizeVersion="0">3500.0</input>
+    <plot x="635" autoPlotX="true" yMax="1.0" autoPlotY="true" y="402" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Forager Moves" width="186" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 0 [ plot (mean [ move-tracker ] of foragers) 
+] [ plot 0 ]
+]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="pen-1" color="-7500403" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 2 [ plot mean [ move-tracker ] of foragers + standard-deviation [ move-tracker ] of foragers  ] [ plot 0 ]]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="pen-2" color="-7500403" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 2 [ plot mean [ move-tracker ] of foragers - standard-deviation [ move-tracker ] of foragers  ] [ plot 0 ]]]></update>
+      </pen>
+    </plot>
+    <switch x="746" y="15" height="33" on="false" variable="export?" display="export?" width="104" sizeVersion="0"></switch>
+    <chooser x="323" y="70" height="45" variable="veg-distribution" current="0" display="veg-distribution" width="110" sizeVersion="0">
+      <choice type="string" value="random"></choice>
+      <choice type="string" value="clustered"></choice>
+    </chooser>
+    <plot x="1014" autoPlotX="true" yMax="10.0" autoPlotY="true" y="77" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Forager Interactions" width="186" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="all_interactions" color="-7858858" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 0 [ plot mean [ interactions ] of foragers ] [ plot 0 ]]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="same_interactions" color="-1664597" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 2 [ plot mean [ same-interactions ] of foragers] [ plot 0 ]]]></update>
+      </pen>
+    </plot>
+    <button x="644" y="15" height="33" disableUntilTicks="false" forever="false" kind="Observer" width="92" sizeVersion="0">cycle-veg</button>
+    <slider x="17" step="1" y="171" max="7" display="burn-veg-type-threshold" height="33" min="1" direction="Horizontal" default="4.0" variable="burn-veg-type-threshold" width="177" sizeVersion="0"></slider>
+    <input x="1018" multiline="false" y="12" height="60" variable="directory-name" type="string" width="229" sizeVersion="0"></input>
+    <switch x="857" y="15" height="33" on="false" variable="export-limited?" display="export-limited?" width="152" sizeVersion="0"></switch>
+    <slider x="11" step="500" y="334" max="3000" display="forager-energy-requirement" height="33" min="500" direction="Horizontal" default="1500.0" variable="forager-energy-requirement" width="183" sizeVersion="0"></slider>
+    <slider x="10" step="500" y="372" max="5000" display="reproduction-threshold" height="33" min="forager-energy-requirement" direction="Horizontal" default="3000.0" variable="reproduction-threshold" width="184" sizeVersion="0"></slider>
+    <slider x="10" step="500" y="409" max="reproduction-threshold" display="reproduction-cost" height="33" min="500" direction="Horizontal" default="500.0" variable="reproduction-cost" width="185" sizeVersion="0"></slider>
+    <slider x="10" step="100" y="447" max="500" display="burn-cost" height="33" min="0" direction="Horizontal" default="200.0" variable="burn-cost" width="186" sizeVersion="0"></slider>
+    <slider x="10" step="1" y="499" max="20" width="187" display="cultural-trait-count" height="50" min="0" direction="Horizontal" default="10.0" variable="cultural-trait-count"></slider>
+    <plot x="825" autoPlotX="true" yMax="10.0" autoPlotY="true" y="238" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Average Energy Intake" width="186" sizeVersion="0">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-6917194" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 0 [ plot mean [ energy ] of foragers ] [ plot 0 ]]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="pen-1" color="-1712915" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 2 [ plot mean [ energy ] of foragers + standard-deviation [ energy ] of foragers  ] [ plot 0 ]]]></update>
+      </pen>
+      <pen interval="1.0" mode="0" display="pen-2" color="-1712915" legend="true">
+        <setup></setup>
+        <update><![CDATA[ifelse count foragers > 2 [ plot mean [ energy ] of foragers - standard-deviation [ energy ] of foragers  ] [ plot 0 ]]]></update>
+      </pen>
+    </plot>
+    <plot x="1017" autoPlotX="true" yMax="10.0" autoPlotY="true" y="237" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" width="183" display="Cultural Traits">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot count turtles</update>
+      </pen>
+    </plot>
+  </widgets>
+  <info>## WHAT IS IT?
+
+ForageMod is a simple model of foraging in an environment in which a disturbance (either natural or forager-initiated; e.g. fire) can temporarily improve local environmental productivity. 
+
+## HOW IT WORKS
+
+In the model, agents obtain resources (energy) from their environment, moving to new locations once local resources are exhausted. If an agent obtains more resources than needed to exceed a threshold, the agent can reproduce, adding a new agent to the world. If an agent fails to obtain enough resource to survive, the agent dies.
+
+The energy obtained from different parts of the environment is controlled by the *veg-type*, where a higher value provides more resources, while a lower value (baseline 1) provides less. A value of 0 indicates the patch has either previously been foraged or burned. Each patch is assigned a *max-veg-type* that it can achieve; this is determined by whether the model is in a productive vegetation regime (*curret-veg-regime*) or an unproductive one. During a productive state, *max-veg-types* are either 3, 5, or 7. During an unproductive state, *max-veg-types* are limited to 3 and 5, reducing the total possible resources available in the environment. These vegetation regimes cycle throughout the model as determined by the *cycle-duration* parameter.
+
+Each time step, the environment updates in the following ways:
+-Burned patches are reset to their *max-veg-type*
+-Foraged patches that are not burned return to the minimum veg-type (1)
+-Patches with a veg-type higher than 1 reduce their veg-type by 1
+
+Following this, a random subset of patches are burned through "natural ignition" (e.g. lightning), setting their veg-type to 0. 
+
+Movement occurs over a number of steps, and can occur in one of two ways:
+-"Directed Walk", where agents move to the neighboring patch with the highest resource availability.
+-"Random Walk", where agents move to any neighboring patch.
+
+Agents assess how many steps they will take during a given tick by iteratively checking what is the maximum amount of energy they could obtain within increasingly larger radii. Agents add additional moves to their agenda until they determine they will have enough energy to reproduce and do their next round of foraging. The agents then carry out those steps and forage at each step when possible. For every step, the order of foragers is randomized.
+
+When agents forage, they reduce the veg-type to 0. If an agent arrives on a patch that has a 0 value, there is an agent-specific probability (burn-prob) that the agent will burn the patch. At the start of the model, these probabilities are distributed evenly in the population between -0.1 and 0.1, with negative values resulting in no burning at all.
+
+When an agent burns a patch, there is an associated burn cost, but they also receive a little extra energy.
+ 
+Following reproduction, the new agent begins with enough resource to survive to the next time step. The new agent's *burn-prob* is the value of the parent +/- 0.01, making the new agent more or less likely to burn unproductive land than their parent.
+
+
+## HOW TO USE IT
+
+### Controls
+
+#### *TODO: update to include new parameters*
+
+To run the model, press Setup to initiate the simulation, then Go to set it running. The model begins with 100 agents in a landscape where all patches are veg-type 1. 
+
+
+The percentage of patches that are burned naturally each time step is controlled by the natural-ignition slider. For example, if the slider is set to 0.05, then a random set of patches equivalent to 5% of all patches ignites naturally each time step. 
+
+The amount of energy available in a patch of a given veg-type is controlled by the veg-type-modifier slider. For example, if the slider is set to 200, then a patch with a veg-type of 3 provides 600 energy units to a forager.
+
+The capacity of the agents to burn can be turned on or off with the foragers-burn? switch. If this is turned off, foragers will not engage in any burning behavior.
+
+The number of moves an agent takes each time step can be controlled by the forager-moves slider. For example, if the slider is set to 5, the agent performs 5 foraging moves per time step.
+
+The type of movement used by the agents can be controlled by the movement-model chooser. These models are described in the preceding section.
+
+The amount of energy required by each agent for survival can be controlled by the forager-energy-requirement slider. For example, if the slider is set to 1000, an agent requires a net 1000 energy units at the end of its turn or else it dies. Note: new agents in the model begin with the number of energy units specified by this slider.
+
+The amount of energy required by an agent to reproduce during its turn is controlled by the reproduction-threshold slider. For example, if the slider is set to 2000, an agent must obtain at least 2000 energy units in order to reproduce. The minimum value of this slider is equal to the value of the forager-energy-requirement slider.
+
+The amount of energy expended by a reproducing agent is controlled by the reproduction-cost slider. For example, if the slider is set to 500, a reproducting agent expends 500 energy units to reproduce.
+
+The amount of energy expended by an agent moving between patches is controlled by the movement-cost slider. For example, if the slider is set to 100, an agent expends 100 energy units for each move it makes. 
+
+### Outputs
+
+#### Plots
+
+Population: the total number of agents at the end of each time step
+
+Age structure: the distribution of ages for each agent
+
+Forager interactions: the average number of other agents each agent has recently encountered (with 1 standard deviation)
+
+Vegetation type proportions: the proportional number of patches with each *veg-type* value
+
+Available Forage Per Capita: total available energy at the world evenly divided among agents prior to foraging
+
+Average Energy Intake: the average amount of energy taken in by an agent at the end of each time step (with 1 standard deviation)
+
+Forager moves: the average number of steps agents take at each tick (with 1 standard deviation)
+
+Burning behavior: the average burn-prob in the population of agents (with 1 standard deviation)
+
+Self vs Other Benefit: tracks the number of patches where the energy gained from them was gained by the last agent to burn it (self; orange) or someone else (other; blue)
+
+#### Other outputs
+A file that records the frequency of human burning events for each patch (x, y coords)
+
+
+## THINGS TO NOTICE
+
+-If foragers cannot burn, the natural ignitions will control carrying capacity of the model. For random walk movement settings, this will likely result in populations dying out from increased likelihood of agents passing over patches that have already been foraged.
+
+-Under all configurations of this model, the benefits that come from burning are overwhelmingly transferred to other agents rather than the agent doing the burning.
+
+-If agents use either of the "walk" movement schemes, the local benefits of agent burning result in greater selection for burning behavior; that is, agents moving locally are more likely to benefit from their own burning, and will therefore agents doing more burning will be more likely to reach the reproduction threshold, potentially reaching higher levels of burn-prob. This process will feedback, producing higher populations and more prevalent burning behavior in the population. 
+
+-If movements incur costs, then a "random walk" movement will likely result in many agents initially dying as agents frequently retrace their steps over foraged patches. Alternatively, a "directed walk" will result in slow growth as agents avoid senesenced patches that require burning. 
+
+-If agents use the "jump" movements, then the stochastic effects of movement mean agents rarely obtain resources from patches they burn, giving no benefit to burners; however, under some circumstances, the random effects of burning behavior inheritance of can result in feedbacks for productivity, producing peaks in population. 
+
+
+## EXTENDING THE MODEL
+
+-Currently, the model does not account for forager age or experience; therefore, agents can die from lack of resources irrespective of their age. It would be useful to connect success with longevity.
+
+-There is a high disparity in the amount of resources agents obtain each time step, with some agents substantially exceeding the reproduction threshold. It would be interesting to add a component that allows agents to share resources.
+
+-There are no lagged effects of forage regeneration, which allows the model to maintain a higher population density. It would be interesting to look at how lagged forage regrowth affects the patterns. Adding to this, it could be useful to modulate how quickly certain types of vegetation regrow or transition into different succession stages.
+
+-The current implementation assumes that all burning results in better long-term foraging returns. However, it is possible that there would be diminishing returns for burned patches depending on how frequently they are burned. This could be further broken down by vegetation type, such that some types of patches are more or less affected by burning. 
+
+
+## CREDITS AND REFERENCES
+
+Ben Davies, University of Utah, 2020
+Emily Coco, Yale University, 2024
+
+## VERSION HISTORY
+
+vb01 base model 1 Dec 2020
+vb02 replaced hard-coded forager variables with sliders 16 Dec 2020
+v01 Updated burning activities to include recently foraged patches, renamed some variables
+Web: b-davies.github.io/files/ForageModv01.html
+v02 Updated environmental conditions, burning limits, and foragers do movement assessment, added some new outputs 2024</info>
+  <turtleShapes>
+    <shape name="default" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="5"></point>
+        <point x="40" y="250"></point>
+        <point x="150" y="205"></point>
+        <point x="260" y="250"></point>
+      </polygon>
+    </shape>
+    <shape name="airplane" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="0"></point>
+        <point x="135" y="15"></point>
+        <point x="120" y="60"></point>
+        <point x="120" y="105"></point>
+        <point x="15" y="165"></point>
+        <point x="15" y="195"></point>
+        <point x="120" y="180"></point>
+        <point x="135" y="240"></point>
+        <point x="105" y="270"></point>
+        <point x="120" y="285"></point>
+        <point x="150" y="270"></point>
+        <point x="180" y="285"></point>
+        <point x="210" y="270"></point>
+        <point x="165" y="240"></point>
+        <point x="180" y="180"></point>
+        <point x="285" y="195"></point>
+        <point x="285" y="165"></point>
+        <point x="180" y="105"></point>
+        <point x="180" y="60"></point>
+        <point x="165" y="15"></point>
+      </polygon>
+    </shape>
+    <shape name="arrow" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="0"></point>
+        <point x="0" y="150"></point>
+        <point x="105" y="150"></point>
+        <point x="105" y="293"></point>
+        <point x="195" y="293"></point>
+        <point x="195" y="150"></point>
+        <point x="300" y="150"></point>
+      </polygon>
+    </shape>
+    <shape name="box" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="285"></point>
+        <point x="285" y="225"></point>
+        <point x="285" y="75"></point>
+        <point x="150" y="135"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="135"></point>
+        <point x="15" y="75"></point>
+        <point x="150" y="15"></point>
+        <point x="285" y="75"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="15" y="75"></point>
+        <point x="15" y="225"></point>
+        <point x="150" y="285"></point>
+        <point x="150" y="135"></point>
+      </polygon>
+      <line endX="150" startY="285" marked="false" color="255" endY="135" startX="150"></line>
+      <line endX="15" startY="135" marked="false" color="255" endY="75" startX="150"></line>
+      <line endX="285" startY="135" marked="false" color="255" endY="75" startX="150"></line>
+    </shape>
+    <shape name="bug" rotatable="true" editableColorIndex="0">
+      <circle x="96" y="182" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="110" y="127" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <circle x="110" y="75" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <line endX="80" startY="100" marked="true" color="-1920102913" endY="30" startX="150"></line>
+      <line endX="220" startY="100" marked="true" color="-1920102913" endY="30" startX="150"></line>
+    </shape>
+    <shape name="butterfly" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="165"></point>
+        <point x="209" y="199"></point>
+        <point x="225" y="225"></point>
+        <point x="225" y="255"></point>
+        <point x="195" y="270"></point>
+        <point x="165" y="255"></point>
+        <point x="150" y="240"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="165"></point>
+        <point x="89" y="198"></point>
+        <point x="75" y="225"></point>
+        <point x="75" y="255"></point>
+        <point x="105" y="270"></point>
+        <point x="135" y="255"></point>
+        <point x="150" y="240"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="139" y="148"></point>
+        <point x="100" y="105"></point>
+        <point x="55" y="90"></point>
+        <point x="25" y="90"></point>
+        <point x="10" y="105"></point>
+        <point x="10" y="135"></point>
+        <point x="25" y="180"></point>
+        <point x="40" y="195"></point>
+        <point x="85" y="194"></point>
+        <point x="139" y="163"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="162" y="150"></point>
+        <point x="200" y="105"></point>
+        <point x="245" y="90"></point>
+        <point x="275" y="90"></point>
+        <point x="290" y="105"></point>
+        <point x="290" y="135"></point>
+        <point x="275" y="180"></point>
+        <point x="260" y="195"></point>
+        <point x="215" y="195"></point>
+        <point x="162" y="165"></point>
+      </polygon>
+      <polygon color="255" filled="true" marked="false">
+        <point x="150" y="255"></point>
+        <point x="135" y="225"></point>
+        <point x="120" y="150"></point>
+        <point x="135" y="120"></point>
+        <point x="150" y="105"></point>
+        <point x="165" y="120"></point>
+        <point x="180" y="150"></point>
+        <point x="165" y="225"></point>
+      </polygon>
+      <circle x="135" y="90" marked="false" color="255" diameter="30" filled="true"></circle>
+      <line endX="195" startY="105" marked="false" color="255" endY="60" startX="150"></line>
+      <line endX="105" startY="105" marked="false" color="255" endY="60" startX="150"></line>
+    </shape>
+    <shape name="car" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="300" y="180"></point>
+        <point x="279" y="164"></point>
+        <point x="261" y="144"></point>
+        <point x="240" y="135"></point>
+        <point x="226" y="132"></point>
+        <point x="213" y="106"></point>
+        <point x="203" y="84"></point>
+        <point x="185" y="63"></point>
+        <point x="159" y="50"></point>
+        <point x="135" y="50"></point>
+        <point x="75" y="60"></point>
+        <point x="0" y="150"></point>
+        <point x="0" y="165"></point>
+        <point x="0" y="225"></point>
+        <point x="300" y="225"></point>
+        <point x="300" y="180"></point>
+      </polygon>
+      <circle x="180" y="180" marked="false" color="255" diameter="90" filled="true"></circle>
+      <circle x="30" y="180" marked="false" color="255" diameter="90" filled="true"></circle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="162" y="80"></point>
+        <point x="132" y="78"></point>
+        <point x="134" y="135"></point>
+        <point x="209" y="135"></point>
+        <point x="194" y="105"></point>
+        <point x="189" y="96"></point>
+        <point x="180" y="89"></point>
+      </polygon>
+      <circle x="47" y="195" marked="true" color="-1920102913" diameter="58" filled="true"></circle>
+      <circle x="195" y="195" marked="true" color="-1920102913" diameter="58" filled="true"></circle>
+    </shape>
+    <shape name="circle" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+    </shape>
+    <shape name="circle 2" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+      <circle x="30" y="30" marked="false" color="255" diameter="240" filled="true"></circle>
+    </shape>
+    <shape name="cow" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="200" y="193"></point>
+        <point x="197" y="249"></point>
+        <point x="179" y="249"></point>
+        <point x="177" y="196"></point>
+        <point x="166" y="187"></point>
+        <point x="140" y="189"></point>
+        <point x="93" y="191"></point>
+        <point x="78" y="179"></point>
+        <point x="72" y="211"></point>
+        <point x="49" y="209"></point>
+        <point x="48" y="181"></point>
+        <point x="37" y="149"></point>
+        <point x="25" y="120"></point>
+        <point x="25" y="89"></point>
+        <point x="45" y="72"></point>
+        <point x="103" y="84"></point>
+        <point x="179" y="75"></point>
+        <point x="198" y="76"></point>
+        <point x="252" y="64"></point>
+        <point x="272" y="81"></point>
+        <point x="293" y="103"></point>
+        <point x="285" y="121"></point>
+        <point x="255" y="121"></point>
+        <point x="242" y="118"></point>
+        <point x="224" y="167"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="73" y="210"></point>
+        <point x="86" y="251"></point>
+        <point x="62" y="249"></point>
+        <point x="48" y="208"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="25" y="114"></point>
+        <point x="16" y="195"></point>
+        <point x="9" y="204"></point>
+        <point x="23" y="213"></point>
+        <point x="25" y="200"></point>
+        <point x="39" y="123"></point>
+      </polygon>
+    </shape>
+    <shape name="cylinder" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+    </shape>
+    <shape name="dot" rotatable="false" editableColorIndex="0">
+      <circle x="90" y="90" marked="true" color="-1920102913" diameter="120" filled="true"></circle>
+    </shape>
+    <shape name="face happy" rotatable="false" editableColorIndex="0">
+      <circle x="8" y="8" marked="true" color="-1920102913" diameter="285" filled="true"></circle>
+      <circle x="60" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <circle x="180" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="150" y="255"></point>
+        <point x="90" y="239"></point>
+        <point x="62" y="213"></point>
+        <point x="47" y="191"></point>
+        <point x="67" y="179"></point>
+        <point x="90" y="203"></point>
+        <point x="109" y="218"></point>
+        <point x="150" y="225"></point>
+        <point x="192" y="218"></point>
+        <point x="210" y="203"></point>
+        <point x="227" y="181"></point>
+        <point x="251" y="194"></point>
+        <point x="236" y="217"></point>
+        <point x="212" y="240"></point>
+      </polygon>
+    </shape>
+    <shape name="face neutral" rotatable="false" editableColorIndex="0">
+      <circle x="8" y="7" marked="true" color="-1920102913" diameter="285" filled="true"></circle>
+      <circle x="60" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <circle x="180" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <rectangle endX="240" startY="195" marked="false" color="255" endY="225" startX="60" filled="true"></rectangle>
+    </shape>
+    <shape name="face sad" rotatable="false" editableColorIndex="0">
+      <circle x="8" y="8" marked="true" color="-1920102913" diameter="285" filled="true"></circle>
+      <circle x="60" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <circle x="180" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="150" y="168"></point>
+        <point x="90" y="184"></point>
+        <point x="62" y="210"></point>
+        <point x="47" y="232"></point>
+        <point x="67" y="244"></point>
+        <point x="90" y="220"></point>
+        <point x="109" y="205"></point>
+        <point x="150" y="198"></point>
+        <point x="192" y="205"></point>
+        <point x="210" y="220"></point>
+        <point x="227" y="242"></point>
+        <point x="251" y="229"></point>
+        <point x="236" y="206"></point>
+        <point x="212" y="183"></point>
+      </polygon>
+    </shape>
+    <shape name="fish" rotatable="false" editableColorIndex="0">
+      <polygon color="-1" filled="true" marked="false">
+        <point x="44" y="131"></point>
+        <point x="21" y="87"></point>
+        <point x="15" y="86"></point>
+        <point x="0" y="120"></point>
+        <point x="15" y="150"></point>
+        <point x="0" y="180"></point>
+        <point x="13" y="214"></point>
+        <point x="20" y="212"></point>
+        <point x="45" y="166"></point>
+      </polygon>
+      <polygon color="-1" filled="true" marked="false">
+        <point x="135" y="195"></point>
+        <point x="119" y="235"></point>
+        <point x="95" y="218"></point>
+        <point x="76" y="210"></point>
+        <point x="46" y="204"></point>
+        <point x="60" y="165"></point>
+      </polygon>
+      <polygon color="-1" filled="true" marked="false">
+        <point x="75" y="45"></point>
+        <point x="83" y="77"></point>
+        <point x="71" y="103"></point>
+        <point x="86" y="114"></point>
+        <point x="166" y="78"></point>
+        <point x="135" y="60"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="30" y="136"></point>
+        <point x="151" y="77"></point>
+        <point x="226" y="81"></point>
+        <point x="280" y="119"></point>
+        <point x="292" y="146"></point>
+        <point x="292" y="160"></point>
+        <point x="287" y="170"></point>
+        <point x="270" y="195"></point>
+        <point x="195" y="210"></point>
+        <point x="151" y="212"></point>
+        <point x="30" y="166"></point>
+      </polygon>
+      <circle x="215" y="106" marked="false" color="255" diameter="30" filled="true"></circle>
+    </shape>
+    <shape name="flag" rotatable="false" editableColorIndex="0">
+      <rectangle endX="75" startY="15" marked="true" color="-1920102913" endY="300" startX="60" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="90" y="150"></point>
+        <point x="270" y="90"></point>
+        <point x="90" y="30"></point>
+      </polygon>
+      <line endX="90" startY="135" marked="true" color="-1920102913" endY="135" startX="75"></line>
+      <line endX="90" startY="45" marked="true" color="-1920102913" endY="45" startX="75"></line>
+    </shape>
+    <shape name="flower" rotatable="false" editableColorIndex="0">
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="135" y="120"></point>
+        <point x="165" y="165"></point>
+        <point x="180" y="210"></point>
+        <point x="180" y="240"></point>
+        <point x="150" y="300"></point>
+        <point x="165" y="300"></point>
+        <point x="195" y="240"></point>
+        <point x="195" y="195"></point>
+        <point x="165" y="135"></point>
+      </polygon>
+      <circle x="85" y="132" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="130" y="147" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="192" y="85" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="85" y="40" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="177" y="40" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="177" y="132" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="70" y="85" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="130" y="25" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="96" y="51" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="113" y="68" marked="false" color="255" diameter="74" filled="true"></circle>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="189" y="233"></point>
+        <point x="219" y="188"></point>
+        <point x="249" y="173"></point>
+        <point x="279" y="188"></point>
+        <point x="234" y="218"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="180" y="255"></point>
+        <point x="150" y="210"></point>
+        <point x="105" y="210"></point>
+        <point x="75" y="240"></point>
+        <point x="135" y="240"></point>
+      </polygon>
+    </shape>
+    <shape name="house" rotatable="false" editableColorIndex="0">
+      <rectangle endX="255" startY="120" marked="true" color="-1920102913" endY="285" startX="45" filled="true"></rectangle>
+      <rectangle endX="180" startY="210" marked="false" color="255" endY="285" startX="120" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="15" y="120"></point>
+        <point x="150" y="15"></point>
+        <point x="285" y="120"></point>
+      </polygon>
+      <line endX="270" startY="120" marked="false" color="255" endY="120" startX="30"></line>
+    </shape>
+    <shape name="leaf" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="210"></point>
+        <point x="135" y="195"></point>
+        <point x="120" y="210"></point>
+        <point x="60" y="210"></point>
+        <point x="30" y="195"></point>
+        <point x="60" y="180"></point>
+        <point x="60" y="165"></point>
+        <point x="15" y="135"></point>
+        <point x="30" y="120"></point>
+        <point x="15" y="105"></point>
+        <point x="40" y="104"></point>
+        <point x="45" y="90"></point>
+        <point x="60" y="90"></point>
+        <point x="90" y="105"></point>
+        <point x="105" y="120"></point>
+        <point x="120" y="120"></point>
+        <point x="105" y="60"></point>
+        <point x="120" y="60"></point>
+        <point x="135" y="30"></point>
+        <point x="150" y="15"></point>
+        <point x="165" y="30"></point>
+        <point x="180" y="60"></point>
+        <point x="195" y="60"></point>
+        <point x="180" y="120"></point>
+        <point x="195" y="120"></point>
+        <point x="210" y="105"></point>
+        <point x="240" y="90"></point>
+        <point x="255" y="90"></point>
+        <point x="263" y="104"></point>
+        <point x="285" y="105"></point>
+        <point x="270" y="120"></point>
+        <point x="285" y="135"></point>
+        <point x="240" y="165"></point>
+        <point x="240" y="180"></point>
+        <point x="270" y="195"></point>
+        <point x="240" y="210"></point>
+        <point x="180" y="210"></point>
+        <point x="165" y="195"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="195"></point>
+        <point x="135" y="240"></point>
+        <point x="120" y="255"></point>
+        <point x="105" y="255"></point>
+        <point x="105" y="285"></point>
+        <point x="135" y="285"></point>
+        <point x="165" y="240"></point>
+        <point x="165" y="195"></point>
+      </polygon>
+    </shape>
+    <shape name="line" rotatable="true" editableColorIndex="0">
+      <line endX="150" startY="0" marked="true" color="-1920102913" endY="300" startX="150"></line>
+    </shape>
+    <shape name="line half" rotatable="true" editableColorIndex="0">
+      <line endX="150" startY="0" marked="true" color="-1920102913" endY="150" startX="150"></line>
+    </shape>
+    <shape name="pentagon" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="15"></point>
+        <point x="15" y="120"></point>
+        <point x="60" y="285"></point>
+        <point x="240" y="285"></point>
+        <point x="285" y="120"></point>
+      </polygon>
+    </shape>
+    <shape name="person" rotatable="false" editableColorIndex="0">
+      <circle x="110" y="5" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="105" y="90"></point>
+        <point x="120" y="195"></point>
+        <point x="90" y="285"></point>
+        <point x="105" y="300"></point>
+        <point x="135" y="300"></point>
+        <point x="150" y="225"></point>
+        <point x="165" y="300"></point>
+        <point x="195" y="300"></point>
+        <point x="210" y="285"></point>
+        <point x="180" y="195"></point>
+        <point x="195" y="90"></point>
+      </polygon>
+      <rectangle endX="172" startY="79" marked="true" color="-1920102913" endY="94" startX="127" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="195" y="90"></point>
+        <point x="240" y="150"></point>
+        <point x="225" y="180"></point>
+        <point x="165" y="105"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="105" y="90"></point>
+        <point x="60" y="150"></point>
+        <point x="75" y="180"></point>
+        <point x="135" y="105"></point>
+      </polygon>
+    </shape>
+    <shape name="plant" rotatable="false" editableColorIndex="0">
+      <rectangle endX="165" startY="90" marked="true" color="-1920102913" endY="300" startX="135" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="255"></point>
+        <point x="90" y="210"></point>
+        <point x="45" y="195"></point>
+        <point x="75" y="255"></point>
+        <point x="135" y="285"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="165" y="255"></point>
+        <point x="210" y="210"></point>
+        <point x="255" y="195"></point>
+        <point x="225" y="255"></point>
+        <point x="165" y="285"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="180"></point>
+        <point x="90" y="135"></point>
+        <point x="45" y="120"></point>
+        <point x="75" y="180"></point>
+        <point x="135" y="210"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="165" y="180"></point>
+        <point x="165" y="210"></point>
+        <point x="225" y="180"></point>
+        <point x="255" y="120"></point>
+        <point x="210" y="135"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="105"></point>
+        <point x="90" y="60"></point>
+        <point x="45" y="45"></point>
+        <point x="75" y="105"></point>
+        <point x="135" y="135"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="165" y="105"></point>
+        <point x="165" y="135"></point>
+        <point x="225" y="105"></point>
+        <point x="255" y="45"></point>
+        <point x="210" y="60"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="90"></point>
+        <point x="120" y="45"></point>
+        <point x="150" y="15"></point>
+        <point x="180" y="45"></point>
+        <point x="165" y="90"></point>
+      </polygon>
+    </shape>
+    <shape name="sheep" rotatable="false" editableColorIndex="15">
+      <circle x="203" y="65" marked="true" color="-1" diameter="88" filled="true"></circle>
+      <circle x="70" y="65" marked="true" color="-1" diameter="162" filled="true"></circle>
+      <circle x="150" y="105" marked="true" color="-1" diameter="120" filled="true"></circle>
+      <polygon color="-1920102913" filled="true" marked="false">
+        <point x="218" y="120"></point>
+        <point x="240" y="165"></point>
+        <point x="255" y="165"></point>
+        <point x="278" y="120"></point>
+      </polygon>
+      <circle x="214" y="72" marked="false" color="-1920102913" diameter="67" filled="true"></circle>
+      <rectangle endX="179" startY="223" marked="true" color="-1" endY="298" startX="164" filled="true"></rectangle>
+      <polygon color="-1" filled="true" marked="true">
+        <point x="45" y="285"></point>
+        <point x="30" y="285"></point>
+        <point x="30" y="240"></point>
+        <point x="15" y="195"></point>
+        <point x="45" y="210"></point>
+      </polygon>
+      <circle x="3" y="83" marked="true" color="-1" diameter="150" filled="true"></circle>
+      <rectangle endX="80" startY="221" marked="true" color="-1" endY="296" startX="65" filled="true"></rectangle>
+      <polygon color="-1" filled="true" marked="true">
+        <point x="195" y="285"></point>
+        <point x="210" y="285"></point>
+        <point x="210" y="240"></point>
+        <point x="240" y="210"></point>
+        <point x="195" y="210"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="false">
+        <point x="276" y="85"></point>
+        <point x="285" y="105"></point>
+        <point x="302" y="99"></point>
+        <point x="294" y="83"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="false">
+        <point x="219" y="85"></point>
+        <point x="210" y="105"></point>
+        <point x="193" y="99"></point>
+        <point x="201" y="83"></point>
+      </polygon>
+    </shape>
+    <shape name="square" rotatable="false" editableColorIndex="0">
+      <rectangle endX="270" startY="30" marked="true" color="-1920102913" endY="270" startX="30" filled="true"></rectangle>
+    </shape>
+    <shape name="square 2" rotatable="false" editableColorIndex="0">
+      <rectangle endX="270" startY="30" marked="true" color="-1920102913" endY="270" startX="30" filled="true"></rectangle>
+      <rectangle endX="240" startY="60" marked="false" color="255" endY="240" startX="60" filled="true"></rectangle>
+    </shape>
+    <shape name="star" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="151" y="1"></point>
+        <point x="185" y="108"></point>
+        <point x="298" y="108"></point>
+        <point x="207" y="175"></point>
+        <point x="242" y="282"></point>
+        <point x="151" y="216"></point>
+        <point x="59" y="282"></point>
+        <point x="94" y="175"></point>
+        <point x="3" y="108"></point>
+        <point x="116" y="108"></point>
+      </polygon>
+    </shape>
+    <shape name="target" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+      <circle x="30" y="30" marked="false" color="255" diameter="240" filled="true"></circle>
+      <circle x="60" y="60" marked="true" color="-1920102913" diameter="180" filled="true"></circle>
+      <circle x="90" y="90" marked="false" color="255" diameter="120" filled="true"></circle>
+      <circle x="120" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+    </shape>
+    <shape name="tree" rotatable="false" editableColorIndex="0">
+      <circle x="118" y="3" marked="true" color="-1920102913" diameter="94" filled="true"></circle>
+      <rectangle endX="180" startY="195" marked="false" color="-1653716737" endY="300" startX="120" filled="true"></rectangle>
+      <circle x="65" y="21" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="116" y="41" marked="true" color="-1920102913" diameter="127" filled="true"></circle>
+      <circle x="45" y="90" marked="true" color="-1920102913" diameter="120" filled="true"></circle>
+      <circle x="104" y="74" marked="true" color="-1920102913" diameter="152" filled="true"></circle>
+    </shape>
+    <shape name="triangle" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="30"></point>
+        <point x="15" y="255"></point>
+        <point x="285" y="255"></point>
+      </polygon>
+    </shape>
+    <shape name="triangle 2" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="30"></point>
+        <point x="15" y="255"></point>
+        <point x="285" y="255"></point>
+      </polygon>
+      <polygon color="255" filled="true" marked="false">
+        <point x="151" y="99"></point>
+        <point x="225" y="223"></point>
+        <point x="75" y="224"></point>
+      </polygon>
+    </shape>
+    <shape name="truck" rotatable="false" editableColorIndex="0">
+      <rectangle endX="195" startY="45" marked="true" color="-1920102913" endY="187" startX="4" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="296" y="193"></point>
+        <point x="296" y="150"></point>
+        <point x="259" y="134"></point>
+        <point x="244" y="104"></point>
+        <point x="208" y="104"></point>
+        <point x="207" y="194"></point>
+      </polygon>
+      <rectangle endX="195" startY="60" marked="false" color="-1" endY="105" startX="195" filled="true"></rectangle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="238" y="112"></point>
+        <point x="252" y="141"></point>
+        <point x="219" y="141"></point>
+        <point x="218" y="112"></point>
+      </polygon>
+      <circle x="234" y="174" marked="false" color="255" diameter="42" filled="true"></circle>
+      <rectangle endX="214" startY="185" marked="true" color="-1920102913" endY="194" startX="181" filled="true"></rectangle>
+      <circle x="144" y="174" marked="false" color="255" diameter="42" filled="true"></circle>
+      <circle x="24" y="174" marked="false" color="255" diameter="42" filled="true"></circle>
+      <circle x="24" y="174" marked="true" color="-1920102913" diameter="42" filled="false"></circle>
+      <circle x="144" y="174" marked="true" color="-1920102913" diameter="42" filled="false"></circle>
+      <circle x="234" y="174" marked="true" color="-1920102913" diameter="42" filled="false"></circle>
+    </shape>
+    <shape name="turtle" rotatable="true" editableColorIndex="0">
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="215" y="204"></point>
+        <point x="240" y="233"></point>
+        <point x="246" y="254"></point>
+        <point x="228" y="266"></point>
+        <point x="215" y="252"></point>
+        <point x="193" y="210"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="195" y="90"></point>
+        <point x="225" y="75"></point>
+        <point x="245" y="75"></point>
+        <point x="260" y="89"></point>
+        <point x="269" y="108"></point>
+        <point x="261" y="124"></point>
+        <point x="240" y="105"></point>
+        <point x="225" y="105"></point>
+        <point x="210" y="105"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="105" y="90"></point>
+        <point x="75" y="75"></point>
+        <point x="55" y="75"></point>
+        <point x="40" y="89"></point>
+        <point x="31" y="108"></point>
+        <point x="39" y="124"></point>
+        <point x="60" y="105"></point>
+        <point x="75" y="105"></point>
+        <point x="90" y="105"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="132" y="85"></point>
+        <point x="134" y="64"></point>
+        <point x="107" y="51"></point>
+        <point x="108" y="17"></point>
+        <point x="150" y="2"></point>
+        <point x="192" y="18"></point>
+        <point x="192" y="52"></point>
+        <point x="169" y="65"></point>
+        <point x="172" y="87"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="85" y="204"></point>
+        <point x="60" y="233"></point>
+        <point x="54" y="254"></point>
+        <point x="72" y="266"></point>
+        <point x="85" y="252"></point>
+        <point x="107" y="210"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="119" y="75"></point>
+        <point x="179" y="75"></point>
+        <point x="209" y="101"></point>
+        <point x="224" y="135"></point>
+        <point x="220" y="225"></point>
+        <point x="175" y="261"></point>
+        <point x="128" y="261"></point>
+        <point x="81" y="224"></point>
+        <point x="74" y="135"></point>
+        <point x="88" y="99"></point>
+      </polygon>
+    </shape>
+    <shape name="wheel" rotatable="false" editableColorIndex="0">
+      <circle x="3" y="3" marked="true" color="-1920102913" diameter="294" filled="true"></circle>
+      <circle x="30" y="30" marked="false" color="255" diameter="240" filled="true"></circle>
+      <line endX="150" startY="285" marked="true" color="-1920102913" endY="15" startX="150"></line>
+      <line endX="285" startY="150" marked="true" color="-1920102913" endY="150" startX="15"></line>
+      <circle x="120" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <line endX="79" startY="40" marked="true" color="-1920102913" endY="269" startX="216"></line>
+      <line endX="269" startY="84" marked="true" color="-1920102913" endY="221" startX="40"></line>
+      <line endX="269" startY="216" marked="true" color="-1920102913" endY="79" startX="40"></line>
+      <line endX="221" startY="40" marked="true" color="-1920102913" endY="269" startX="84"></line>
+    </shape>
+    <shape name="wolf" rotatable="false" editableColorIndex="0">
+      <polygon color="255" filled="true" marked="false">
+        <point x="253" y="133"></point>
+        <point x="245" y="131"></point>
+        <point x="245" y="133"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="2" y="194"></point>
+        <point x="13" y="197"></point>
+        <point x="30" y="191"></point>
+        <point x="38" y="193"></point>
+        <point x="38" y="205"></point>
+        <point x="20" y="226"></point>
+        <point x="20" y="257"></point>
+        <point x="27" y="265"></point>
+        <point x="38" y="266"></point>
+        <point x="40" y="260"></point>
+        <point x="31" y="253"></point>
+        <point x="31" y="230"></point>
+        <point x="60" y="206"></point>
+        <point x="68" y="198"></point>
+        <point x="75" y="209"></point>
+        <point x="66" y="228"></point>
+        <point x="65" y="243"></point>
+        <point x="82" y="261"></point>
+        <point x="84" y="268"></point>
+        <point x="100" y="267"></point>
+        <point x="103" y="261"></point>
+        <point x="77" y="239"></point>
+        <point x="79" y="231"></point>
+        <point x="100" y="207"></point>
+        <point x="98" y="196"></point>
+        <point x="119" y="201"></point>
+        <point x="143" y="202"></point>
+        <point x="160" y="195"></point>
+        <point x="166" y="210"></point>
+        <point x="172" y="213"></point>
+        <point x="173" y="238"></point>
+        <point x="167" y="251"></point>
+        <point x="160" y="248"></point>
+        <point x="154" y="265"></point>
+        <point x="169" y="264"></point>
+        <point x="178" y="247"></point>
+        <point x="186" y="240"></point>
+        <point x="198" y="260"></point>
+        <point x="200" y="271"></point>
+        <point x="217" y="271"></point>
+        <point x="219" y="262"></point>
+        <point x="207" y="258"></point>
+        <point x="195" y="230"></point>
+        <point x="192" y="198"></point>
+        <point x="210" y="184"></point>
+        <point x="227" y="164"></point>
+        <point x="242" y="144"></point>
+        <point x="259" y="145"></point>
+        <point x="284" y="151"></point>
+        <point x="277" y="141"></point>
+        <point x="293" y="140"></point>
+        <point x="299" y="134"></point>
+        <point x="297" y="127"></point>
+        <point x="273" y="119"></point>
+        <point x="270" y="105"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="-1" y="195"></point>
+        <point x="14" y="180"></point>
+        <point x="36" y="166"></point>
+        <point x="40" y="153"></point>
+        <point x="53" y="140"></point>
+        <point x="82" y="131"></point>
+        <point x="134" y="133"></point>
+        <point x="159" y="126"></point>
+        <point x="188" y="115"></point>
+        <point x="227" y="108"></point>
+        <point x="236" y="102"></point>
+        <point x="238" y="98"></point>
+        <point x="268" y="86"></point>
+        <point x="269" y="92"></point>
+        <point x="281" y="87"></point>
+        <point x="269" y="103"></point>
+        <point x="269" y="113"></point>
+      </polygon>
+    </shape>
+    <shape name="x" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="270" y="75"></point>
+        <point x="225" y="30"></point>
+        <point x="30" y="225"></point>
+        <point x="75" y="270"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="30" y="75"></point>
+        <point x="75" y="30"></point>
+        <point x="270" y="225"></point>
+        <point x="225" y="270"></point>
+      </polygon>
+    </shape>
+  </turtleShapes>
+  <linkShapes>
+    <shape name="default" curviness="0.0">
+      <lines>
+        <line x="-0.2" visible="false">
+          <dash value="0.0"></dash>
+          <dash value="1.0"></dash>
+        </line>
+        <line x="0.0" visible="true">
+          <dash value="1.0"></dash>
+          <dash value="0.0"></dash>
+        </line>
+        <line x="0.2" visible="false">
+          <dash value="0.0"></dash>
+          <dash value="1.0"></dash>
+        </line>
+      </lines>
+      <indicator>
+        <shape name="link direction" rotatable="true" editableColorIndex="0">
+          <line endX="90" startY="150" marked="true" color="-1920102913" endY="180" startX="150"></line>
+          <line endX="210" startY="150" marked="true" color="-1920102913" endY="180" startX="150"></line>
+        </shape>
+      </indicator>
+    </shape>
+  </linkShapes>
+  <previewCommands>setup repeat 75 [ go ]</previewCommands>
+  <experiments>
+    <experiment name="HPC-test" repetitions="1" sequentialRunOrder="false" runMetricsEveryStep="false">
+      <setup>setup
+profiler:reset
+profiler:start</setup>
+      <go>go</go>
+      <postRun>profiler:stop
+let _fname (word "report_" stamp1 ".txt")
+carefully [file-delete _fname] []
+file-open _fname
+file-print profiler:report
+file-close</postRun>
+      <constants>
+        <enumeratedValueSet variable="export?">
+          <value value="false"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="export-limited?">
+          <value value="false"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="directory-name">
+          <value value="&quot;&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="tick-limit">
+          <value value="2000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="natural-ignition">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-distribution">
+          <value value="&quot;random&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-cycle-start">
+          <value value="&quot;productive&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="cycle-duration">
+          <value value="500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="foragers-burn?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-moves">
+          <value value="10"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-model">
+          <value value="&quot;Random Walk&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-type-modifier">
+          <value value="200"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burnt-neighbor-limit">
+          <value value="10"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-veg-type-threshold">
+          <value value="10"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-energy-requirement">
+          <value value="1500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-cost">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-cost">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-threshold">
+          <value value="3000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-cost">
+          <value value="500"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+    <experiment name="burning-behaviors" repetitions="10" sequentialRunOrder="true" runMetricsEveryStep="false">
+      <setup>setup</setup>
+      <go>go</go>
+      <constants>
+        <enumeratedValueSet variable="export?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="export-limited?">
+          <value value="false"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="directory-name">
+          <value value="&quot;results&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="tick-limit">
+          <value value="3500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="natural-ignition">
+          <value value="0.05"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-distribution">
+          <value value="&quot;random&quot;"></value>
+          <value value="&quot;clustered&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-cycle-start">
+          <value value="&quot;productive&quot;"></value>
+          <value value="&quot;unproductive&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="cycle-duration">
+          <value value="100"></value>
+          <value value="250"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="foragers-burn?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-moves">
+          <value value="10"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-model">
+          <value value="&quot;Random Walk&quot;"></value>
+          <value value="&quot;Directed Walk&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-type-modifier">
+          <value value="200"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burnt-neighbor-limit">
+          <value value="1"></value>
+          <value value="4"></value>
+          <value value="8"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-veg-type-threshold">
+          <value value="4"></value>
+          <value value="7"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-energy-requirement">
+          <value value="1500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-cost">
+          <value value="0"></value>
+          <value value="100"></value>
+          <value value="200"></value>
+          <value value="300"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-cost">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-threshold">
+          <value value="5000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-cost">
+          <value value="1000"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+    <experiment name="sensitivity_analysis_high-med-low" repetitions="10" sequentialRunOrder="true" runMetricsEveryStep="true">
+      <setup>setup</setup>
+      <go>go</go>
+      <constants>
+        <enumeratedValueSet variable="export?">
+          <value value="false"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="export-limited?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="directory-name">
+          <value value="&quot;sensitivity-analysis_parameters&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="tick-limit">
+          <value value="500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="natural-ignition">
+          <value value="0"></value>
+          <value value="0.5"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-distribution">
+          <value value="&quot;random&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-cycle-start">
+          <value value="&quot;productive&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="cycle-duration">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="foragers-burn?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-moves">
+          <value value="5"></value>
+          <value value="10"></value>
+          <value value="15"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-model">
+          <value value="&quot;Random Walk&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-type-modifier">
+          <value value="100"></value>
+          <value value="200"></value>
+          <value value="300"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burnt-neighbor-limit">
+          <value value="8"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-veg-type-threshold">
+          <value value="7"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-energy-requirement">
+          <value value="1000"></value>
+          <value value="1500"></value>
+          <value value="2000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-cost">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-cost">
+          <value value="50"></value>
+          <value value="100"></value>
+          <value value="150"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-threshold">
+          <value value="4000"></value>
+          <value value="5000"></value>
+          <value value="6000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-cost">
+          <value value="500"></value>
+          <value value="1000"></value>
+          <value value="1500"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+    <experiment name="sensitivity-analysis_time" repetitions="50" sequentialRunOrder="true" runMetricsEveryStep="false">
+      <setup>setup</setup>
+      <go>go</go>
+      <postRun>export-limited-data</postRun>
+      <constants>
+        <enumeratedValueSet variable="export?">
+          <value value="false"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="export-limited?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="directory-name">
+          <value value="&quot;sensitivity-analysis_time&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="tick-limit">
+          <value value="6000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="natural-ignition">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-distribution">
+          <value value="&quot;random&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-cycle-start">
+          <value value="&quot;productive&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="cycle-duration">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="foragers-burn?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-moves">
+          <value value="10"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-model">
+          <value value="&quot;Random Walk&quot;"></value>
+          <value value="&quot;Directed Walk&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-type-modifier">
+          <value value="200"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burnt-neighbor-limit">
+          <value value="1"></value>
+          <value value="4"></value>
+          <value value="8"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-veg-type-threshold">
+          <value value="4"></value>
+          <value value="7"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-energy-requirement">
+          <value value="1500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-cost">
+          <value value="0"></value>
+          <value value="100"></value>
+          <value value="200"></value>
+          <value value="300"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-cost">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-threshold">
+          <value value="5000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-cost">
+          <value value="1000"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+    <experiment name="sensitivity-analysis_time_TEST" repetitions="1" sequentialRunOrder="true" runMetricsEveryStep="false">
+      <setup>setup</setup>
+      <go>go</go>
+      <postRun>export-limited-data</postRun>
+      <exitCondition><![CDATA[mean [ burn-prob ] of foragers >= 1]]></exitCondition>
+      <constants>
+        <enumeratedValueSet variable="export?">
+          <value value="false"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="export-limited?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="directory-name">
+          <value value="&quot;sensitivity-analysis_time&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="tick-limit">
+          <value value="5000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="natural-ignition">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-distribution">
+          <value value="&quot;random&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-cycle-start">
+          <value value="&quot;productive&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="cycle-duration">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="foragers-burn?">
+          <value value="true"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-moves">
+          <value value="10"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-model">
+          <value value="&quot;Random Walk&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="veg-type-modifier">
+          <value value="200"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burnt-neighbor-limit">
+          <value value="8"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-veg-type-threshold">
+          <value value="7"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="forager-energy-requirement">
+          <value value="1500"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="burn-cost">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="movement-cost">
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-threshold">
+          <value value="5000"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="reproduction-cost">
+          <value value="1000"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+  </experiments>
+</model>
