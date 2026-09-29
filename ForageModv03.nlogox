@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <model version="NetLogo 7.0.3" snapToGrid="true">
-  <code><![CDATA[;;forageMOD v02 by Ben Davies, University of Utah
-;; modified by Emily Coco, Yale University
-;;08 February 2024
+  <code><![CDATA[;;forageMOD v03 by Ben Davies, University of Utah
+;;modified by Emily Coco, Yale University, ICArEHB
+;;29 September 2026
 
 extensions [
   csv
@@ -33,17 +33,13 @@ patches-own [
   max-veg-type 
   save-veg-type
 ]
-links-own [ 
-  counter 
-]
 
 globals [ 
   stamp1 
   file-path 
   patch-count 
-  patch-burn-list 
+  ;patch-burn-list 
   patch-veg-list 
-  turtle-location-list 
   available-forage 
   forage-per-capita 
   self-burn 
@@ -66,9 +62,8 @@ to setup
   
   set patch-count count patches
 
-  set patch-burn-list []
+  ;set patch-burn-list []
   set patch-veg-list []
-  set turtle-location-list []
 
   ;Tracking for burn benefit
   set self-burn 0
@@ -161,11 +156,13 @@ end
 
 to go
 
-  if ticks >= tick-limit [
+  ;;end conditions
+  let total-foragers count foragers
+  let pop-density total-foragers / (count patches)
+  if total-foragers = 0 or pop-density > 5 [ ;if all the agents are dead or the population density is greater than 5 agents per square
     if export? = true [
-      set patch-burn-list lput burn-grid patch-burn-list
-      set patch-veg-list lput veg-type-grid patch-veg-list
-      set turtle-location-list lput turtle-location turtle-location-list
+      ;set patch-burn-list lput burn-grid patch-burn-list
+      set patch-veg-list fput veg-type-grid patch-veg-list
       export-data
     ]
 
@@ -174,15 +171,27 @@ to go
     ]
     stop
   ]
+  
+  if ticks >= tick-limit [
+    if export? = true [
+      ;set patch-burn-list lput burn-grid patch-burn-list
+      set patch-veg-list fput veg-type-grid patch-veg-list
+      export-data
+    ]
 
+    if export-limited? = true [
+      export-limited-data
+    ]
+    stop
+  ]
+  
   ;Reset trackers
   set self-burn 0
   set other-burn 0
   ;if ticks mod (cycle-duration / 2) = 0 and ticks != 0 [
   if ticks mod 50 = 0 and ticks != 0 [
-    set patch-burn-list lput burn-grid patch-burn-list
-    set patch-veg-list lput veg-type-grid patch-veg-list
-    set turtle-location-list lput turtle-location turtle-location-list
+    ;set patch-burn-list lput burn-grid patch-burn-list
+    set patch-veg-list fput veg-type-grid patch-veg-list
   ]
 
 
@@ -227,9 +236,8 @@ to go
   ]
 
   ;foraging loop based on which agents still have moves to make
-  while [ any? foragers with [ moves > 0] ] [
-    let movers foragers with [ moves > 0]
-    
+  let movers foragers with [ moves > 0]
+  while [ any? movers ] [
     ;Agents forage and move
     ask movers [
       ifelse (([ burnt? ] of patch-here = false) and ([ foraged? ] of patch-here = false)) [
@@ -243,9 +251,9 @@ to go
     ]
     
     ;Check for new interactions after moving
-    ask movers [
-      check-interactions
-    ]
+    ask movers [ check-interactions ]
+    
+    set movers foragers with [ moves > 0 ]
   ]
 
   ask foragers [
@@ -262,7 +270,6 @@ to go
     ]
 
     ;update tracking variables
-    let total-foragers count foragers
     set interactions ((count my-links) / total-foragers)
     
     ;same interactions from total population
@@ -295,22 +302,8 @@ to go
     set age age + 1 ;age
     ;if age = 100 [ die ]  ;optional lifespan limit
   ]
-
-  if count foragers = 0 [ ;if all the agents are dead, stop the model
-    if export? = true [
-      set patch-burn-list lput burn-grid patch-burn-list
-      set patch-veg-list lput veg-type-grid patch-veg-list
-      set turtle-location-list lput turtle-location turtle-location-list
-      export-data
-    ]
-
-    if export-limited? = true [
-      export-limited-data
-    ]
-    stop
-  ]
+  
   tick
-
 end
 
 ;Foraging routine
@@ -470,7 +463,6 @@ to check-interactions
   ;create new links with foragers on neighboring patches
   let nforagers turtles-on neighbors
   create-links-with nforagers with [not link-neighbor? myself] [
-    set counter 0
     hide-link
   ]
 end
@@ -497,16 +489,6 @@ to reproduce
   ]
   set energy energy - reproduction-cost
   set offspring offspring + 1
-end
-
-
-to-report turtle-location
-  let loc-list []
-  ask patches [
-    let tcount count turtles-here
-    set loc-list lput (list ([pxcor] of self) ([pycor] of self) tcount ticks) loc-list
-  ]
-  report loc-list
 end
 
 to-report veg-type-grid
@@ -541,27 +523,21 @@ end
 
 to export-data
 
-  output-print (word "exp " stamp1 " total run time: " timer "sec" )
+  output-print (word date-and-time ": exp " stamp1 " total run time: " timer "sec" )
 
-  set patch-burn-list reduce sentence patch-burn-list
-  file-open (word file-path "human-burning-amounts.csv")
-  csv:to-file (word file-path "human-burning-amounts.csv") patch-burn-list
-  file-close
+;   set patch-burn-list reduce sentence patch-burn-list
+;   file-open (word file-path "human-burning-amounts.csv")
+;   csv:to-file (word file-path "human-burning-amounts.csv") patch-burn-list
+;   file-close
 
-  set patch-veg-list reduce sentence patch-veg-list
+  set patch-veg-list reduce sentence (reverse patch-veg-list)
   file-open (word file-path "gridded-veg-types.csv")
   csv:to-file (word file-path "gridded-veg-types.csv") patch-veg-list
   file-close
 
-  set turtle-location-list reduce sentence turtle-location-list
-  file-open (word file-path "turtle-locations.csv")
-  csv:to-file (word file-path "turtle-locations.csv") turtle-location-list
-  file-close
-
   export-plot "Vegetation Type Proportions" (word file-path "vegetation-types.csv")
-  export-plot "Available Forage Per Capita" (word file-path "resources-per-capita.csv")
   export-plot "Burning Behavior" (word file-path "burning-behavior.csv")
-  export-plot "Population" (word file-path "population.csv")
+  export-plot "Population Density" (word file-path "population.csv")
   export-plot "Self vs Other Benefit" (word file-path "benefit-distribution.csv")
   export-plot "Forager Interactions" (word file-path "forager-interactions.csv")
   export-plot "Network Similarity" (word file-path "network_similarity.csv")
@@ -572,27 +548,26 @@ end
 
 to export-limited-data ;for sensitivity analysis
 
-  output-print (word "exp " stamp1 " total run time: " timer "sec" )
+  output-print (word date-and-time ": exp " stamp1 " total run time: " timer "sec" )
 
-  export-plot "Population" (word file-path "population.csv")
+  export-plot "Population Density" (word file-path "population.csv")
   export-plot "Burning Behavior" (word file-path "burning_behavior.csv")
   export-plot "Forager Moves" (word file-path "forager_moves.csv")
   export-plot "Network Similarity" (word file-path "network_similarity.csv")
   export-plot "Network Spatial Clustering" (word file-path "network_spat_clustering.csv")
-  export-plot "Forager Moves" (word file-path "forager_moves.csv")
   export-plot "Vegetation Type Proportions" (word file-path "vegetation_types.csv")
 
 end]]></code>
   <widgets>
-    <view x="205" wrappingAllowedX="true" y="123" frameRate="30.0" minPycor="-25" height="417" showTickCounter="true" patchSize="8.0" fontSize="10" wrappingAllowedY="true" width="416" tickCounterLabel="ticks" maxPycor="25" updateMode="1" maxPxcor="25" minPxcor="-25"></view>
-    <slider x="17" step="0.001" y="13" max="0.01" display="natural-ignition" height="33" min="0" direction="Horizontal" default="0.005" variable="natural-ignition" width="164" sizeVersion="0"></slider>
+    <view x="205" wrappingAllowedX="true" y="123" frameRate="30.0" minPycor="-25" height="416" showTickCounter="true" patchSize="8.0" fontSize="10" wrappingAllowedY="true" width="416" tickCounterLabel="ticks" maxPycor="25" updateMode="1" maxPxcor="25" minPxcor="-25"></view>
+    <slider x="17" step="0.001" y="13" max="0.01" display="natural-ignition" height="33" min="0" direction="Horizontal" default="0.05" variable="natural-ignition" width="164" sizeVersion="0"></slider>
     <button x="282" y="16" height="33" disableUntilTicks="false" forever="true" kind="Observer" width="63" sizeVersion="0">go</button>
     <switch x="18" y="93" height="33" on="true" variable="foragers-burn?" display="foragers-burn?" width="139" sizeVersion="0"></switch>
-    <chooser x="17" y="264" height="45" variable="movement-model" current="0" display="movement-model" width="138" sizeVersion="0">
+    <chooser x="17" y="264" height="45" variable="movement-model" current="1" display="movement-model" width="138" sizeVersion="0">
       <choice type="string" value="Directed Walk"></choice>
       <choice type="string" value="Random Walk"></choice>
     </chooser>
-    <slider x="17" step="1" y="226" max="15" display="forager-moves" height="33" min="5" direction="Horizontal" default="10.0" variable="forager-moves" width="172" sizeVersion="0"></slider>
+    <slider x="17" step="1" y="226" max="15" display="forager-moves" height="33" min="5" direction="Horizontal" default="8.0" variable="forager-moves" width="172" sizeVersion="0"></slider>
     <slider x="17" step="50" y="51" max="500" display="veg-type-modifier" height="33" min="50" direction="Horizontal" default="200.0" variable="veg-type-modifier" width="164" sizeVersion="0"></slider>
     <button x="356" y="16" height="33" disableUntilTicks="false" forever="false" kind="Observer" display="go-once" width="85" sizeVersion="0">go</button>
     <slider x="451" step="100" y="81" max="2000" display="cycle-duration" height="33" min="0" direction="Horizontal" default="100.0" variable="cycle-duration" units="ticks" width="154" sizeVersion="0"></slider>
@@ -600,29 +575,29 @@ end]]></code>
       <choice type="string" value="productive"></choice>
       <choice type="string" value="unproductive"></choice>
     </chooser>
-    <slider x="17" step="1" y="131" max="8" display="burnt-neighbor-limit" height="33" min="0" direction="Horizontal" default="4.0" variable="burnt-neighbor-limit" width="164" sizeVersion="0"></slider>
+    <slider x="17" step="1" y="131" max="8" display="burnt-neighbor-limit" height="33" min="0" direction="Horizontal" default="1.0" variable="burnt-neighbor-limit" width="164" sizeVersion="0"></slider>
     <input x="467" multiline="false" y="10" height="60" variable="tick-limit" type="number" width="76" sizeVersion="0">3500.0</input>
-    <switch x="746" y="15" height="33" on="false" variable="export?" display="export?" width="104" sizeVersion="0"></switch>
+    <switch x="746" y="15" height="33" on="true" variable="export?" display="export?" width="104" sizeVersion="0"></switch>
     <chooser x="323" y="70" height="45" variable="veg-distribution" current="0" display="veg-distribution" width="110" sizeVersion="0">
       <choice type="string" value="random"></choice>
       <choice type="string" value="clustered"></choice>
     </chooser>
     <button x="644" y="15" height="33" disableUntilTicks="false" forever="false" kind="Observer" width="92" sizeVersion="0">cycle-veg</button>
     <slider x="17" step="1" y="171" max="7" display="burn-veg-type-threshold" height="33" min="1" direction="Horizontal" default="4.0" variable="burn-veg-type-threshold" width="177" sizeVersion="0"></slider>
-    <input x="1018" multiline="false" y="12" height="60" variable="directory-name" type="string" width="229" sizeVersion="0"></input>
+    <input x="1018" multiline="false" y="12" height="60" variable="directory-name" type="string" width="229" sizeVersion="0">results</input>
     <switch x="857" y="15" height="33" on="false" variable="export-limited?" display="export-limited?" width="152" sizeVersion="0"></switch>
     <slider x="11" step="500" y="334" max="3000" display="forager-energy-requirement" height="33" min="500" direction="Horizontal" default="1500.0" variable="forager-energy-requirement" width="183" sizeVersion="0"></slider>
-    <slider x="10" step="500" y="372" max="5000" display="reproduction-threshold" height="33" min="forager-energy-requirement" direction="Horizontal" default="3000.0" variable="reproduction-threshold" width="184" sizeVersion="0"></slider>
-    <slider x="10" step="500" y="409" max="reproduction-threshold" display="reproduction-cost" height="33" min="500" direction="Horizontal" default="500.0" variable="reproduction-cost" width="185" sizeVersion="0"></slider>
-    <slider x="10" step="100" y="447" max="500" display="burn-cost" height="33" min="0" direction="Horizontal" default="200.0" variable="burn-cost" width="186" sizeVersion="0"></slider>
+    <slider x="10" step="500" y="372" max="5000" display="reproduction-threshold" height="33" min="forager-energy-requirement" direction="Horizontal" default="5000.0" variable="reproduction-threshold" width="184" sizeVersion="0"></slider>
+    <slider x="10" step="500" y="409" max="reproduction-threshold" display="reproduction-cost" height="33" min="500" direction="Horizontal" default="1000.0" variable="reproduction-cost" width="185" sizeVersion="0"></slider>
+    <slider x="10" step="100" y="447" max="500" display="burn-cost" height="33" min="0" direction="Horizontal" default="0.0" variable="burn-cost" width="186" sizeVersion="0"></slider>
     <slider x="10" step="1" y="499" max="20" width="187" display="cultural-trait-count" height="50" min="0" direction="Horizontal" default="10.0" variable="cultural-trait-count"></slider>
     <button x="212" y="16" height="33" disableUntilTicks="false" forever="false" kind="Observer" width="63" sizeVersion="0">setup</button>
-    <plot x="635" autoPlotX="true" yMax="10.0" autoPlotY="true" y="80" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Population" width="186" sizeVersion="0">
+    <plot x="635" autoPlotX="true" yMax="1.0" autoPlotY="true" y="80" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Population Density" width="186" sizeVersion="0">
       <setup></setup>
       <update></update>
-      <pen interval="1.0" mode="0" display="default" color="-2674135" legend="true">
+      <pen interval="1.0" mode="0" display="population_density" color="-2674135" legend="true">
         <setup></setup>
-        <update>plot count foragers</update>
+        <update>plot (count foragers) / (count patches)</update>
       </pen>
     </plot>
     <plot x="825" autoPlotX="true" yMax="10.0" autoPlotY="true" y="235" xMin="0.0" height="150" legend="false" xMax="10.0" yMin="0.0" display="Average Energy Intake" width="186" sizeVersion="0">
@@ -1819,9 +1794,6 @@ file-close</postRun>
         <enumeratedValueSet variable="burn-cost">
           <value value="0"></value>
         </enumeratedValueSet>
-        <enumeratedValueSet variable="movement-cost">
-          <value value="100"></value>
-        </enumeratedValueSet>
         <enumeratedValueSet variable="reproduction-threshold">
           <value value="3000"></value>
         </enumeratedValueSet>
@@ -1830,7 +1802,7 @@ file-close</postRun>
         </enumeratedValueSet>
       </constants>
     </experiment>
-    <experiment name="burning-behaviors" repetitions="10" sequentialRunOrder="true" runMetricsEveryStep="false">
+    <experiment name="model-experiments" repetitions="10" sequentialRunOrder="true" runMetricsEveryStep="false">
       <setup>setup</setup>
       <go>go</go>
       <constants>
@@ -1892,9 +1864,6 @@ file-close</postRun>
           <value value="200"></value>
           <value value="300"></value>
         </enumeratedValueSet>
-        <enumeratedValueSet variable="movement-cost">
-          <value value="100"></value>
-        </enumeratedValueSet>
         <enumeratedValueSet variable="reproduction-threshold">
           <value value="5000"></value>
         </enumeratedValueSet>
@@ -1903,7 +1872,7 @@ file-close</postRun>
         </enumeratedValueSet>
       </constants>
     </experiment>
-    <experiment name="sensitivity_analysis_high-med-low" repetitions="10" sequentialRunOrder="true" runMetricsEveryStep="true">
+    <experiment name="sensitivity_analysis_parameters" repetitions="10" sequentialRunOrder="true" runMetricsEveryStep="false">
       <setup>setup</setup>
       <go>go</go>
       <constants>
@@ -1914,14 +1883,14 @@ file-close</postRun>
           <value value="true"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="directory-name">
-          <value value="&quot;sensitivity-analysis_parameters&quot;"></value>
+          <value value="&quot;sensitivity_analysis_parameters&quot;"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="tick-limit">
-          <value value="500"></value>
+          <value value="2000"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="natural-ignition">
           <value value="0"></value>
-          <value value="0.5"></value>
+          <value value="0.05"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="veg-distribution">
           <value value="&quot;random&quot;"></value>
@@ -1962,15 +1931,10 @@ file-close</postRun>
         <enumeratedValueSet variable="burn-cost">
           <value value="0"></value>
         </enumeratedValueSet>
-        <enumeratedValueSet variable="movement-cost">
-          <value value="50"></value>
-          <value value="100"></value>
-          <value value="150"></value>
-        </enumeratedValueSet>
         <enumeratedValueSet variable="reproduction-threshold">
-          <value value="4000"></value>
+          <value value="2500"></value>
           <value value="5000"></value>
-          <value value="6000"></value>
+          <value value="10000"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="reproduction-cost">
           <value value="500"></value>
@@ -1991,7 +1955,7 @@ file-close</postRun>
           <value value="true"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="directory-name">
-          <value value="&quot;sensitivity-analysis_time&quot;"></value>
+          <value value="&quot;sensitivity_analysis_time&quot;"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="tick-limit">
           <value value="6000"></value>
@@ -2022,7 +1986,6 @@ file-close</postRun>
           <value value="200"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="burnt-neighbor-limit">
-          <value value="1"></value>
           <value value="4"></value>
           <value value="8"></value>
         </enumeratedValueSet>
@@ -2038,9 +2001,6 @@ file-close</postRun>
           <value value="100"></value>
           <value value="200"></value>
           <value value="300"></value>
-        </enumeratedValueSet>
-        <enumeratedValueSet variable="movement-cost">
-          <value value="100"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="reproduction-threshold">
           <value value="5000"></value>
@@ -2063,7 +2023,7 @@ file-close</postRun>
           <value value="true"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="directory-name">
-          <value value="&quot;sensitivity-analysis_time&quot;"></value>
+          <value value="&quot;sensitivity_analysis_time&quot;"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="tick-limit">
           <value value="5000"></value>
@@ -2103,9 +2063,6 @@ file-close</postRun>
         </enumeratedValueSet>
         <enumeratedValueSet variable="burn-cost">
           <value value="0"></value>
-        </enumeratedValueSet>
-        <enumeratedValueSet variable="movement-cost">
-          <value value="100"></value>
         </enumeratedValueSet>
         <enumeratedValueSet variable="reproduction-threshold">
           <value value="5000"></value>
