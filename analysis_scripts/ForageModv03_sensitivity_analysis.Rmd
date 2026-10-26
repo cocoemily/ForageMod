@@ -1,0 +1,651 @@
+---
+title: "Supplementary Material 3 for: Low-cost niche construction can create conditions for subdivided populations"
+subtitle: "Sensitivity Analyses"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+bibliography: grateful-refs-sensitivity.bib
+csl: pnas.csl
+---
+
+We assessed two aspects of the model to determine the best set of variables to use. First, we looked at how long to run each model for. Second, we look the effects of parameters that were not under investigation to determine the best values.
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(formatR)
+library(broom)
+library(tidyverse)
+library(ggpubr)
+library(ggsignif)
+library(jtools)
+
+
+theme_set(theme_bw())
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+
+# Parameters
+We examined how forager burning preference, movement, and network structure was affected by those parameters not studied in the paper. Specifically, we looked at varying the available energy in the environment (*veg-type-modifier*) and the thresholds/costs of non-burning forager behaviors. To do so, we allowed for essentially unlimited disturbance behaviors by holding *burn-cost*,
+*burnt-neighbor-limit*, and *burn-veg-type-threshold* constant. We also tested with one type of environmental scenario - starting in a productive environment and cycling the environment every 100 ticks - and one type of movement model - random walking. We tested the effects of the parameters listed below at a low, medium, and high value.
+
+```{r read-parameter-data, echo=FALSE, message=FALSE, warning=FALSE}
+data = readRDS("../sensitivity_analysis_parameters/SA_data_parameters.rds")
+
+parameters = c(
+  "natural_ignition", 
+  "cycle_duration", 
+  "veg_cycle_start", 
+  "veg_distribution",
+  "forager_moves", 
+  "movement_model", 
+  "veg_type_modifier", 
+  "burnt_neighbor_limit", 
+  "burn_veg_type_threshold", 
+  "forager_energy_requirement",  
+  "burn_cost",
+  "reproduction_threshold", 
+  "reproduction_cost"
+)
+
+clean.data = data %>%
+  rename(natural_ignition = `natural-ignition`, 
+         cycle_duration = `cycle-duration`, 
+         veg_cycle_start = `veg-cycle-start`, 
+         veg_distribution = `veg-distribution`,
+         forager_moves = `forager-moves`, 
+         movement_model = `movement-model`,
+         veg_type_modifier = `veg-type-modifier`,
+         burnt_neighbor_limit = `burnt-neighbor-limit`,  
+         burn_veg_type_threshold = `burn-veg-type-threshold`,
+         forager_energy_requirement = `forager-energy-requirement`, 
+         burn_cost = `burn-cost`, 
+         reproduction_threshold = `reproduction-threshold`, 
+         reproduction_cost = `reproduction-cost`) %>%
+  mutate_at(c(parameters), as.factor)
+
+data = clean.data
+rm(list = c("clean.data"))
+
+reg.parameters = c(
+  "natural_ignition", 
+  "forager_moves",  
+  "veg_type_modifier",  
+  "forager_energy_requirement", 
+  "reproduction_threshold", 
+  "reproduction_cost"
+)
+lapply(data[, c(reg.parameters)], unique)
+
+```
+
+## What parameters result in population maintenance vs population collapse or explosion?
+
+Here, we check how many runs result in a population size of 0 or a population density greater than 5.
+
+```{r pop-death, fig.height=6, fig.width=10, message=FALSE, warning=FALSE, out.width='100%'}
+all.exp = unique(data$exp)
+
+end.tick = unique(data$`tick-limit`)
+fd = data %>% filter(ticks == end.tick)
+finished.exp = unique(fd$exp)
+
+finished.data = data %>% filter(exp %in% finished.exp)
+unfinished.data = data %>% filter(!(exp %in% finished.exp))
+length(unique(unfinished.data$exp)) / length(unique(data$exp))
+```
+
+Over half of the model runs performed in the sensitivity analysis result in populations that are too small or too large.
+
+```{r unfinished-reason}
+
+maxed.out = unfinished.data %>%
+  group_by(exp, across(all_of(reg.parameters))) %>%
+  slice_max(ticks, n = 1, with_ties = FALSE) %>%
+  filter(pop.density > 1)
+
+length(unique(maxed.out$exp)) / length(unique(unfinished.data$exp))
+
+died.out = unfinished.data %>%
+  group_by(exp, across(all_of(reg.parameters))) %>%
+  slice_max(ticks, n = 1, with_ties = FALSE) %>%
+  filter(pop.density < 1)
+
+length(unique(died.out$exp)) / length(unique(unfinished.data$exp))
+
+```
+Of these runs, approximately 39% end up exceed a population density above 5 agents per patch, while the other 61% result in all agents dying off. 
+
+```{r parameter-selection-population-behavior, echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+rt.labs = c("repro threshold: 2500", "repro threshold: 5000", "repro threshold: 10000")
+names(rt.labs) = c(2500, 5000, 10000)
+rc.labs = c("repro cost: 500", "repro cost: 1000", "repro cost: 1500")
+names(rc.labs) = c(500, 1000, 1500)
+fm.labs = c("moves: 5", "moves: 10", "moves: 15")
+names(fm.labs) = c(5, 10, 15)
+ni.labs = c("natural ignition: 0", "natural ignition: 0.05")
+names(ni.labs) = c(0, 0.05)
+
+pop_parameters = data %>%
+  group_by(exp, across(all_of(parameters))) %>%
+  slice_max(ticks, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(
+    outcome = case_when(
+      ticks == 2000 ~ "maintained",
+      ticks != 2000 & near(pop.density, 0, tol = 1) ~ "died off",
+      ticks != 2000 & near(pop.density, 5, tol = 1) ~ "maxed out",
+      TRUE ~ "other" 
+    )
+  ) %>%
+  mutate(outcome = factor(outcome, levels = c("died off", "maxed out", "maintained")))
+
+model_data <- pop_parameters %>%
+  mutate(is_maintained = if_else(outcome == "maintained", 1, 0))
+
+formula_str <- paste("is_maintained ~", paste(reg.parameters, collapse = " + "))
+logit_model <- glm(as.formula(formula_str), data = model_data, family = binomial)
+
+summary(logit_model)
+plot_summs(logit_model, scale = T)
+```
+When we look at a logit model on the whether or not a population is maintained in a model, we find that population maintenance is mainly driven by the number of forager moves (more moves increases the likelihood of population maintenance), resource availability (*veg_type_modifer* = 200 substantially increases the likelihood of population maintenance), and the reproduction threshold (higher threshold increases the likelihood of population maintenance). 
+
+```{r parameter-decision-tree}
+rt.labs = c("repro threshold: 2500", "repro threshold: 5000", "repro threshold: 10000")
+names(rt.labs) = c(2500, 5000, 10000)
+rc.labs = c("repro cost: 500", "repro cost: 1000", "repro cost: 1500")
+names(rc.labs) = c(500, 1000, 1500)
+fm.labs = c("moves: 5", "moves: 10", "moves: 15")
+names(fm.labs) = c(5, 10, 15)
+ni.labs = c("natural ignition: 0", "natural ignition: 0.05")
+names(ni.labs) = c(0, 0.05)
+
+param_select_data = pop_parameters %>% 
+  filter(veg_type_modifier == 200, natural_ignition == 0.05) %>%
+  filter(outcome != "maintained")
+
+ggplot(param_select_data) +
+  geom_count(aes(x = forager_energy_requirement, y = forager_moves, color = outcome)) +
+  facet_grid(reproduction_cost ~ reproduction_threshold, 
+             labeller = labeller(
+               reproduction_cost = rc.labs,
+               reproduction_threshold = rt.labs 
+             )) +
+  theme(legend.position = "bottom")
+  
+```
+
+The above count graph shows those model runs that do not sustain a population until the end of model run (pink) and those model runs that result in a very large population (blue). Here, we are looking only at model runs with a *veg_type_modifer* = 200 and *natural_ignition* = 0.05 since these both maximizes population maintenance. We see that lower forager energy requirements and reproduction thresholds result in the population growing very quickly whereas higher requirements can result in the population dying off if the foragers cannot perform enough moves per foraging bout.
+
+```{r pop-density, echo=TRUE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+pop_maintenance = pop_parameters %>% filter(outcome == "maintained")
+
+hist(pop_maintenance$pop.density)
+
+model3 = glm(pop.density ~ .,
+             data = pop_maintenance[,c("pop.density", reg.parameters)], 
+             family = "quasipoisson")
+# plot(model3)
+
+summary(model3)
+plot_summs(model3, scale = T)
+
+
+```
+
+Comparing standardized regression coefficients, we can see that access to energy is a critical determinant of final population density. We also see that increased energy requirements for foraging and reproduction reduce population density. 
+
+```{r population-trend-1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+COMMON_THEME = theme(
+  legend.text = element_text(size = 8), 
+  legend.title = element_text(size = 8)
+)
+
+ggarrange(
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = pop.density, color = forager_moves)) + COMMON_THEME, 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = pop.density, color = forager_energy_requirement)) + COMMON_THEME, 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = pop.density, color = reproduction_threshold)) + COMMON_THEME, 
+  ggplot(finished.data) + 
+    geom_smooth(aes(x = ticks, y = pop.density, color = reproduction_cost)) + COMMON_THEME, 
+  ncol = 2, nrow = 2, legend = "bottom"
+)
+
+```
+
+From the above visualized parameters, we prioritize values that maintain lower population densities to reduce the computational needs of the model particularly since the various parameter values do not change the shape of the population density curve, only the magnitude. 
+
+## How do the parameters affect burning preference values of foragers?
+
+```{r burning-probabilities_1, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+ggarrange(
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.burn.prob, color = natural_ignition)) + COMMON_THEME, 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.burn.prob, color = veg_type_modifier)) + COMMON_THEME, 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.burn.prob, color = forager_moves)) + COMMON_THEME, 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.burn.prob, color = forager_energy_requirement)) + COMMON_THEME, 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.burn.prob, color = reproduction_threshold))+ COMMON_THEME, 
+  ggplot(finished.data) + 
+    geom_smooth(aes(x = ticks, y = mean.burn.prob, color = reproduction_cost)) + COMMON_THEME, 
+  ncol = 2, nrow = 4, legend = "bottom"
+)
+```
+
+Across all parameters, when populations are maintained, burning preferences increase, so We look at the final mean burning preference to compare parameter effects. 
+
+Specifically, we test for significant differences using Mann-Whitney U (two-sample Wilcoxon) tests. For all tests, we are only looking at model runs with a *veg_type_modifer* = 200 and *natural_ignition* = 0.05, the parameters that maintain populations above. 
+
+```{r burning-probabilities_2, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+comparison.data = fd %>% filter(veg_type_modifier == 200, natural_ignition == 0.05)
+
+COMMON_THEME = theme(
+  axis.title = element_text(size = 9),
+  axis.text = element_text(size = 8), 
+  strip.text = element_text(size = 8)
+)
+
+ggarrange(
+  ggboxplot(comparison.data, 
+            x = "reproduction_threshold", y = "mean.burn.prob", 
+            color = "reproduction_threshold",
+            facet.by = "reproduction_cost",
+            short.panel.lab = FALSE) +
+    stat_compare_means(comparisons = list(c("2500", "5000"), 
+                                          c("5000", "10000"), 
+                                          c("2500", "10000")), 
+                       label = "p.signif", vjust = 0.6, hide.ns = T, 
+                       method = "wilcox.test") +
+    COMMON_THEME +
+    theme(legend.position = "none"),
+  
+   ggboxplot(comparison.data, 
+            x = "forager_energy_requirement", y = "mean.burn.prob", 
+            color = "forager_energy_requirement",
+            short.panel.lab = FALSE) +
+    stat_compare_means(comparisons = list(c("1000", "1500"), 
+                                          c("1500", "2000"), 
+                                          c("1000", "2000")), 
+                       label = "p.signif", vjust = 0.6, hide.ns = T, 
+                       method = "wilcox.test") +
+    COMMON_THEME +
+    theme(legend.position = "none"),
+  
+   ggboxplot(comparison.data, 
+            x = "reproduction_cost",  y = "mean.burn.prob", 
+            color ="reproduction_cost",
+            facet.by = "reproduction_threshold",
+            short.panel.lab = FALSE) +
+    stat_compare_means(comparisons = list(c("500", "1000"), 
+                                          c("1000", "1500"), 
+                                          c("500", "1500")), 
+                       label = "p.signif", vjust = 0.6, hide.ns = T, 
+                       method = "wilcox.test") +
+    COMMON_THEME +
+    theme(legend.position = "none"), 
+  
+  ggboxplot(comparison.data, 
+            x = "forager_moves", y = "mean.burn.prob", 
+            color = "forager_moves",
+            short.panel.lab = FALSE) +
+    stat_compare_means(comparisons = list(c("5", "10"), 
+                                          c("10", "15"), 
+                                          c("5", "15")), 
+                       label = "p.signif", vjust = 0.6, hide.ns = T, 
+                       method = "wilcox.test") +
+    COMMON_THEME +
+    theme(legend.position = "none"),
+  
+  ncol = 2, nrow = 2, widths = c(1.25, 0.75)
+  
+)
+
+```
+
+First, it is clear that *reproduction_cost* values do not appreciably change the final burning preference value, particularly at the highest and lowest reproduction threshold values. In contrast, the *reproduction_threshold* value results in substantial changes in the final average burning preference of the population. An important thing to note here is that the lowest reproduction threshold values allow for a final burning preference of 1+, meaning that the entire population is always making the choice to burn.
+
+For *forager_energy_requirement* values, we see that there are significant differences, but the degree of difference between the middle and high values is less than the comparison with the low value. 
+
+We also see smaller significant differences in final disturbance preference values between the middle and high value of *forager-moves* across all energy requirements/thresholds.
+
+Based on these comparisons, it is prudent to select either the middle or high values for each parameter. 
+
+## How do the parameters affect forager movement?
+
+```{r forager_moves_1, echo=FALSE, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+COMMON_THEME = theme(
+  legend.title = element_text(size = 6), 
+  legend.position = "bottom", 
+  strip.text = element_text(size = 6), 
+  axis.text = element_text(size = 6), 
+  legend.text = element_text(size = 5)
+)
+
+ggarrange(
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.fm, color = veg_type_modifier), method = "lm") +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15)) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))), 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.fm, color = forager_energy_requirement), method = "lm") +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15))+
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))), 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = mean.fm, color = reproduction_threshold), method = "lm") +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15)) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))),  
+  ggplot(finished.data) + 
+    geom_smooth(aes(x = ticks, y = mean.fm, color = reproduction_cost), method = "lm") +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15)) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))),
+  ncol = 2, nrow = 2
+)
+```
+
+It is clear that the parameter with the largest effect on how much foragers move during their foraging bouts is (*veg-type-modifier*). Thee above results demonstrate that differences caused by the other parameters are minimized with lowest *forager_moves* value. 
+
+## How do the parameters affect proportion of vegetation types across the landscape?
+```{r veg_props, echo=FALSE, fig.height=10, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+finished.data$burnt = finished.data$`veg_-1`
+
+veg_long = finished.data %>% pivot_longer(cols = c(9:16, 39), names_to = "veg.type", values_to = "proportion")
+
+COMMON_THEME = theme(
+  legend.title = element_text(size = 6),
+  legend.text = element_text(size = 6),
+  axis.text = element_text(size = 6)
+)
+
+ggarrange(
+  ggplot(veg_long) +
+    geom_smooth(aes(x = ticks, y = proportion, color = veg.type)) +
+    facet_wrap(~veg_type_modifier, nrow=1, labeller = label_both) +
+    COMMON_THEME,
+  ggplot(veg_long) +
+    geom_smooth(aes(x = ticks,  y = proportion, color = veg.type)) +
+    facet_wrap(~forager_moves, nrow=1, labeller = label_both) +
+    COMMON_THEME,
+  ggplot(veg_long) +
+    geom_smooth(aes(x = ticks, y = proportion, color = veg.type)) +
+    facet_wrap(~forager_energy_requirement, nrow=1, labeller = label_both) +
+    COMMON_THEME,
+  ggplot(veg_long) +
+    geom_smooth(aes(x = ticks, y = proportion, color = veg.type)) +
+    facet_wrap(~reproduction_threshold, nrow=1, labeller = label_both) +
+    COMMON_THEME,
+  ggplot(veg_long) +
+    geom_smooth(aes(x = ticks, y = proportion, color = veg.type)) +
+    facet_wrap(~reproduction_cost, nrow=1, labeller = label_both) +
+    COMMON_THEME,
+  nrow = 5, ncol = 1, common.legend = T, legend = "bottom"
+)
+
+```
+
+Across the parameters tested here, the relationships between the proportions of different vegetation types on the landscape remain relatively the same. The main effects are on *veg_0* and *burnt* which represent proportion of the landscape with foraged patches and with burnt patches, respectively. This changes slightly with amount of energy required for foraging and maximum number of moves per foraging bout. 
+
+Otherwise, the main trend is low levels of vegetation types greater than 1 (which is the starting value for all patches) and a slow decline in the proportion of vegetation type 1 as more of the landscape gets disturbed each time step and turns over into higher vegetation types. 
+
+Given these results, any of the values used would produce a similar pattern of vegetation types.
+
+## How do the parameters affect social network similarity?
+```{r network-similarity, echo=F, message=F, warning=F}
+COMMON_THEME = theme(
+  legend.title = element_text(size = 6), 
+  legend.position = "bottom", 
+  strip.text = element_text(size = 6), 
+  axis.text = element_text(size = 6), 
+  legend.text = element_text(size = 5)
+)
+
+ggarrange(
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = net.sim, color = veg_type_modifier)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+   COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))), 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = net.sim, color = forager_energy_requirement)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))), 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = net.sim, color = reproduction_threshold)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))),  
+  ggplot(finished.data) + 
+    geom_smooth(aes(x = ticks, y = net.sim, color = reproduction_cost)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15)) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))),
+  ncol = 2, nrow = 2
+)
+```
+For network similarity, we see that different values of *reproduction_threshold* produce the largest differences in magnitude, while the overall trends are maintained.  
+
+## How do the parameters affect social network spatial clustering?
+```{r network-clustering, echo=F, message=F, warning=F}
+COMMON_THEME = theme(
+  legend.title = element_text(size = 6), 
+  legend.position = "bottom", 
+  strip.text = element_text(size = 6), 
+  axis.text = element_text(size = 6), 
+  legend.text = element_text(size = 5)
+)
+
+ggarrange(
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = net.clust, color = veg_type_modifier)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+   COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))), 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = net.clust, color = forager_energy_requirement)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))), 
+  ggplot(finished.data) +
+    geom_smooth(aes(x = ticks, y = net.clust, color = reproduction_threshold)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))),  
+  ggplot(finished.data) + 
+    geom_smooth(aes(x = ticks, y = net.clust, color = reproduction_cost)) +
+    facet_wrap(~forager_moves, labeller = label_both) +
+    scale_y_continuous(limits = c(0, 15)) +
+    COMMON_THEME +
+    guides(color = guide_legend(override.aes = list(size = 1))),
+  ncol = 2, nrow = 2
+)
+```
+For network spatial clustering, we see that none of the tested parameter values really change the patterns or magnitudes.  
+
+## Final parameter selection
+
+Based on the above sensitivity analysis, we use the middle values of each of the parameters tested here for the final experiments. These are:
+
+-   *natural-ignition* = 0.05
+-   *forager-moves* = 10
+-   *veg-type-modifier* = 200
+-   *forager-energy-requirement* = 1500
+-   *reproduction-threshold* = 5000
+-   *reproduction-cost* = 1000
+
+These values allow the model to maintain a reasonable population that does not significantly hinder model performance (i.e., does not drastically increase run time or memory requirements).
+Additionally, these parameters do meaningfully affect our variables of interest - disturbance preference and forager movement. The effects of the other model parameters are discussed in the manuscript and the supplementary material.
+
+# Time and replicates
+We explored how long to run the model for by testing how long it took the model to reach an average preference for burning behaviors of 1 across all forager agents and how long it took the model to reach population equilibrium. We tested this at different values for the parameters that control disturbance costs, while holding all other parameters constant. We limited the model to 6000 ticks.
+
+```{r load-time-data, echo=FALSE, message=FALSE, warning=FALSE}
+data = readRDS("../sensitivity_analysis_time/SA_data_time.rds")
+
+parameters = c(
+  "natural_ignition", 
+  "cycle_duration", 
+  "veg_cycle_start", 
+  "veg_distribution",
+  "forager_moves", 
+  "movement_model", 
+  "veg_type_modifier", 
+  "burnt_neighbor_limit", 
+  "burn_veg_type_threshold", 
+  "forager_energy_requirement",  
+  "burn_cost",
+  "reproduction_threshold", 
+  "reproduction_cost"
+)
+
+clean.data = data %>%
+  rename(natural_ignition = `natural-ignition`, 
+         cycle_duration = `cycle-duration`, 
+         veg_cycle_start = `veg-cycle-start`, 
+         veg_distribution = `veg-distribution`,
+         forager_moves = `forager-moves`, 
+         movement_model = `movement-model`,
+         veg_type_modifier = `veg-type-modifier`,
+         burnt_neighbor_limit = `burnt-neighbor-limit`,  
+         burn_veg_type_threshold = `burn-veg-type-threshold`,
+         forager_energy_requirement = `forager-energy-requirement`, 
+         burn_cost = `burn-cost`, 
+         reproduction_threshold = `reproduction-threshold`, 
+         reproduction_cost = `reproduction-cost`) %>%
+  mutate_at(c(parameters), as.factor)
+
+data = clean.data
+rm(list = c("clean.data"))
+```
+
+## How long to run the model?
+```{r end-ticks, echo=FALSE, message=FALSE, warning=FALSE}
+max.ticks = data %>% group_by_at(c("exp", parameters)) %>%
+  filter(mean.burn.prob <= 1) %>%
+  summarize(max.tick = max(ticks))  %>%
+  left_join(data %>% select_at(c("exp", "ticks", 
+                                 "pop.density", "mean.burn.prob")), 
+            by = c('exp' = 'exp', 'max.tick' = 'ticks')) %>% 
+  filter(pop.density > 0)
+
+summary(max.ticks$max.tick)
+
+ggplot(max.ticks %>% filter(burnt_neighbor_limit %in% c(1, 8))) +
+  geom_histogram(aes(x = max.tick)) +
+  geom_vline(aes(xintercept = 3000), color = "red") +
+  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, labeller = label_both) +
+  theme(strip.text = element_text(size = 6), axis.text = element_text(size = 6))
+
+```
+We can see that at the lowest restrictions and costs to burning behaviors (upper right corner), the model reaches an average preference for disturbance of 1 across all agents by approximately 3000 model ticks. Imposing limits on disturbance behaviors increases the time to achieving a population with an average disturbance preference of 1.  
+
+```{r population-over-time, echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
+hist(data$pop.density)
+
+ggplot(data) +
+  geom_smooth(aes(x = ticks, y = pop.density, color = exp)) +
+  geom_smooth(aes(x = ticks, y = pop.density), color = "black") +
+  geom_vline(aes(xintercept = 3000), color = "red") + 
+  geom_vline(aes(xintercept = 4000), color = "purple") + 
+  facet_grid(burn_cost ~ burn_veg_type_threshold + burnt_neighbor_limit, labeller = label_both) +
+  theme(strip.text = element_text(size = 6), axis.text = element_text(size = 6)) +
+  theme(legend.position = "none")
+
+```
+
+When looking at population growth over time, we can see that different disturbance restriction parameters create different population thresholds. This indicates that carrying capacity of the model is affected by how many patches can be disturbed in a single time step. 
+
+By plotting our 3000th tick from above, we can see that this is right on the cusp of population stabilization in many scenarios. We decided to run the model for 4000 ticks. Although this will likely result in populations that evolve disturbance preferences greater than 1, it will allow us to examine what behavioral and environmental factors influence or are influenced by population stasis.
+
+To determine how many runs of each experiment to run, we assess convergence of our variables of interest with increasing number of runs.
+```{r how-many-runs}
+end.tick = 4000
+fd = data %>% filter(ticks == end.tick)
+
+group_parameters = c(
+  "burn_cost", 
+  "burnt_neighbor_limit", 
+  "burn_veg_type_threshold"
+)
+
+vars = c(
+  "pop.density",
+  "mean.burn.prob", 
+  "mean.fm", 
+  "net.sim", 
+  "net.clust"
+)
+
+
+permuted_data <- fd %>%
+  group_by(across(all_of(group_parameters))) %>%
+  group_nest() %>%
+  mutate(permutations = map(data, ~ {
+    map_dfr(1:50, function(i) {
+      .x %>%
+        slice_sample(prop = 1) %>% 
+        mutate(
+          run = row_number(),
+          perm_id = i
+        )
+    })
+  })) %>%
+  select(-data) %>%
+  unnest(permutations)
+
+cum_perm_data <- permuted_data %>%
+  group_by(across(all_of(c(group_parameters, "perm_id")))) %>%
+  arrange(run) %>%
+  mutate(across(all_of(vars), ~ cumsum(.x) / run, .names = "cum_mean_{.col}")) %>%
+  ungroup()
+
+summary_data <- cum_perm_data %>%
+  pivot_longer(
+    cols = starts_with("cum_mean_"),
+    names_to = "variable",
+    values_to = "cumulative_mean"
+  ) %>%
+  mutate(variable = str_remove(variable, "cum_mean_")) %>%
+  group_by(across(all_of(group_parameters)), variable, run) %>%
+  summarise(
+    mean_cum = mean(cumulative_mean),
+    lower_ci = quantile(cumulative_mean, 0.025), 
+    upper_ci = quantile(cumulative_mean, 0.975), 
+    .groups = "drop"
+  ) %>%
+  group_by(across(all_of(group_parameters))) %>%
+  mutate(group_id = cur_group_id()) %>%
+  ungroup()
+
+ggplot(summary_data, aes(x = run, group = group_id)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.15, fill = "steelblue") +
+  geom_line(aes(y = mean_cum), color = "steelblue", alpha = 0.6) +
+  facet_wrap(~ variable, scales = "free_y") +
+  theme_minimal()
+
+```
+
+We can see that, despite variation in the raw values for our variables of interest, there appears to be convergence by 25 runs. 
+
+## References
+
+```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
+pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc", "marginaleffects", "minpack.lm"), bib.file = "grateful-refs-sensitivity")
+knitr::kable(pkgs)
+```
