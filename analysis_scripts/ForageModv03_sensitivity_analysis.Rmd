@@ -643,9 +643,9 @@ ggplot(summary_data, aes(x = run, group = group_id)) +
 
 We can see that, despite variation in the raw values for our variables of interest, there appears to be convergence by 25 runs. 
 
-## References
+# References
 
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
-pkgs <- grateful::cite_packages(output = "table", out.dir = ".", omit = c("QuantPsyc", "marginaleffects", "minpack.lm"), bib.file = "grateful-refs-sensitivity")
+pkgs <- grateful::cite_packages(output = "table", pkgs = "ForageModv03_sensitivity_analysis.Rmd", out.dir = ".", omit = c("QuantPsyc", "marginaleffects", "minpack.lm"), bib.file = "grateful-refs-sensitivity")
 knitr::kable(pkgs)
 ```
