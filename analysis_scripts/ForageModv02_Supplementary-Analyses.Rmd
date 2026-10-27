@@ -2017,7 +2017,8 @@ With directed walks, the effect of underlying vegetation potential is more varie
 ```{r citations, echo=FALSE, message=FALSE, warning=FALSE}
 pkgs <- grateful::cite_packages(
   output = "table",
-  out.dir = "."
+  out.dir = ".", 
+  pkgs = "ForageModv02_Supplementary-Analyses.Rmd",
 )
 
 bib_file = "grateful-refs.bib"
