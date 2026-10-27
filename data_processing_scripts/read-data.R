@@ -27,8 +27,9 @@ registerDoParallel(cl)
 final.data <- foreach(
   x = experiments, 
   .packages = c("tidyverse"), 
+  .export = c("file.list", "outputs"),
   .combine = bind_rows,
-  .errorhandling = "pass"
+  .errorhandling = "stop"
 ) %dopar% {
   print(paste0("reading data from exp: ", x))
   exp.files = file.list[which(str_detect(file.list, as.character(x)))]

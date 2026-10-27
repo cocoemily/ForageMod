@@ -24,6 +24,7 @@ registerDoParallel(cl)
 final.data <- foreach(
   x = experiments, 
   .packages = c("tidyverse"), 
+  .export = c("file.list", "outputs"),
   .combine = bind_rows,
   .errorhandling = "pass"
 ) %dopar% {

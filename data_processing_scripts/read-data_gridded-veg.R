@@ -1,20 +1,28 @@
 library(tidyverse)
 library(here)
-library(data.table)
+library(foreach)
+library(doParallel)
 
 file.list = list.files("results", pattern = "\\.csv$", full.names = T)
 exp.list = list.files("results", pattern = "\\.csv$", full.names = F)
-experiments = unlist(str_split(exp.list, "_"))[seq(2, (length(exp.list) * 3), by = 3)]
+experiments = sub("^experiment_([^_]+)_.*$", "\\1", exp.list)
 experiments = unique(experiments)
-print(length(experiments))
 
 outputs = c(
   "gridded-veg-types"
 )
 
-vt.data = list()
+num_cores <- detectCores() - 8
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
 
-for (x in experiments) {
+final.data <- foreach(
+  x = experiments, 
+  .packages = c("tidyverse"), 
+  .export = c("file.list", "outputs"),
+  .combine = bind_rows,
+  .errorhandling = "stop"
+) %dopar% {
   print(paste0("reading data from exp: ", x))
   exp.files = file.list[which(str_detect(file.list, as.character(x)))]
   
@@ -27,9 +35,9 @@ for (x in experiments) {
   final.vt.df = bind_cols(gvt.df, model.parameters)
   final.vt.df$exp = x
 
-  vt.data[[x]] = final.vt.df
+  return(final.vt.df)
 }
 
-final.vt.data = rbindlist(vt.data)
+stopCluster(cl)
 
-saveRDS(final.vt.data, file = "results/bb-vt-data.rds")
+saveRDS(final.vt.data, file = "results/veg_types_spatial_data.rds")
