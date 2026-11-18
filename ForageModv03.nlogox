@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<model version="NetLogo 7.0.3" snapToGrid="true">
+<model version="NetLogo 7.0.2" snapToGrid="true">
   <code><![CDATA[;;forageMOD v03 by Ben Davies, University of Utah
 ;;modified by Emily Coco, Yale University, ICArEHB
 ;;29 September 2026
@@ -15,11 +15,11 @@ foragers-own [
   move-tracker 
   energy 
   burn-prob 
-  age offspring 
+  age 
+  offspring 
   interactions 
   previous-interaction-list 
   same-interactions 
-  cultural-traits
   network-jaccard
   avg-network-dist
 ]
