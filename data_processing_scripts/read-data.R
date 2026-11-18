@@ -98,13 +98,16 @@ final.data <- foreach(
 
   
   if(nrow(all.data) > 1) {
-    if(model.parameters$`veg-cycle-start` == "productive") {
-      cc.seq = rep(rep(c("productive", "unproductive"), each = model.parameters$`cycle-duration`), 
-                   (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
-      all.data$climate.condition = c("productive", cc.seq[1:(nrow(all.data) - 1)])     } 
-    else {        
-      cc.seq = rep(rep(c("unproductive", "productive"), each = model.parameters$`cycle-duration`),                                                                                                            (model.parameters$`tick-limit`/model.parameters$`cycle-duration`)/2)
-      all.data$climate.condition = c("unproductive", cc.seq[1:(nrow(all.data) - 1)])
+    cycle_duration <- as.numeric(model.parameters$`cycle-duration`)
+    veg_start <- str_trim(as.character(model.parameters$`veg-cycle-start`))
+    
+    # Determine the cycle index for each tick
+    cycle_idx <- floor(all.data$ticks / cycle_duration)
+    
+    if(veg_start == "productive") {
+      all.data$climate.condition <- ifelse(cycle_idx %% 2 == 0, "productive", "unproductive")
+    } else {
+      all.data$climate.condition <- ifelse(cycle_idx %% 2 == 0, "unproductive", "productive")
     }
   }
   
