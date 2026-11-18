@@ -25,9 +25,6 @@ header-includes:
 
 This document contains supplementary statistical analyses to support the results and conclusions presented in the manuscript. 
 
-#### Parameter names
-In the development of ForageMod ABM, we used variable names specific to simulating burning behaviors, but the behavior of the model can be generalized to any disturbance that temporarily improves local environment. In this document we use model parameter names, but we reiterate that the results are not only associated with anthropogenic burning regimes. 
-
 ```{r load-data, message=FALSE, warning=FALSE, include=FALSE}
 library(knitr)
 library(broom)
@@ -57,7 +54,7 @@ options(
   tinytex.verbose = TRUE
 )
 
-data = readRDS("../results/bb-data.rds")
+data = readRDS("../results/full_experiments_data.rds")
 
 parameters = c(
   "cycle-duration",  # 100, 250
@@ -68,90 +65,53 @@ parameters = c(
   "burn-veg-type-threshold", # 4, 7
   "movement-model" #Random, Directed
 )
-data[,parameters] = lapply(data[,parameters], as.factor)
+parameters = c(
+  "cycle-duration",  # 100, 250
+  "veg-cycle-start", # productive, unproductive
+  "veg-distribution", # random, clustered
+  "burnt-neighbor-limit", # 1, 4, 8
+  "burn-cost", # 0, 50
+  "burn-veg-type-threshold", # 4, 7
+  "movement-model" #Random, Directed
+)
+data$`cycle-duration` = as.factor(data$`cycle-duration`)
+data$`veg-cycle-start` = as.factor(data$`veg-cycle-start`)
 data$`veg-distribution` = factor(data$`veg-distribution`, 
                                  levels = c("\"random\"", "\"clustered\""))
+data$`burnt-neighbor-limit` = as.factor(data$`burnt-neighbor-limit`)
+data$`burn-cost` = as.factor(data$`burn-cost`)
+data$`burn-veg-type-threshold` = as.factor(data$`burn-veg-type-threshold`)
 data$`movement-model` = factor(data$`movement-model`, 
                                levels = c("\"Random Walk\"", "\"Directed Walk\""))
 
-data$adj.fi = data$mean.fi/data$pop.count
-data$same.fi.prop = data$mean.same.fi / data$mean.fi
-
-data$pop.dens = data$pop.count/(51*51)
-
-data$bself.prop = data$benefit_self / (data$pop.count * data$mean.fm)
-data$bother.prop = data$benefit_other / (data$pop.count * data$mean.fm)
-
 data$burnt = data$`veg_-1`
-```
 
-```{r setup-correlation-dataframes, message=FALSE, warning=FALSE, include=FALSE}
-veg.100.prod = readRDS("../results/outputs/veg_moransi_100-prod.rds")
-veg.100.unprod = readRDS("../results/outputs/veg_moransi_100-unprod.rds")
-veg.250.prod = readRDS("../results/outputs/veg_moransi_250-prod.rds")
-veg.250.unprod = readRDS("../results/outputs/veg_moransi_250-unprod.rds")
-veg.data = bind_rows(veg.100.prod, veg.100.unprod, veg.250.prod, veg.250.unprod)
-be.100 = readRDS("../results/outputs/be_morans.i_cycle.100.rds")
-be.250 = readRDS("../results/outputs/be_morans.i_cycle.250.rds")
-be.data = bind_rows(be.100, be.250)
+data$bself.prop = data$benefit_self / ((data$pop.density * 51 * 51) * data$mean.fm) #proportion of average total foraging events that result in a benefit to self
+data$bother.prop = data$benefit_other / ((data$pop.density * 51 * 51) * data$mean.fm) #proportion of average total foraging events that result in a benefit to self
 
-rm(list = c("veg.100.prod", "veg.100.unprod", 
-            "veg.250.prod", "veg.250.unprod", 
-            "be.100", "be.250"))
+veg.data = readRDS("../results/veg_types_spatial_data.rds")
+
+veg.data$`cycle-duration` = as.factor(veg.data$`cycle-duration`)
+veg.data$`veg-cycle-start` = as.factor(veg.data$`veg-cycle-start`)
+veg.data$`veg-distribution` = factor(veg.data$`veg-distribution`, 
+                                 levels = c("\"random\"", "\"clustered\""))
+veg.data$`burnt-neighbor-limit` = as.factor(veg.data$`burnt-neighbor-limit`)
+veg.data$`burn-cost` = as.factor(veg.data$`burn-cost`)
+veg.data$`burn-veg-type-threshold` = as.factor(veg.data$`burn-veg-type-threshold`)
+veg.data$`movement-model` = factor(veg.data$`movement-model`, 
+                               levels = c("\"Random Walk\"", "\"Directed Walk\""))
 
 outputs = c(
-  "pop.dens", #pop count/world size
+  "pop.density", #pop count/world size
   "burnt", 
   "mean.burn.prob", 
-  "adj.fi", #average interaction count/ population count
+  "mean.fi", #average interaction count/ population count
   "mean.fm",  #average forager movements per capita
   "bself.prop", #
   "bother.prop", 
-  "veg_morans.i", 
-  "shannon.div", 
-  "be_morans.i"
+  "morans.i", 
+  "shannon.div"
 )
-
-# par(mfrow = c(1,3))
-# par(mar=c(0,1,0,1))
-#plot at 250
-data250 = data %>% dplyr::filter(ticks == 250) %>% 
-  left_join(veg.data %>% 
-              dplyr::filter(ticks == 250) %>% 
-              dplyr::select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
-              rename(veg_morans.i = morans.i), 
-            by = c("exp")) %>% 
-  left_join(be.data %>% 
-              dplyr::filter(ticks == 250) %>% 
-              dplyr::select(exp, morans.i) %>%
-              rename(be_morans.i = morans.i), 
-            by = c("exp"))
-
-#plot at 2000
-data2000 = data %>% filter(ticks == 2000) %>% 
-  left_join(veg.data %>% 
-              filter(ticks == 2000) %>% 
-              dplyr::select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
-              rename(veg_morans.i = morans.i), 
-            by = c("exp")) %>% 
-  left_join(be.data %>% 
-              filter(ticks == 2000) %>% 
-              dplyr::select(exp, morans.i) %>%
-              rename(be_morans.i = morans.i), 
-            by = c("exp"))
-
-#plot at 3500
-data3500 = data %>% filter(ticks == 3500) %>% 
-  left_join(veg.data %>% 
-              filter(ticks == 3500) %>% 
-              dplyr::select(exp, morans.i, shannon.div, shannon.div.no0) %>% 
-              rename(veg_morans.i = morans.i), 
-            by = c("exp")) %>% 
-  left_join(be.data %>% 
-              filter(ticks == 3500) %>% 
-              dplyr::select(exp, morans.i) %>%
-              rename(be_morans.i = morans.i), 
-            by = c("exp"))
 
 start.labs = c("unproductive start", "productive start")
 names(start.labs) = c("\"unproductive\"", "\"productive\"")
@@ -160,24 +120,58 @@ names(cycle.labs) = c(250, 100)
 dist.labs = c("random environmental potential", 
               "clustered environmental potential")
 names(dist.labs) = c("\"random\"", "\"clustered\"")
-bc.labs = c("disturb cost = 0", "disturb cost = 100", 
-            "disturb cost = 200", "disturb cost = 300")
+bc.labs = c("burn cost = 0", "burn cost = 100", 
+            "burn cost = 200", "burn cost = 300")
 names(bc.labs) = c(0, 100, 200, 300)
-bt.labs = c("can disturb veg types 1-4", "can disturb veg types 1-7")
+bt.labs = c("can burn veg types 1-4", "can burn veg types 1-7")
 names(bt.labs) = c(4, 7)
-bn.labs = c("disturb with 1 disturbed neighbor", 
-            "disturb with 4 disturbed neighbors", 
-            "disturb with 8 disturbed neighbors")
+bn.labs = c("burn with 1 burnt neighbor", 
+            "burn with 4 burnt neighbors", 
+            "burn with 8 burnt neighbors")
 names(bn.labs) = c(1, 4, 8)
 move.labs = c("random walks", "directed walks")
 names(move.labs) = c("\"Random Walk\"", "\"Directed Walk\"")
 
+sample = data %>%
+  group_by(exp) %>%
+  slice(1) %>%
+  group_by(across(all_of(parameters))) %>%
+  slice_sample(prop = 0.20) %>%
+  pull(exp)
+
+sampled_data = data %>% filter(exp %in% sample)
+
+```
+
+```{r setup-correlation-dataframes, message=FALSE, warning=FALSE, include=FALSE}
+# par(mfrow = c(1,3))
+# par(mar=c(0,1,0,1))
+#plot at 250
+data250 = data %>% dplyr::filter(ticks == 250) %>% 
+  left_join(veg.data %>% 
+              dplyr::filter(ticks == 250) %>% 
+              dplyr::select(exp, morans.i, shannon.div, shannon.div.noburnt), 
+            by = c("exp")) 
+
+#plot at 2000
+data2000 = data %>% filter(ticks == 2000) %>% 
+  left_join(veg.data %>% 
+              filter(ticks == 2000) %>% 
+              dplyr::select(exp, morans.i, shannon.div, shannon.div.noburnt), 
+            by = c("exp")) 
+
+#plot at 4000
+data4000 = data %>% filter(ticks == 4000) %>% 
+  left_join(veg.data %>% 
+              filter(ticks == 4000) %>% 
+              dplyr::select(exp, morans.i, shannon.div, shannon.div.noburnt), 
+            by = c("exp")) 
 ```
 
 
 # Population maintenance?
 
-First, we checked to see whether all model runs maintained a population across all 3500 ticks.
+First, we checked to see whether all model runs maintained a population across all 400 ticks.
 
 ```{r pop-maintenance, echo=TRUE, message=FALSE, warning=FALSE}
 all.exp = unique(data$exp)
@@ -194,11 +188,6 @@ length(unique(unfinished.data$exp))
 ```
 
 None of our modeled scenarios resulted in population extinction. 
-```{r pop-maintenance-2, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-lapply((unfinished.data %>% 
-          select_at(c("exp", parameters)) %>% 
-          distinct())[,parameters], table)
-```
 
 ```{r filter-out-unsuccessful-runs, echo=FALSE, message=FALSE, warning=FALSE}
 data = data %>% filter(exp %in% finished.exp)
@@ -210,30 +199,33 @@ Here we look at changes in population during model run.
 
 ## Population density over time
 ```{r population-1, echo=FALSE, fig.height=7, fig.width=8, message=FALSE, warning=FALSE, out.width='100%', fig.cap = "Population density over time"}
-ggplot(data) +
-  geom_smooth(aes(y = pop.dens, x = ticks, group = exp, color = `burn-cost`), 
+ggplot(sampled_data) +
+  geom_smooth(aes(y = pop.density, x = ticks, group = exp, color = `burn-cost`), 
               alpha = 0.01, size = 0.05) +
-  geom_smooth(aes(x = ticks, y = pop.dens), color = "black", se = T) +
+  geom_smooth(aes(x = ticks, y = pop.density), color = "black", se = T) +
   facet_grid(`burn-cost` ~ `cycle-duration`+`veg-cycle-start`, 
-             labeller = label_both, scale = "free") +
+             labeller = labeller(
+               `burn-cost` = bc.labs, 
+               `cycle-duration` = cycle.labs, 
+               `veg-cycle-start` = start.labs
+             ), 
+             scale = "free") +
   scale_color_brewer(palette = "Set2",
-                     labels = c("no disturbance cost (0)", 
-                                "low disturbance cost (100)", 
-                                "medium disturbance cost (200)", 
-                                "high disturbance cost (300)")) +
-  theme(legend.position = "none")
+                     labels = label_dictionary(bc.labs)) +
+  theme(legend.position = "none") +
+  labs(x = "foraging bout")
 ```
 
-As we can see in Figure S\@ref(fig:population-1), population increases over time. There are fluctuations in population based on the climatic condition of the model, with steep drops in population when the landscape is unproductive (see below). However, the overall trend of population increase is evident across all modeled scenarios.
+As we can see in Figure S\@ref(fig:population-1), population increases over time in nearly all scenarios, except when burn costs are the highest. In this case, we see that under certain other parameter settings, population density remains relatively stable across model run. There are also fluctuations in population based on the climatic condition of the model, with drops in population when the landscape is unproductive (see below). However, the overall trend of population increase is evident when burn costs are medium to zero.
 
 ```{r population-2, echo=T, fig.height=5, message=FALSE, warning=FALSE, out.width='100%'}
-reg.data = data %>% filter(ticks == 3000)
+reg.data = data %>% filter(ticks == 3950) %>% filter(`veg-cycle-start` == "\"unproductive\"")
 
 # hist(reg.data$pop.dens)
-mean(reg.data$pop.dens)
-var(reg.data$pop.dens)
+mean(reg.data$pop.density)
+var(reg.data$pop.density)
 
-model1 = glm(pop.dens ~ ., data = reg.data[,c("pop.dens", parameters)], family = "poisson")
+model1 = glm(pop.density ~ ., data  = reg.data[,c("pop.density", parameters[c(1,3:7)])], family = "poisson")
 plot(model1)
 
 deviance(model1)/df.residual(model1)
@@ -243,7 +235,7 @@ plot_summs(model1, scale = T)
 
 ```
 
-When we compare standardized regression coefficients to look at how parameter values affect the resulting population density at the end of model run, we can see that the highest disturbance costs (*burn-cost* = 200 & 300) have the strongest effect, significantly reducing the maximum population density achieved during model run. 
+When we compare standardized regression coefficients to look at how parameter values affect the resulting population density at the end of model run (using models that end in a productive period), we can see that the highest *burn-cost* = 300 have the strongest effect, significantly reducing the maximum population density achieved during model run. Interestingly, the parameters that impose limits on burning behaviors have a significantly positive effect on the final population density. 
 
 We also looked at linear rates of changes to population density within each climate period of the model to get a more detailed understanding of population change during model run. This was accomplished by separating the data into tick ranges based on the cycle duration of each individual model run. Within each tick range, a linear regression was fit to the output variable of interest, in this case population density, with tick as the explanatory variable. We then recorded the coefficient of the tick variable, as well as the estimated value of the dependent variable at the beginning and end of the tick range.
 
@@ -252,18 +244,17 @@ rates <- readRDS("../results/outputs/output-evolution-comparison.rds")
 
 rates = rates %>% left_join(data %>% select_at(c("exp", parameters)), 
                             by = "exp", multiple = "first")
-rates[,4:28] <- lapply(rates[,4:28], as.numeric)
 
-tick.seq1 = seq(from = 0, to = 3500, by = 100)
+tick.seq1 = seq(from = 0, to = 4000, by = 100)
 tick.levels = c()
 for(i in 1:(length(tick.seq1) - 1)){
   tick.levels = c(tick.levels, paste0(tick.seq1[i] + 1, "-", tick.seq1[i+1]))
 }
-tick.seq2 = seq(from = 0, to = 3500, by = 250)
+tick.seq2 = seq(from = 0, to = 4000, by = 250)
 for(i in 1:(length(tick.seq2) - 1)){
   tick.levels = c(tick.levels, paste0(tick.seq2[i] + 1, "-", tick.seq2[i+1]))
 }
-rates$tick.range = factor(rates$tick.range, levels = tick.levels)
+rates$tick_range = factor(rates$tick_range, levels = tick.levels)
 
 rm(list = c("tick.seq1", "tick.seq2", "tick.levels"))
 ```
@@ -271,12 +262,13 @@ rm(list = c("tick.seq1", "tick.seq2", "tick.levels"))
 
 ```{r population-change-over-time-2, fig.cap="Linear rate of population change within climatic intervals for model runs starting in a productive climatic interval", echo=FALSE, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, out.width='100%'}
 ggplot(rates %>% filter(`veg-cycle-start` == "\"productive\"")) +
-  geom_boxplot(aes(x = tick.range, y = pop.dens.slope, 
+  geom_boxplot(aes(x = tick_range, y = slope.pop.density, 
                    color = climate.condition)) +
   facet_wrap(~ `cycle-duration`, scales = "free", labeller = label_both) +
   geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45))
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 90, size = 6, hjust = 1))
 
 ```
 We see that, on average, with short climate cycles, unproductive periods see essentially no change in population, with slopes being essentially zero (Figure S\@ref(fig:population-change-over-time-2)). With longer climatic cycles, there is slight positive population change during unproductive periods at the beginning of model run. 
